@@ -1,6 +1,7 @@
 import { StreamEvent } from "../interface/EventStream.js"
 import { attemptCompletionToolDefinition } from "./AttemptCompletionTool.js"
 import { readToolDefinition } from "./ReadFileTool.js"
+import { writeToolDefinition } from "./WriteTool.js"
 
 export interface ToolDefinition {
 	name: string
@@ -17,6 +18,7 @@ export interface ToolDefinition {
 
 export const tools = {
 	[readToolDefinition.name]: readToolDefinition,
-	[attemptCompletionToolDefinition.name]: attemptCompletionToolDefinition
+	[attemptCompletionToolDefinition.name]: attemptCompletionToolDefinition,
+	[writeToolDefinition.name]: writeToolDefinition
 	// TODO: add the rest
 }

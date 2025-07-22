@@ -113,6 +113,8 @@ export class TaskAgent {
                     tools,
                 );
 
+                Logger.info(`Request to ${this.agent.name} used ${response.usage?.prompt_tokens}tok`)
+
                 const message = response.choices[0]?.message;
 
                 if (!message) {
@@ -131,7 +133,7 @@ export class TaskAgent {
                 if (message.tool_calls && message.tool_calls.length > 0) {
                     for (const toolCall of message.tool_calls) {
                         const toolResult = await this.executeToolCall(toolCall);
-                        Logger.info(`Agent: ${this.agent.name} used ${toolCall.function.name} and received ${toolResult}`)
+                        Logger.info(`Agent: ${this.agent.name} used ${toolCall.function.name} and received ${toolResult.slice(0, 50)}`)
                         
                         // Add tool result to context
                         this.context.push({

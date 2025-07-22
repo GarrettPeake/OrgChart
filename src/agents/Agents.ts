@@ -1,6 +1,7 @@
 // TODO: Interface spec for an agent
 
 import { ToolDefinition } from "../tools/index.js";
+import { AssociateSoftwareEngineer } from "./AssociateSoftwareEngineer.js";
 import { ProjectResearcher } from "./ProjectResearcher.js";
 import { technicalProductManager } from "./TechnicalProductManager.js";
 
@@ -18,5 +19,6 @@ export interface Agent {
 
 export const agents: Record<string, Agent> = {
     [technicalProductManager.id]: technicalProductManager,
-    [ProjectResearcher.id]: ProjectResearcher
+    [ProjectResearcher.id]: ProjectResearcher,
+    [AssociateSoftwareEngineer.id]: AssociateSoftwareEngineer
 }

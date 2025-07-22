@@ -1,6 +1,4 @@
 import { attemptCompletionToolDefinition, attemptCompletionToolName } from "../tools/AttemptCompletionTool.js"
-import { editToolDefinition } from "../tools/EditTool.js"
-import { tools } from "../tools/index.js"
 import { readToolDefinition } from "../tools/ReadFileTool.js"
 import { writeToolDefinition } from "../tools/WriteTool.js"
 import { Agent } from "./Agents.js"
@@ -10,7 +8,7 @@ export const AssociateSoftwareEngineer: Agent = {
     id: "AssociateSoftwareEngineer",
     name: "Associate Software Engineer",
     description: "Performs tasks with a well defined scope that require modification of code or config files",
-    tools: [attemptCompletionToolDefinition, readToolDefinition, writeToolDefinition, editToolDefinition],
+    tools: [attemptCompletionToolDefinition, readToolDefinition, writeToolDefinition],
     level: 5,
     temperature: 0.6,
     system_prompt: `
