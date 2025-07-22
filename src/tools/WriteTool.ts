@@ -1,5 +1,7 @@
 import { StreamEvent } from "../interface/EventStream.js";
 import { ToolDefinition } from "./index.js";
+import fs from 'fs/promises';
+import path from 'path';
 
 const descriptionForAgent = 
 `Request to write content to a file at the specified path. If the file exists, it will be overwritten with the provided content. If the file doesn't exist, it will be created. This tool will automatically create any directories needed to write the file.
@@ -29,6 +31,19 @@ export const writeToolDefinition: ToolDefinition = {
 		},
 		required: ["file_path", "content"],
 	},
-	enact: async (args: {file_path: string, content: string}): Promise<string> => "Not implemented",
+	enact: async (args: {file_path: string, content: string}): Promise<string> => {
+		try {
+			// Ensure the directory exists
+			const dir = path.dirname(args.file_path);
+			await fs.mkdir(dir, { recursive: true });
+			
+			// Write the content to the file
+			await fs.writeFile(args.file_path, args.content, 'utf8');
+			
+			return `Successfully wrote ${args.content.length} characters to ${args.file_path}`;
+		} catch (error) {
+			throw new Error(`Failed to write file ${args.file_path}: ${error}`);
+		}
+	},
 	formatEvent: async (args: {file_path: string, content: string}): Promise<StreamEvent> => ({title: "", content: "Not implemented"}),
 }
