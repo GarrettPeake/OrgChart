@@ -45,5 +45,5 @@ export const writeToolDefinition: ToolDefinition = {
 			throw new Error(`Failed to write file ${args.file_path}: ${error}`);
 		}
 	},
-	formatEvent: async (args: {file_path: string, content: string}): Promise<StreamEvent> => ({title: "", content: "Not implemented"}),
+	formatEvent: async (args: {file_path: string, content: string}): Promise<StreamEvent> => ({title: `Write(${args.file_path})`, content: args.content.split("\n").slice(0, 8).join("\n")}),
 }

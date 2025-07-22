@@ -97,7 +97,9 @@ export const AgentSelector: React.FC = () => {
 						))}
 						<Text></Text>
 					</Box>
-					<Text dimColor>↑↓ Navigate, Enter to select</Text>
+					<Box>
+						<Text dimColor>↑↓ Navigate, Enter to select</Text>
+					</Box>
 				</>
 			}
 		</Box>
