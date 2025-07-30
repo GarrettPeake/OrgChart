@@ -40,7 +40,8 @@ function grep(pattern: string, path: string, include?: string): string[] {
 		"node_modules/**",
 		"dist/**",
 		".claude/**",
-		"build/**"
+		"build/**",
+		"package-lock.json"
 	], nodir: true})
 	let results: string[] = []
 	for (const file of files) {

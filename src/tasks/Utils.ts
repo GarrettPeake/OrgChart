@@ -7,5 +7,6 @@ export const getAllFiles = () => globSync('**/*', { ignore: [
     "node_modules/**",
     "dist/**",
     ".claude/**",
-    "build/**"
+    "build/**",
+    "package-lock.json"
 ], nodir: true})

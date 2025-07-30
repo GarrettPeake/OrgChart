@@ -1,5 +1,6 @@
 import { ToolDefinition } from "../tools/index.js";
 import { AssociateSoftwareEngineer } from "./AssociateSoftwareEngineer.js";
+import { CodeReviewer } from "./CodeReviewer.js";
 import { ProjectResearcher } from "./ProjectResearcher.js";
 import { SeniorSoftwareEngineer } from "./SeniorSoftwareEngineer.js";
 import { technicalProductManager } from "./TechnicalProductManager.js";
@@ -20,5 +21,6 @@ export const agents: Record<string, Agent> = {
     [technicalProductManager.id]: technicalProductManager,
     [ProjectResearcher.id]: ProjectResearcher,
     [AssociateSoftwareEngineer.id]: AssociateSoftwareEngineer,
-    [SeniorSoftwareEngineer.id]: SeniorSoftwareEngineer
+    [SeniorSoftwareEngineer.id]: SeniorSoftwareEngineer,
+    [CodeReviewer.id]: CodeReviewer
 }
