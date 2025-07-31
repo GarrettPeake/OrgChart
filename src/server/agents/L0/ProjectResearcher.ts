@@ -1,7 +1,7 @@
-import {getAllFiles} from '../tasks/Utils.js';
-import {attemptCompletionToolDefinition} from '../tools/AttemptCompletionTool.js';
-import {readToolDefinition} from '../tools/ReadFileTool.js';
-import {Agent} from './Agents.js';
+import {getAllFiles} from '../../tasks/Utils.js';
+import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
+import {readToolDefinition} from '../../tools/ReadFileTool.js';
+import {Agent} from '../Agents.js';
 
 export const ProjectResearcher: Agent = {
 	model: 'google/gemini-2.5-flash',
@@ -65,7 +65,9 @@ Be a trusted, always-available source of project truth. Your role is to reduce a
 2. Work through these goals sequentially, utilizing available tools as necessary. Each goal should correspond to a distinct step in your answer-finding process.
 3. Once you've completed the given task, you must attempt completion to present the result of the task to the requester.
 
-===
-All files present in the project: ${getAllFiles()}}
+---
+
+Here is a list of all files present in the project:
+${getAllFiles()}}
 `,
 };

@@ -9,7 +9,7 @@ interface AgentTreeProps {
 
 export const AgentTree: React.FC<AgentTreeProps> = ({rootTaskRunner}) => {
 	return (
-		<Box flexDirection="column" padding={1}>
+		<Box flexDirection="column" padding={1} flexShrink={0}>
 			{buildRunnerLevel(rootTaskRunner)}
 		</Box>
 	);
@@ -17,8 +17,8 @@ export const AgentTree: React.FC<AgentTreeProps> = ({rootTaskRunner}) => {
 
 const buildRunnerLevel = (runner: TaskAgent | null) => {
 	return (
-		<Box flexDirection="column" marginLeft={1}>
-			<Box flexDirection="row">
+		<Box flexDirection="column" marginLeft={1} flexShrink={0}>
+			<Box flexDirection="row" flexShrink={0}>
 				{/* <Spinner type='sand'/> */}
 				<Text
 					dimColor={runner?.status === 'exited'}

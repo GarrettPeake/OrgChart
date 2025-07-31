@@ -19,28 +19,22 @@ const reducer = (state: any, action: any) => {
 			return {
 				...state,
 				innerHeight: action.innerHeight,
-				scrollTop: state.delink
-					? state.scrollTop
-					: Math.max(state.innerHeight - state.height, 0),
+				scrollTop: Math.max(state.innerHeight - state.height, 0),
 			};
 
 		case 'SCROLL_DOWN':
-			const should_jump = Date.now() - (state.lastScroll || 0) < 500;
 			return {
 				...state,
 				scrollTop: Math.min(
 					Math.max(state.innerHeight - state.height, 0),
 					state.scrollTop + 1,
 				),
-				lastScroll: Date.now(),
 			};
 
 		case 'SCROLL_UP':
 			return {
 				...state,
 				scrollTop: Math.max(0, state.scrollTop - 1),
-				lastScroll: undefined,
-				delink: true,
 			};
 
 		default:
@@ -99,7 +93,7 @@ const ScrollArea: React.FC<ScrollAreaProps> = ({
 	);
 
 	return (
-		<Box height={height} flexDirection="column" overflow="hidden">
+		<Box height={height} overflow="hidden">
 			<Box
 				ref={innerRef}
 				flexShrink={0}
@@ -119,7 +113,7 @@ export const EventStream = ({
 }: EventStreamProps) => (
 	<Box flexDirection="column" paddingX={1} flexGrow={1} height={height}>
 		<ScrollArea height={height} focused={focused}>
-			{...events.map((event, index) => (
+			{events.map((event, index) => (
 				<Box key={`event-${index}`} flexDirection="column" marginTop={1}>
 					<Text bold color={colors.accentColor}>
 						• {event.title}

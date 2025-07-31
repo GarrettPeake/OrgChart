@@ -1,7 +1,7 @@
-import {getAllFiles} from '../tasks/Utils.js';
-import {attemptCompletionToolDefinition} from '../tools/AttemptCompletionTool.js';
-import {readToolDefinition} from '../tools/ReadFileTool.js';
-import {Agent} from './Agents.js';
+import {getAllFiles} from '../../tasks/Utils.js';
+import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
+import {readToolDefinition} from '../../tools/ReadFileTool.js';
+import {Agent} from '../Agents.js';
 
 export const CodeReviewer: Agent = {
 	name: 'Code Reviewer',
@@ -11,7 +11,7 @@ export const CodeReviewer: Agent = {
 	llm_description:
 		'Specializes in reviewing code for quality, readability, and adherence to best practices. Provides constructive feedback, identifies potential bugs, and suggests improvements to enhance code maintainability and performance.',
 	level: 0,
-	model: 'anthropic/claude-3.5-sonnet',
+	model: 'google/gemini-2.5-flash',
 	temperature: 0.1,
 	tools: () => [readToolDefinition, attemptCompletionToolDefinition],
 	system_prompt: () => `
@@ -61,7 +61,9 @@ When reviewing code, consider these aspects:
 
 Remember that your goal is to help improve the codebase and support the development team. Your reviews should leave the code in better shape and developers with a clearer understanding of best practices.
 
-===
-All files present in the project: ${getAllFiles()}}
+---
+
+Here is a list of all files present in the project:
+${getAllFiles()}}
   `,
 };

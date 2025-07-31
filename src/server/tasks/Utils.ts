@@ -2,7 +2,7 @@ import {globSync} from 'glob';
 
 // Get all files, ignoring the globs in our list
 export const getAllFiles = () =>
-	globSync('**/*', {
+	"- " + globSync('**/*', {
 		ignore: [
 			'.env',
 			'node_modules/**',
@@ -12,4 +12,4 @@ export const getAllFiles = () =>
 			'package-lock.json',
 		],
 		nodir: true,
-	});
+	}).join("\n- ");
