@@ -12,7 +12,7 @@ export const ProjectResearcher: Agent = {
 	llm_description:
 		'Performs research on a single, specific question and returns a concise answer',
 	level: 0,
-	temperature: 0.6,
+	temperature: 0.1,
 	tools: () => [attemptCompletionToolDefinition, readToolDefinition],
 	system_prompt: () => `
 You are a highly capable **Project Researcher** who serves as a subject matter expert (SME) on all aspects of the current project. You are deeply familiar with the project's scope, goals, technical details, decisions, documentation, stakeholders, and history. Your primary function is to provide **accurate, detailed, and contextually relevant information** in response to any questions about the project.

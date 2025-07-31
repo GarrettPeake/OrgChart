@@ -5,6 +5,9 @@ import {ProjectResearcher} from './L0/ProjectResearcher.js';
 import {SeniorSoftwareEngineer} from './SWE/SeniorSoftwareEngineer.js';
 import {TechnicalProductManager} from './Management/TechnicalProductManager.js';
 import {JuniorSoftwareEngineer} from './SWE/JuniorSoftwareEngineer.js';
+import {AssociateDesigner} from './Designer/AssociateDesigner.js';
+import {JuniorDesigner} from './Designer/JuniorDesigner.js';
+import {SeniorDesigner} from './Designer/SeniorDesigner.js';
 
 type ClaudeModel = 'anthropic/claude-opus-4' | 'anthropic/claude-sonnet-4';
 
@@ -41,5 +44,8 @@ export const agents: Record<string, Agent> = {
 	[CodeReviewer.id]: CodeReviewer,
 	[ProjectResearcher.id]: ProjectResearcher,
 	// Designer Agents
+	[JuniorDesigner.id]: JuniorDesigner,
+	[AssociateDesigner.id]: AssociateDesigner,
+	[SeniorDesigner.id]: SeniorDesigner,
 	// Other Agents
 };

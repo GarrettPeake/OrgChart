@@ -1,8 +1,5 @@
 import {getAllFiles} from '../../tasks/Utils.js';
-import {
-	attemptCompletionToolDefinition,
-	attemptCompletionToolName,
-} from '../../tools/AttemptCompletionTool.js';
+import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {writeToolDefinition} from '../../tools/WriteTool.js';
 import {Agent} from '../Agents.js';
