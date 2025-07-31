@@ -3,10 +3,11 @@
 import React from 'react';
 import {withFullScreen} from 'fullscreen-ink';
 import meow from 'meow';
-import {AgentSelector} from './interface/AgentSelector.js';
-import Logger from './Logger.js';
+import {Cli} from './cli/Cli.js';
+import Logger, {initContextLogger} from './Logger.js';
 
-export const cli = meow(`
+export const cli = meow(
+	`
 	Usage
 		$ orgchart
 
@@ -15,10 +16,14 @@ export const cli = meow(`
 
 	Examples
 		$ orgchart
-`, {
-	importMeta: import.meta
-});
+`,
+	{
+		importMeta: import.meta,
+	},
+);
 
-Logger.info("======================= STARTING NEW RUN ===============================")
+Logger.info(
+	'======================= STARTING NEW RUN ===============================',
+);
 
-withFullScreen(<AgentSelector />, { exitOnCtrlC: true }).start();
+withFullScreen(<Cli />, {exitOnCtrlC: true}).start();

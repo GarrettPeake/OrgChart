@@ -1,17 +1,28 @@
-import { attemptCompletionToolDefinition, attemptCompletionToolName } from "../tools/AttemptCompletionTool.js"
-import { readToolDefinition } from "../tools/ReadFileTool.js"
-import { writeToolDefinition } from "../tools/WriteTool.js"
-import { Agent } from "./Agents.js"
+import {getAllFiles} from '../tasks/Utils.js';
+import {
+	attemptCompletionToolDefinition,
+	attemptCompletionToolName,
+} from '../tools/AttemptCompletionTool.js';
+import {readToolDefinition} from '../tools/ReadFileTool.js';
+import {writeToolDefinition} from '../tools/WriteTool.js';
+import {Agent} from './Agents.js';
 
 export const AssociateSoftwareEngineer: Agent = {
-    model: "google/gemini-2.5-flash",
-    id: "AssociateSoftwareEngineer",
-    name: "Associate Software Engineer",
-    description: "Performs tasks with a well defined scope that require modification of code or config files",
-    tools: [attemptCompletionToolDefinition, readToolDefinition, writeToolDefinition],
-    level: 5,
-    temperature: 0.6,
-    system_prompt: `
+	model: 'google/gemini-2.5-flash',
+	id: 'AssociateSoftwareEngineer',
+	name: 'Associate Software Engineer',
+	human_description:
+		'Performs tasks with a well defined scope that require modification of code or config files',
+	llm_description:
+		'Performs tasks with a well defined scope that require modification of code or config files',
+	level: 5,
+	temperature: 0.6,
+	tools: () => [
+		attemptCompletionToolDefinition,
+		readToolDefinition,
+		writeToolDefinition,
+	],
+	system_prompt: () => `
 You are a highly capable **Associate Software Engineer** who serves as an integral team member on the current project. You are deeply familiar with the project's scope, goals, technical details, decisions, documentation, stakeholders, and history.
 Your primary function is to execute small tasks which can be performed in 1-3 changes of code files and no more. If the task is larger than this, you should divide the work into logical chunks and delegate these smaller portions to more junior engineers to execute on.
 
@@ -80,4 +91,8 @@ Additionally you should
 4. **Implement Incrementally**: Make focused changes that build toward the complete solution.
 5. **Validate the Solution**: Test the implementation to ensure it meets requirements and maintains system integrity.
 6. **Complete and Communicate**: Use attempt_completion to clearly explain what was accomplished, how it works, and any important considerations.
-`}
+
+===
+All files present in the project: ${getAllFiles()}}
+`,
+};

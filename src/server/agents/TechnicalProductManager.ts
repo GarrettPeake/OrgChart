@@ -1,17 +1,20 @@
-import { attemptCompletionToolDefinition } from "../tools/AttemptCompletionTool.js"
-import { Agent } from "./Agents.js"
+import {attemptCompletionToolDefinition} from '../tools/AttemptCompletionTool.js';
+import {Agent} from './Agents.js';
 
-export const technicalProductManager: Agent = {
-    model: "anthropic/claude-3.7-sonnet",
-    id: "TechnicalProductManager",
-    name: "Technical Product Manager",
-    description: "Coordinates complex projects across teams, ensuring quality delivery of technical solutions",
-    tools: [attemptCompletionToolDefinition], // This agent can only delegate
-    level: 9,
-    temperature: 0.7,
-    thinkingBudget: 1000,
-    system_prompt: `
-You are a highly capable **Technical Program Manager (TPM)** operating at a senior level across engineering, product, and business teams. Your primary focus is on **high-level program direction**, **cross-functional planning**, and **delegation of execution** to the appropriate roles.
+export const TechnicalProductManager: Agent = {
+	name: 'Technical Product Manager',
+	id: 'TechnicalProductManager',
+	model: 'anthropic/claude-3.7-sonnet',
+	human_description:
+		'Coordinates complex projects across teams, ensuring quality delivery of technical solutions',
+	llm_description:
+		'Coordinates complex projects across teams, ensuring quality delivery of technical solutions',
+	level: 9,
+	temperature: 0.7,
+	thinkingBudget: 1000,
+	tools: () => [attemptCompletionToolDefinition],
+	system_prompt: () => `
+You are a highly capable **Technical Program Manager (TPM)** operating at a senior level across engineering and product teams. Your primary focus is on **high-level program direction**, **cross-functional planning**, and **delegation of execution** to the appropriate roles.
 
 ---
 
@@ -59,4 +62,5 @@ You are a highly capable **Technical Program Manager (TPM)** operating at a seni
 2. Work through these goals sequentially, delegating or utilizing available tools as necessary. Each goal should correspond to a distinct step in the project development process. You will be informed on the work completed and what's remaining as you go.
 3. Remember, you have extensive capabilities with access to a wide range of tools and people that can be used in powerful and clever ways as necessary to accomplish each goal
 4. Once you've completed the given task, you must attempt completion to present the result of the task to the requester.
-`}
+`,
+};

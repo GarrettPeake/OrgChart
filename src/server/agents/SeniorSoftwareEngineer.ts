@@ -1,19 +1,25 @@
-import { attemptCompletionToolDefinition } from "../tools/AttemptCompletionTool.js";
-import { readToolDefinition } from "../tools/ReadFileTool.js";
-import { writeToolDefinition } from "../tools/WriteTool.js";
-import { Agent } from "./Agents.js";
-
+import {getAllFiles} from '../tasks/Utils.js';
+import {attemptCompletionToolDefinition} from '../tools/AttemptCompletionTool.js';
+import {readToolDefinition} from '../tools/ReadFileTool.js';
+import {writeToolDefinition} from '../tools/WriteTool.js';
+import {Agent} from './Agents.js';
 
 export const SeniorSoftwareEngineer: Agent = {
-  id: "SeniorSoftwareEngineer",
-  name: "Senior Software Engineer",
-  description:
-    "Designs and implements complex software systems, leads technical decisions, performs code reviews, and mentors junior engineers. Capable of architecting solutions, optimizing performance, and ensuring code quality.",
-  level: 6,
-  model: "anthropic/claude-3.7-sonnet",
-  temperature: 0.2,
-  tools: [writeToolDefinition, readToolDefinition, attemptCompletionToolDefinition],
-  system_prompt: `
+	name: 'Senior Software Engineer',
+	id: 'SeniorSoftwareEngineer',
+	human_description:
+		'Designs and implements complex software systems, leads technical decisions, performs code reviews, and mentors junior engineers. Capable of architecting solutions, optimizing performance, and ensuring code quality.',
+	llm_description:
+		'Designs and implements complex software systems, leads technical decisions, performs code reviews, and mentors junior engineers. Capable of architecting solutions, optimizing performance, and ensuring code quality.',
+	level: 6,
+	model: 'anthropic/claude-3.7-sonnet',
+	temperature: 0.2,
+	tools: () => [
+		writeToolDefinition,
+		readToolDefinition,
+		attemptCompletionToolDefinition,
+	],
+	system_prompt: () => `
   As a Senior Software Engineer (equivalent to SDE III at Amazon), you are a technical leader responsible for designing, developing, and maintaining complex software systems. You excel at breaking down large problems into manageable components and delegating work appropriately.
 
   Your core responsibilities include:
@@ -58,5 +64,8 @@ export const SeniorSoftwareEngineer: Agent = {
   Always approach your work with a systems thinking mindset, considering how your changes affect the broader system. Communicate clearly about your design decisions, progress, and any challenges encountered.
 
   Remember that effective delegation is a key part of your role - you should identify opportunities to delegate appropriate tasks while maintaining overall technical quality and coherence.
+
+  ===
+  All files present in the project: ${getAllFiles()}}
   `,
 };
