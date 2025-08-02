@@ -1,12 +1,14 @@
 import {Agent} from '../Agents.js';
 import {
 	SystemPromptDelegationInstructions,
+	SystemPromptSharedAgentBehavior,
 	SystemPromptWriteRoleAttemptCompletionInstructions,
 } from '../Prompts.js';
 import {getAllFiles} from '../../tasks/Utils.js';
 import {writeToolDefinition} from '../../tools/WriteTool.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
+import {commonTools} from '../../tools/index.js';
 
 export const AssociateDesigner: Agent = {
 	id: 'AssociateDesigner',
@@ -18,11 +20,7 @@ export const AssociateDesigner: Agent = {
 	level: 5,
 	temperature: 0.5,
 	model: 'google/gemini-2.5-flash',
-	tools: () => [
-		writeToolDefinition,
-		readToolDefinition,
-		attemptCompletionToolDefinition,
-	],
+	tools: () => [...commonTools, writeToolDefinition, readToolDefinition],
 	system_prompt: () =>
 		`
 You are a highly capable **Associate Designer**. Your primary function is to execute small-medium sized tasks which can be performed in less than 3 self-contained changes of design files and no more. If the task is larger than this, you should divide the work into logical chunks and delegate these smaller portions to more junior designers to execute on.
@@ -43,6 +41,8 @@ You are a highly capable **Associate Designer**. Your primary function is to exe
 - Contribute to the development and maintenance of design systems.
 
 ---
+
+${SystemPromptSharedAgentBehavior}
 
 ${SystemPromptDelegationInstructions}
 
@@ -82,6 +82,6 @@ ${SystemPromptWriteRoleAttemptCompletionInstructions}
 ---
 
 Here is a list of all files present in the project:
-${getAllFiles()}}
+${getAllFiles()}
 `,
 };

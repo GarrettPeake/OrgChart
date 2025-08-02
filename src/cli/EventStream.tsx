@@ -1,6 +1,7 @@
-import React, {useReducer, useRef, useEffect} from 'react';
+import React, {useReducer, useRef, useEffect, ReactNode} from 'react';
 import {Box, Text, measureElement, useInput} from 'ink';
 import {colors} from './Util.js';
+import Logger from '../Logger.js';
 
 interface EventStreamProps {
 	events?: StreamEvent[];
@@ -19,7 +20,7 @@ const reducer = (state: any, action: any) => {
 			return {
 				...state,
 				innerHeight: action.innerHeight,
-				scrollTop: Math.max(state.innerHeight - state.height, 0),
+				scrollTop: Math.max(action.innerHeight - state.height, 0),
 			};
 
 		case 'SCROLL_DOWN':
@@ -44,15 +45,11 @@ const reducer = (state: any, action: any) => {
 
 interface ScrollAreaProps {
 	height: number | string;
-	children: React.ReactNode;
+	children: ReactNode;
 	focused?: boolean;
 }
 
-const ScrollArea: React.FC<ScrollAreaProps> = ({
-	height,
-	children,
-	focused = false,
-}) => {
+function ScrollArea({height, children, focused}: ScrollAreaProps) {
 	const [state, dispatch] = useReducer(reducer, {
 		height,
 		scrollTop: 0,
@@ -61,20 +58,16 @@ const ScrollArea: React.FC<ScrollAreaProps> = ({
 	const innerRef = useRef<any>(null);
 
 	useEffect(() => {
-		if (innerRef.current) {
-			const dimensions = measureElement(innerRef.current);
+		const dimensions = measureElement(innerRef.current);
 
-			dispatch({
-				type: 'SET_INNER_HEIGHT',
-				innerHeight: dimensions.height,
-			});
-		}
+		dispatch({
+			type: 'SET_INNER_HEIGHT',
+			innerHeight: dimensions.height,
+		});
 	}, [children]);
 
-	useInput(
-		(_input: string, key: any) => {
-			if (!focused) return;
-
+	useInput((_input: string, key: any) => {
+		if (focused) {
 			if (key.downArrow) {
 				dispatch({
 					type: 'SCROLL_DOWN',
@@ -86,40 +79,38 @@ const ScrollArea: React.FC<ScrollAreaProps> = ({
 					type: 'SCROLL_UP',
 				});
 			}
-		},
-		{
-			isActive: focused,
-		},
-	);
+		}
+	});
 
 	return (
-		<Box height={height} overflow="hidden">
+		<Box height={height} flexDirection="column" overflow="hidden">
 			<Box
 				ref={innerRef}
 				flexShrink={0}
 				flexDirection="column"
 				marginTop={-state.scrollTop}
+				rowGap={1}
 			>
 				{children}
 			</Box>
 		</Box>
 	);
-};
+}
 
 export const EventStream = ({
 	events = [],
 	focused = false,
 	height,
 }: EventStreamProps) => (
-	<Box flexDirection="column" paddingX={1} flexGrow={1} height={height}>
+	<Box flexDirection="column" paddingX={1} height={height}>
 		<ScrollArea height={height} focused={focused}>
 			{events.map((event, index) => (
-				<Box key={`event-${index}`} flexDirection="column" marginTop={1}>
+				<Box key={`event-${index}`} flexDirection="column">
 					<Text bold color={colors.accentColor}>
 						• {event.title}
 					</Text>
 					{event.content ? (
-						<Box key={`event-${index}`} marginLeft={2} flexDirection="column">
+						<Box marginLeft={2} flexDirection="column">
 							<Text color={colors.subtextColor}>{event.content}</Text>
 						</Box>
 					) : null}

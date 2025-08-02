@@ -1,6 +1,7 @@
 import {StreamEvent} from '../../cli/EventStream.js';
 import {attemptCompletionToolDefinition} from './AttemptCompletionTool.js';
 import {readToolDefinition} from './ReadFileTool.js';
+import {updateTodoListToolDefinition} from './UpdateTodoListTool.js';
 import {writeToolDefinition} from './WriteTool.js';
 
 export interface ToolDefinition {
@@ -20,5 +21,11 @@ export const tools = {
 	[readToolDefinition.name]: readToolDefinition,
 	[attemptCompletionToolDefinition.name]: attemptCompletionToolDefinition,
 	[writeToolDefinition.name]: writeToolDefinition,
+	[updateTodoListToolDefinition.name]: updateTodoListToolDefinition,
 	// TODO: add the rest
 };
+
+export const commonTools = [
+    attemptCompletionToolDefinition,
+    updateTodoListToolDefinition,
+]

@@ -8,17 +8,7 @@ import {JuniorSoftwareEngineer} from './SWE/JuniorSoftwareEngineer.js';
 import {AssociateDesigner} from './Designer/AssociateDesigner.js';
 import {JuniorDesigner} from './Designer/JuniorDesigner.js';
 import {SeniorDesigner} from './Designer/SeniorDesigner.js';
-
-type ClaudeModel = 'anthropic/claude-opus-4' | 'anthropic/claude-sonnet-4';
-
-type GeminiModel =
-	| 'google/gemini-2.5-flash-lite'
-	| 'google/gemini-2.5-flash'
-	| 'google/gemini-2.5-pro';
-
-type OtherModel = 'moonshotai/kimi-k2' | 'qwen/qwen3-coder';
-
-export type LLMModel = ClaudeModel | GeminiModel | OtherModel;
+import {LLMModel} from './ModelInfo.js';
 
 export interface Agent {
 	model: LLMModel; // The model which is used by the agent
@@ -40,12 +30,12 @@ export const agents: Record<string, Agent> = {
 	[JuniorSoftwareEngineer.id]: JuniorSoftwareEngineer,
 	[AssociateSoftwareEngineer.id]: AssociateSoftwareEngineer,
 	[SeniorSoftwareEngineer.id]: SeniorSoftwareEngineer,
-	// L0 Agents
-	[CodeReviewer.id]: CodeReviewer,
-	[ProjectResearcher.id]: ProjectResearcher,
 	// Designer Agents
 	[JuniorDesigner.id]: JuniorDesigner,
 	[AssociateDesigner.id]: AssociateDesigner,
 	[SeniorDesigner.id]: SeniorDesigner,
 	// Other Agents
+	// L0 Agents
+	[CodeReviewer.id]: CodeReviewer,
+	[ProjectResearcher.id]: ProjectResearcher,
 };

@@ -1,9 +1,13 @@
 import {getAllFiles} from '../../tasks/Utils.js';
 import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
+import {commonTools} from '../../tools/index.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {writeToolDefinition} from '../../tools/WriteTool.js';
 import {Agent} from '../Agents.js';
-import {SystemPromptWriteRoleAttemptCompletionInstructions} from '../Prompts.js';
+import {
+	SystemPromptSharedAgentBehavior,
+	SystemPromptWriteRoleAttemptCompletionInstructions,
+} from '../Prompts.js';
 
 export const JuniorSoftwareEngineer: Agent = {
 	model: 'google/gemini-2.5-flash',
@@ -15,15 +19,13 @@ export const JuniorSoftwareEngineer: Agent = {
 		'Performs small software engineering tasks with a well defined scope that require modification of only a few code or config files',
 	level: 4,
 	temperature: 0.6,
-	tools: () => [
-		attemptCompletionToolDefinition,
-		readToolDefinition,
-		writeToolDefinition,
-	],
+	tools: () => [...commonTools, readToolDefinition, writeToolDefinition],
 	system_prompt: () => `
 You are a highly capable **Junior Software Engineer**. Your primary function is to execute small software engineering tasks that can be completed by writing or modifying only a few files
 
 ---
+
+${SystemPromptSharedAgentBehavior}
 
 ## Core Responsibilities
 

@@ -5,13 +5,16 @@ import {ToolDefinition} from './index.js';
 export const delegateWorkToolName = 'DelegateWork';
 
 const descriptionForAgent = (level: number) => ` 
-This tool allows you to delegate a portion of your assigned task to the given agent. The amount and scope of work delegated should be commensurate to the agent's job title, for instance, designing a service is too large for a Junior Engineer and writing unit tests is too small for a Principal or Senior Software engineer.
-Please delegate work to the most logical agent and utilize agents as often as possible. If your assigned task is manageable in only a few small steps, you should not delegate. If your assigned task could be broken down into two sets of code changes, it should be broken down and delegated in dependency order.
-Agents Ids and their descriptions:
+This tool allows you to delegate a portion of your assigned task to another agent. The amount, type, and scope of work delegated should be commensurate to the agent's job title. For instance:
+ * Design tasks should not be given to a Software Engineer but rather a Designer.
+ * Designing an entire feature service is too large for a Junior Designer
+ * Writing a few unit tests is too small for a Senior Software engineer but if we're making sweeping changes to all tests that's too big for a Junior Software Engineer
+You should delegate work to the most logical agent and utilize agents as often as possible. If your assigned task is manageable in only a few small steps, you should not delegate. If your assigned task could be broken down into two sets of code changes, it should be broken down and delegated in dependency order.
+Here is a list of agentIds and their descriptions:
 ${Object.entries(agents)
 	.map(([k, v]) => {
 		if (v.level < level) {
-			return `* ${k}: ${v.human_description}`;
+			return `* ${k}: ${v.llm_description}`;
 		} else {
 			return undefined;
 		}

@@ -4,7 +4,7 @@ import React from 'react';
 import {withFullScreen} from 'fullscreen-ink';
 import meow from 'meow';
 import {Cli} from './cli/Cli.js';
-import Logger, {initContextLogger} from './Logger.js';
+import Logger from './Logger.js';
 
 export const cli = meow(
 	`

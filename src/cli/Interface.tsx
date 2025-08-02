@@ -134,6 +134,7 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 					borderStyle="round"
 					flexShrink={1}
 					borderDimColor
+					width={75}
 					borderColor={
 						focusedSection === 'agentTree'
 							? colors.highlightColor

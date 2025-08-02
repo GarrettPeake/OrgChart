@@ -1,10 +1,12 @@
 import {getAllFiles} from '../../tasks/Utils.js';
 import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
+import {commonTools} from '../../tools/index.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {writeToolDefinition} from '../../tools/WriteTool.js';
 import {Agent} from '../Agents.js';
 import {
 	SystemPromptDelegationInstructions,
+	SystemPromptSharedAgentBehavior,
 	SystemPromptWriteRoleAttemptCompletionInstructions,
 } from '../Prompts.js';
 
@@ -18,11 +20,7 @@ export const AssociateSoftwareEngineer: Agent = {
 		'Performs software engineering tasks with a well defined scope that require modification of code or config files',
 	level: 5,
 	temperature: 0.5,
-	tools: () => [
-		attemptCompletionToolDefinition,
-		readToolDefinition,
-		writeToolDefinition,
-	],
+	tools: () => [...commonTools, readToolDefinition, writeToolDefinition],
 	system_prompt: () => `
 You are a highly capable **Associate Software Engineer**. Your primary function is to execute small-medium sized tasks which can be performed in less than 3 self-contained changes of code files and no more. If the task is larger than this, you should divide the work into logical chunks and delegate these smaller portions to more junior engineers to execute on.
 
@@ -41,6 +39,8 @@ You are a highly capable **Associate Software Engineer**. Your primary function 
 - Ensure thread safety and handle concurrent access patterns appropriately
 
 ---
+
+${SystemPromptSharedAgentBehavior}
 
 ${SystemPromptDelegationInstructions}
 

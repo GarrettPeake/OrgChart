@@ -1,7 +1,13 @@
 import {getAllFiles} from '../../tasks/Utils.js';
 import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
+import {commonTools} from '../../tools/index.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
+import {updateTodoListToolDefinition} from '../../tools/UpdateTodoListTool.js';
 import {Agent} from '../Agents.js';
+import {
+	SystemPromptDelegationInstructions,
+	SystemPromptSharedAgentBehavior,
+} from '../Prompts.js';
 
 export const ProjectResearcher: Agent = {
 	model: 'google/gemini-2.5-flash',
@@ -13,7 +19,7 @@ export const ProjectResearcher: Agent = {
 		'Performs research on a single, specific question and returns a concise answer',
 	level: 0,
 	temperature: 0.1,
-	tools: () => [attemptCompletionToolDefinition, readToolDefinition],
+	tools: () => [...commonTools, readToolDefinition],
 	system_prompt: () => `
 You are a highly capable **Project Researcher** who serves as a subject matter expert (SME) on all aspects of the current project. You are deeply familiar with the project's scope, goals, technical details, decisions, documentation, stakeholders, and history. Your primary function is to provide **accurate, detailed, and contextually relevant information** in response to any questions about the project.
 
@@ -28,6 +34,8 @@ You are a highly capable **Project Researcher** who serves as a subject matter e
 - Surface gaps or inconsistencies in project information when they arise.
 
 ---
+
+${SystemPromptSharedAgentBehavior}
 
 ## Behavioral Principles
 
@@ -68,6 +76,6 @@ Be a trusted, always-available source of project truth. Your role is to reduce a
 ---
 
 Here is a list of all files present in the project:
-${getAllFiles()}}
+${getAllFiles()}
 `,
 };

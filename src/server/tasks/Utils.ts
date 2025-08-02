@@ -13,3 +13,7 @@ export const getAllFiles = () =>
 		],
 		nodir: true,
 	}).join("\n- ");
+
+export const getGitignoreGlobs = () => {
+    
+}

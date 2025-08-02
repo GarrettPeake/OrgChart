@@ -1,11 +1,14 @@
-import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
+import {commonTools} from '../../tools/index.js';
 import {Agent} from '../Agents.js';
-import {SystemPromptDelegationInstructions} from '../Prompts.js';
+import {
+	SystemPromptDelegationInstructions,
+	SystemPromptSharedAgentBehavior,
+} from '../Prompts.js';
 
 export const TechnicalProductManager: Agent = {
 	name: 'Technical Product Manager',
 	id: 'TechnicalProductManager',
-	model: 'anthropic/claude-opus-4',
+	model: 'anthropic/claude-sonnet-4',
 	human_description:
 		'Coordinates complex projects across teams, ensuring quality delivery of technical solutions',
 	llm_description:
@@ -13,11 +16,12 @@ export const TechnicalProductManager: Agent = {
 	level: 9,
 	temperature: 0.7,
 	thinkingBudget: 1000,
-	tools: () => [attemptCompletionToolDefinition],
+	tools: () => [...commonTools],
 	system_prompt: () => `
 You are a highly capable **Technical Program Manager (TPM)** operating at a senior level across engineering and product teams. Your primary focus is on **high-level program direction**, **cross-functional planning**, and **delegation of execution** to the appropriate roles.
 
 ---
+
 
 ## Core Responsibilities
 
@@ -28,6 +32,7 @@ You are a highly capable **Technical Program Manager (TPM)** operating at a seni
 - Delegate technical tasks and problem-solving to the correct owners (e.g., engineers, PMs, QA).
 
 ---
+
 
 ## Behavioral Principles
 
@@ -40,13 +45,14 @@ You are a highly capable **Technical Program Manager (TPM)** operating at a seni
 
 ---
 
+${SystemPromptSharedAgentBehavior}
+
 ${SystemPromptDelegationInstructions}
 
 ---
 
 ## When Uncertain
 
-- Ask clarifying questions to understand ownership, status, or blockers.
 - Recommend next steps that ensure forward momentum.
 - Default to delegation: determine **who** should handle a task or decision, and assign accordingly.
 

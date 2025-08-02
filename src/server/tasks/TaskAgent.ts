@@ -8,6 +8,11 @@ import Logger, {ContextLogger} from '../../Logger.js';
 import {attemptCompletionToolName} from '../tools/AttemptCompletionTool.js';
 import {tools} from '../tools/index.js';
 import {StreamEvent} from '../../cli/EventStream.js';
+import {
+	TodoListItem,
+	updateTodoListToolName,
+} from '../tools/UpdateTodoListTool.js';
+import {ModelInformation} from '../agents/ModelInfo.js';
 
 export type AgentStatus = 'executing' | 'waiting' | 'exited';
 
@@ -20,6 +25,7 @@ export class TaskAgent {
 	public cost: number = 0.0;
 	public contextPercent: number = 0.000001;
 	public agentId: string = crypto.randomUUID();
+	public todoList: TodoListItem[] = [];
 	// Initialize context with system prompt and user input
 	public context: ChatMessage[];
 
@@ -51,27 +57,12 @@ export class TaskAgent {
 		}
 
 		if (toolName === delegateWorkToolName) {
-			const targetAgent = agents[args.agentId];
-			if (!targetAgent) {
-				Logger.error(
-					new Error(`Agent ${args.agentId} not found`),
-					'Delegation failure - agent not found',
-				);
-				throw 'Delegation failure';
-			}
-
-			const childTaskRunner = new TaskAgent(
-				this.llmProvider,
-				this.writeEvent,
-				targetAgent,
-			);
-			this.children.push(childTaskRunner);
-			return childTaskRunner.runTask(args.task);
+			return this.delegateWork(args);
 		}
 
 		const tool = tools[toolName];
 		if (tool === undefined) {
-			return 'Failed to invoke tool, no tool of that type exists';
+			return 'Failed to use tool, no tool of that type exists';
 		}
 
 		this.writeEvent(await tool.formatEvent(args));
@@ -79,7 +70,31 @@ export class TaskAgent {
 		if (toolName === attemptCompletionToolName) {
 			return args.result;
 		}
+
+		if (toolName === updateTodoListToolName) {
+			this.todoList = args;
+		}
 		return await tool.enact(args);
+	}
+
+	async delegateWork(args: any): Promise<string> {
+		this.status = 'waiting';
+		const targetAgent = agents[args.agentId];
+		if (!targetAgent) {
+			Logger.error(
+				new Error(`Agent ${args.agentId} not found`),
+				'Delegation failure - agent not found',
+			);
+			throw 'Delegation failure';
+		}
+
+		const childTaskRunner = new TaskAgent(
+			this.llmProvider,
+			this.writeEvent,
+			targetAgent,
+		);
+		this.children.push(childTaskRunner);
+		return childTaskRunner.runTask(args.task);
 	}
 
 	/**
@@ -106,12 +121,11 @@ export class TaskAgent {
 			}
 
 			let iterations = 0;
-			const maxIterations = 150; // Prevent infinite loops
+			const maxIterations = 30; // Prevent infinite loops
 
 			while (iterations < maxIterations) {
 				this.status = 'executing';
 				iterations++;
-				this.cost += 1;
 
 				const response = await this.llmProvider.chatCompletion(
 					{
@@ -123,6 +137,19 @@ export class TaskAgent {
 					},
 					tools,
 				);
+
+				// Update our context and cost usage
+				if (response.usage) {
+					this.contextPercent =
+						response.usage?.prompt_tokens /
+						ModelInformation[this.agent.model].context;
+					this.cost +=
+						(response.usage?.prompt_tokens / 1_000_000) *
+						ModelInformation[this.agent.model].input_token_cost_per_m;
+					this.cost +=
+						(response.usage?.completion_tokens / 1_000_000) *
+						ModelInformation[this.agent.model].output_token_cost_per_m;
+				}
 
 				Logger.info(
 					`Request to ${this.agent.name} used ${response.usage?.prompt_tokens}tok`,
@@ -150,7 +177,6 @@ export class TaskAgent {
 
 				// Handle tool calls
 				if (message.tool_calls && message.tool_calls.length > 0) {
-					this.status = 'waiting';
 					for (const toolCall of message.tool_calls) {
 						const toolResult = await this.executeToolCall(toolCall);
 						Logger.info(
@@ -169,6 +195,7 @@ export class TaskAgent {
 						// Check if task is complete
 						if (toolCall.function.name === attemptCompletionToolName) {
 							this.status = 'exited';
+							contextLogger();
 							return toolResult;
 						}
 					}
@@ -179,7 +206,12 @@ export class TaskAgent {
 				}
 				contextLogger();
 			}
-			throw 'Infinite loop detected';
+			this.writeEvent({
+				title: `Agent Max Cycles Exceeded (${maxIterations})`,
+				content: 'Please instruct the agent to continue or correct it',
+			});
+			Logger.info('Loop detected, the user will need to manually continue');
+			return `Stopped after ${maxIterations} tool uses`;
 		} catch (error) {
 			Logger.error(error, 'Task execution failed');
 			const errorMessage =

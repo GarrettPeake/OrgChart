@@ -1,29 +1,31 @@
 import {getAllFiles} from '../../tasks/Utils.js';
 import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
+import {commonTools} from '../../tools/index.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {writeToolDefinition} from '../../tools/WriteTool.js';
 import {Agent} from '../Agents.js';
-import {SystemPromptWriteRoleAttemptCompletionInstructions} from '../Prompts.js';
+import {
+	SystemPromptSharedAgentBehavior,
+	SystemPromptWriteRoleAttemptCompletionInstructions,
+} from '../Prompts.js';
 
 export const JuniorDesigner: Agent = {
-  model: 'google/gemini-2.5-flash',
-  id: 'JuniorDesigner',
-  name: 'Junior Designer',
-  human_description:
-    'Performs small design tasks with a well-defined scope that require modification of only a few design files or components.',
-  llm_description:
-    'Performs small design tasks with a well-defined scope that require modification of only a few design files or components.',
-  level: 4,
-  temperature: 0.6,
-  tools: () => [
-    attemptCompletionToolDefinition,
-    readToolDefinition,
-    writeToolDefinition,
-  ],
-  system_prompt: () => `
+	model: 'google/gemini-2.5-flash',
+	id: 'JuniorDesigner',
+	name: 'Junior Designer',
+	human_description:
+		'Performs small design tasks with a well-defined scope that require modification of only a few design files or components.',
+	llm_description:
+		'Performs small design tasks with a well-defined scope that require modification of only a few design files or components.',
+	level: 4,
+	temperature: 0.6,
+	tools: () => [...commonTools, readToolDefinition, writeToolDefinition],
+	system_prompt: () => `
 You are a highly capable **Junior Designer**. Your primary function is to execute small design tasks that can be completed by creating or modifying only a few design files or components, focusing on UI/UX design.
 
 ---
+
+${SystemPromptSharedAgentBehavior}
 
 ## Core Responsibilities
 
@@ -45,8 +47,8 @@ You should follow these steps to solve all problems assigned to you:
 - Ensure the task is well defined, if there is missing information, you should attempt completion stating that the task cannot be completed and why
 - Delegate research tasks to fully understand the scope of the problem. The researcher is smart and can identify which files you need to read and which files you need to edit
 - Read all necessary files by utilizing the ${
-    readToolDefinition.name
-  } tool multiple times in the same response
+		readToolDefinition.name
+	} tool multiple times in the same response
 - Consider how to complete the task, weighing multiple implementation approaches and choose the most appropriate one
 - Break the task down into a list of self-contained design modifications and their corresponding tests (if applicable).
 - Perform the changes to complete each modification.

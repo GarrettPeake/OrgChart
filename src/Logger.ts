@@ -1,5 +1,4 @@
 import {pino} from 'pino';
-import {ChatMessage} from './server/LLMProvider.js';
 import path from 'path';
 import fs from 'fs/promises';
 import {TaskAgent} from './server/tasks/TaskAgent.js';
@@ -68,13 +67,14 @@ function agentDfs(
 	agent: TaskAgent,
 	targetId: string,
 	route: string[] = [],
+	childIndex: number = 0,
 ): [TaskAgent, string[]] | undefined {
-	route = [...route, agent.agentId];
+	route = [...route, `${childIndex}-${agent.agent.id}-${agent.agentId}`];
 	if (agent.agentId === targetId) {
 		return [agent, route];
 	} else {
-		for (let x of agent.children) {
-			const res = agentDfs(x, targetId, route);
+		for (const [index, child] of agent.children.entries()) {
+			const res = agentDfs(child, targetId, route, index);
 			if (res != undefined) {
 				return res;
 			}

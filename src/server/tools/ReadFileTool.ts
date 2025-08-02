@@ -1,6 +1,7 @@
 import {ToolDefinition} from './index.js';
 import Logger from '../../Logger.js';
 import {StreamEvent} from '../../cli/EventStream.js';
+import { cleanText } from '../Utils/TextUtils.js';
 
 const descriptionForAgent = `Read the contents of a file at the specified path. Use this when you need to examine the contents of an existing file you do not know the contents of, for example to analyze code, review text files, or extract information from configuration files. Automatically extracts raw text from PDF and DOCX files. May not be suitable for other types of binary files, as it returns the raw content as a string.`;
 
@@ -25,7 +26,7 @@ export const readToolDefinition: ToolDefinition = {
 		await readFormatted(args.file_path),
 	formatEvent: async (args: {file_path: string}): Promise<StreamEvent> => ({
 		title: `Read(${args.file_path})`,
-		content: await readFormattedTruncated(args.file_path),
+		content: '',
 	}),
 };
 
@@ -43,11 +44,7 @@ const readFormattedTruncated = async (file_path: string): Promise<string> => {
 
 const readFormatted = async (file_path: string): Promise<string> => {
 	const content = await readFile(file_path);
-	let cleanedContent = content
-		.split('\n')
-		.map(e => e.trimEnd())
-		.map(e => e.replaceAll('\t', '  '))
-		.join('\n');
+	let cleanedContent = cleanText(content)
 	Logger.info('File contains: ' + cleanedContent);
 	return cleanedContent;
 };

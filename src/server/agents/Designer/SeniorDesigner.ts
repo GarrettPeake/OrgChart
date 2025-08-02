@@ -1,28 +1,26 @@
 import {Agent} from '../Agents.js';
 import {
 	SystemPromptDelegationInstructions,
+	SystemPromptSharedAgentBehavior,
 	SystemPromptWriteRoleAttemptCompletionInstructions,
 } from '../Prompts.js';
 import {getAllFiles} from '../../tasks/Utils.js';
 import {writeToolDefinition} from '../../tools/WriteTool.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
+import {commonTools} from '../../tools/index.js';
 
 export const SeniorDesigner: Agent = {
 	id: 'SeniorDesigner',
 	name: 'Senior Designer',
 	human_description:
-		'Owns and orchestrates the implementation of large design projects or features from well-defined specifications. Manages implementation by delegation.',
+		'Owns and orchestrates the design of large projects or features from well-defined specifications',
 	llm_description:
-		'Owns and orchestrates the implementation of large design projects or features from well-defined specifications. Manages implementation by delegation.',
+		'Owns and orchestrates the design of large projects or features from well-defined specifications',
 	level: 6,
 	temperature: 0.2,
 	model: 'anthropic/claude-sonnet-4',
-	tools: () => [
-		writeToolDefinition,
-		readToolDefinition,
-		attemptCompletionToolDefinition,
-	],
+	tools: () => [...commonTools, writeToolDefinition, readToolDefinition],
 	system_prompt: () =>
 		`
 You are a highly capable **Senior Designer**. Your primary function is to manage the implementation-by-delegation of medium-large sized design tasks/projects. When you are assigned a task, you become the owner of that portion of the design system, for instance, the UI/UX, design system components, accessibility, or visual hierarchy, and work diligently to understand that portion and ensure the task is executed successfully.
@@ -43,6 +41,8 @@ You are a highly capable **Senior Designer**. Your primary function is to manage
 - Ensure designs meet accessibility standards and best practices.
 
 ---
+
+${SystemPromptSharedAgentBehavior}
 
 ${SystemPromptDelegationInstructions}
 
