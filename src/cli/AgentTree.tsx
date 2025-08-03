@@ -15,13 +15,11 @@ export const AgentTree: React.FC<AgentTreeProps> = ({rootTaskRunner}) => {
 	);
 };
 
-
 // TODO: Just do a DFS and build the string as you descend
 const buildRunnerLevel = (runner: TaskAgent | null) => {
 	return (
 		<Box flexDirection="column" flexShrink={0}>
 			<Box flexDirection="row" flexShrink={0}>
-				{/* <Spinner type='sand'/> */}
 				<Text
 					dimColor={runner?.status === 'exited'}
 					color={
@@ -37,7 +35,6 @@ const buildRunnerLevel = (runner: TaskAgent | null) => {
 					{runner?.contextPercent.toFixed(1)}% - ${runner?.cost.toFixed(2)}
 				</Text>
 			</Box>
-			{/* <Spinner type='flip'/> */}
 			{/* For each child, add an indenting character and  */}
 			{runner?.children.map((child, index) => (
 				<Box key={index} flexDirection="row" flexShrink={0}>

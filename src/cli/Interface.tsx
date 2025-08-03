@@ -33,13 +33,8 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 	}, []);
 
 	const handleCommandSubmit = async (command: string) => {
-		// Add the command to the event stream
-		writeEvent({title: 'Command', content: command});
-		if (taskRunner !== null) {
-			setTaskPromise(taskRunner.runTask(command));
-		} else {
-			throw 'Failed to initialize agent for task';
-		}
+		// Add the command as a task
+		setTaskPromise(taskRunner!.runTask(command));
 	};
 
 	// Handle tab key navigation
@@ -82,7 +77,7 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 					error instanceof Error ? error.message : 'Unknown error occurred',
 			});
 		}
-	}, [agent, task, writeEvent]);
+	}, [agent, task]);
 
 	const headerHeight = 5; // 3 lines of text plus border
 	const topMargin = 1;

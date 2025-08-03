@@ -5,7 +5,10 @@ import {
 	delegateWorkToolName,
 } from '../tools/DelegateWorkTool.js';
 import Logger, {ContextLogger} from '../../Logger.js';
-import {attemptCompletionToolName} from '../tools/AttemptCompletionTool.js';
+import {
+	attemptCompletionToolDefinition,
+	attemptCompletionToolName,
+} from '../tools/AttemptCompletionTool.js';
 import {tools} from '../tools/index.js';
 import {StreamEvent} from '../../cli/EventStream.js';
 import {
@@ -13,6 +16,7 @@ import {
 	updateTodoListToolName,
 } from '../tools/UpdateTodoListTool.js';
 import {ModelInformation} from '../agents/ModelInfo.js';
+import {CompletionUsage} from 'openai/resources.js';
 
 export type AgentStatus = 'executing' | 'waiting' | 'exited';
 
@@ -53,39 +57,40 @@ export class TaskAgent {
 			args = JSON.parse(toolCall.function.arguments);
 		} catch (e) {
 			Logger.error(e, `Error parsing tool arguments for ${toolName}`);
-			throw `Error parsing tool arguments: ${e}`;
+			return `Invalid tool use, unable to parse tool arguments: ${e}`;
 		}
 
-		if (toolName === delegateWorkToolName) {
-			return this.delegateWork(args);
-		}
+		try {
+			if (toolName === delegateWorkToolName) {
+				return this.delegateWork(args);
+			}
 
-		const tool = tools[toolName];
-		if (tool === undefined) {
-			return 'Failed to use tool, no tool of that type exists';
-		}
+			const tool = tools[toolName];
+			if (tool === undefined) {
+				return 'Failed to use tool, no tool of that type exists';
+			}
 
-		this.writeEvent(await tool.formatEvent(args));
+			this.writeEvent(await tool.formatEvent(args));
 
-		if (toolName === attemptCompletionToolName) {
-			return args.result;
-		}
+			if (toolName === attemptCompletionToolName) {
+				return args.result;
+			}
 
-		if (toolName === updateTodoListToolName) {
-			this.todoList = args;
+			if (toolName === updateTodoListToolName) {
+				this.todoList = args;
+			}
+			return await tool.enact(args);
+		} catch (e: any) {
+			return `Failed to enact tool ${toolName}, received error: ${e.message}`;
 		}
-		return await tool.enact(args);
 	}
 
 	async delegateWork(args: any): Promise<string> {
 		this.status = 'waiting';
 		const targetAgent = agents[args.agentId];
 		if (!targetAgent) {
-			Logger.error(
-				new Error(`Agent ${args.agentId} not found`),
-				'Delegation failure - agent not found',
-			);
-			throw 'Delegation failure';
+			Logger.error(`Delegation failure - agent '${args.agentId}' not found`);
+			return `Delegation failure - agent '${args.agentId}' not found`;
 		}
 
 		const childTaskRunner = new TaskAgent(
@@ -97,20 +102,37 @@ export class TaskAgent {
 		return childTaskRunner.runTask(args.task);
 	}
 
+	updateUsages(usage: CompletionUsage) {
+		// Update our context usage and cost usage
+		this.contextPercent =
+			usage.prompt_tokens / ModelInformation[this.agent.model].context;
+		this.cost +=
+			(usage.prompt_tokens / 1_000_000) *
+			ModelInformation[this.agent.model].input_token_cost_per_m;
+		this.cost +=
+			(usage.completion_tokens / 1_000_000) *
+			ModelInformation[this.agent.model].output_token_cost_per_m;
+		Logger.info(`Request to ${this.agent.name} used ${usage.prompt_tokens}tok`);
+	}
+
+	addToContext(message: ChatMessage) {
+		this.context.push(message);
+		ContextLogger.getAgentLogger(this.agentId)();
+	}
+
 	/**
 	 * Main task loop modifying context as it progresses
 	 * @param input The user message to append to the current context before starting the cycles with the LLM
 	 * @returns A task completion message when the LLM has enacted complete task
 	 */
 	async runTask(input: string): Promise<string> {
-		const contextLogger = ContextLogger.getAgentLogger(this.agentId);
 		try {
 			this.writeEvent({
 				title: `Task Started - ${this.agent.name}`,
 				content: `${input}`,
 			});
 
-			this.context.push({
+			this.addToContext({
 				role: 'user',
 				content: input,
 			});
@@ -121,12 +143,21 @@ export class TaskAgent {
 			}
 
 			let iterations = 0;
-			const maxIterations = 30; // Prevent infinite loops
+			const maxIterations = 5; // Prevent infinite loops
 
 			while (iterations < maxIterations) {
 				this.status = 'executing';
 				iterations++;
 
+				// On the final iteration, tell the agent that it is being forced to complete the task with the knowledge it already has
+				if (iterations === maxIterations - 1) {
+					this.addToContext({
+						role: 'user',
+						content: `You have run out of time and must provide a response to the requester given the information you already have/work you've already completed. If you were unable to finish the task completely, ensure the requester is made aware and you provide enough context for the requester to continue the task where you left off`,
+					});
+				}
+
+				// Call the LLM
 				const response = await this.llmProvider.chatCompletion(
 					{
 						model: this.agent.model,
@@ -135,41 +166,41 @@ export class TaskAgent {
 						temperature: this.agent.temperature,
 						stream: false,
 					},
-					tools,
+					iterations !== maxIterations - 1 // On the final iteration, only give the model the complete work tool
+						? tools
+						: [attemptCompletionToolDefinition],
 				);
 
-				// Update our context and cost usage
+				// Update our context usage and cost usage
 				if (response.usage) {
-					this.contextPercent =
-						response.usage?.prompt_tokens /
-						ModelInformation[this.agent.model].context;
-					this.cost +=
-						(response.usage?.prompt_tokens / 1_000_000) *
-						ModelInformation[this.agent.model].input_token_cost_per_m;
-					this.cost +=
-						(response.usage?.completion_tokens / 1_000_000) *
-						ModelInformation[this.agent.model].output_token_cost_per_m;
+					this.updateUsages(response.usage);
 				}
 
-				Logger.info(
-					`Request to ${this.agent.name} used ${response.usage?.prompt_tokens}tok`,
-				);
-
+				// Extract the information we care about
+				const choice = response.choices[0];
 				const message = response.choices[0]?.message;
 
-				if (!message) {
-					Logger.warn('No response received from LLM');
-					throw 'No response from LLM';
+				// Handle the LLM not producing a response
+				if (!choice || !message) {
+					this.writeEvent({
+						title: 'LLM API Error',
+						content: 'No response, retrying',
+					});
+					continue;
+				}
+				// Handle API errors
+				if (response.id === 'failure') {
+					this.writeEvent({
+						title: 'LLM API Error',
+						content: choice?.message.content!,
+					});
+					// Realistically we just want to pause here
+					// TODO: Prompt user for permission to proceed then just infinitely retry
+					return 'Failed to continue work due to unforeseen accident'; // This message will be shown to the requesting agent and is meant to sound work-like
 				}
 
-				// A small hack to circumvent a bug in the OpenRouter API, append some random chars to the tool call ids so they are never repeated
-				message.tool_calls = message.tool_calls?.map(tc => ({
-					...tc,
-					id: tc.id + '-' + crypto.randomUUID().substring(0, 6),
-				}));
-
 				// Add assistant message to context
-				this.context.push({
+				this.addToContext({
 					role: 'assistant',
 					content: message.content,
 					tool_calls: message.tool_calls,
@@ -186,7 +217,7 @@ export class TaskAgent {
 						);
 
 						// Add tool result to context
-						this.context.push({
+						this.addToContext({
 							role: 'tool',
 							content: toolResult,
 							tool_call_id: toolCall.id,
@@ -195,7 +226,6 @@ export class TaskAgent {
 						// Check if task is complete
 						if (toolCall.function.name === attemptCompletionToolName) {
 							this.status = 'exited';
-							contextLogger();
 							return toolResult;
 						}
 					}
@@ -204,20 +234,19 @@ export class TaskAgent {
 					Logger.warn('LLM provided no tool calls');
 					throw 'No Tool Calls';
 				}
-				contextLogger();
 			}
 			this.writeEvent({
 				title: `Agent Max Cycles Exceeded (${maxIterations})`,
 				content: 'Please instruct the agent to continue or correct it',
 			});
 			Logger.info('Loop detected, the user will need to manually continue');
-			return `Stopped after ${maxIterations} tool uses`;
+			return `Forced to stop work after after ${maxIterations} turns`;
 		} catch (error) {
 			Logger.error(error, 'Task execution failed');
 			const errorMessage =
 				error instanceof Error ? error.message : 'Unknown error';
 			this.writeEvent({title: 'Task Error', content: errorMessage});
-			throw error;
+			return errorMessage;
 		} finally {
 			this.status = 'waiting';
 		}

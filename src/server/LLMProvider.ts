@@ -38,9 +38,9 @@ export class LLMProvider {
 	async chatCompletion(
 		request: ChatCompletionRequest,
 		tools: ToolDefinition[],
-	) {
+	): Promise<ChatCompletionResponse> {
 		let retries = 0;
-		// Logger.info("Invoking OpenRouter with request: " + JSON.stringify(request));
+		let finalError: Error | null = null;
 		while (retries < 3) {
 			try {
 				const openAItools = tools.map(
@@ -56,14 +56,40 @@ export class LLMProvider {
 				);
 				request.tools = openAItools;
 				request.tool_choice = 'required';
-				return await this.openai.chat.completions.create(request);
-			} catch (e) {
+				const response = await this.openai.chat.completions.create(request);
+                // A small hack to circumvent a bug in the OpenRouter API, append some random chars to the tool call ids so they are never repeated
+                if (response.choices[0]?.message.tool_calls) {
+                    response.choices[0].message.tool_calls = response.choices[0]?.message.tool_calls?.map(tc => ({
+                        ...tc,
+                        id: tc.id + '-' + crypto.randomUUID().substring(0, 6),
+                    }));
+                }
+                return response
+			} catch (e: any) {
+				finalError = e;
 				Logger.error(e, `Chat completion failed (attempt ${retries + 1}/3)`);
 				retries++;
 			}
 		}
-		const error = new Error('failed after three retries');
-		Logger.error(error, 'Chat completion failed after all retry attempts');
-		throw error;
+		// If we've exceed three retries, return a failure
+		Logger.error(finalError, 'Chat completion failed after all retry attempts');
+		return {
+			id: 'failure',
+			created: 1,
+			model: request.model,
+			object: 'chat.completion',
+			choices: [
+				{
+					finish_reason: 'stop',
+					index: 0,
+					logprobs: {} as any,
+					message: {
+						content: finalError!.message,
+						refusal: null,
+						role: 'assistant',
+					},
+				},
+			],
+		};
 	}
 }

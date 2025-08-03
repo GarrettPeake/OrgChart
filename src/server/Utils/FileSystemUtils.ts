@@ -72,7 +72,7 @@ const buildFileTreeDfs = (
 const buildPrefixString = (prefix: number[]): string => {
 	return prefix
 		.map((it, index) =>
-			it === 0 ? ' ' : it === 1 ? '└' : index === prefix.length - 1 ? '├' : '|',
+			it === 0 ? ' ' : it === 1 ? '└' : index === prefix.length - 1 ? '├' : '│',
 		)
 		.join('');
 };

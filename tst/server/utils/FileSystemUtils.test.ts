@@ -55,12 +55,12 @@ describe('GetFileTree', () => {
 			`
 ${testProjectRoot}/
 ├l1/
-|└l2/
-| └l3/
-|  ├package.json
-|  └package2.json
+│└l2/
+│ └l3/
+│  ├package.json
+│  └package2.json
 ├tp1/
-|└package2.json
+│└package2.json
 └tp2/
             `.trim(),
 		);
@@ -76,12 +76,12 @@ ${testProjectRoot}/
 			`
 ${testProjectRoot}/
 ├l1/
-|└l2/
-| ├l3/
-| |└...<further folder depth truncated>
-| ├l4/
-| |└...<further folder depth truncated>
-| └package2.json
+│└l2/
+│ ├l3/
+│ │└...<further folder depth truncated>
+│ ├l4/
+│ │└...<further folder depth truncated>
+│ └package2.json
 └tp1/
  └package2.json
             `.trim(),
