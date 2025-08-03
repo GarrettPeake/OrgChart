@@ -6,28 +6,28 @@ import {writeToolDefinition} from './WriteTool.js';
 import {bashToolDefinition} from './BashTool.js';
 
 export interface ToolDefinition {
-  name: string;
-  descriptionForAgent: string;
-  inputSchema: {
-    type: string;
-    properties: Record<string, any>;
-    required?: string[];
-    [key: string]: any;
-  };
-  enact: (args: any) => Promise<string>;
-  formatEvent: (args: any) => Promise<StreamEvent>;
+	name: string;
+	descriptionForAgent: string;
+	inputSchema: {
+		type: string;
+		properties: Record<string, any>;
+		required?: string[];
+		[key: string]: any;
+	};
+	enact: (args: any) => Promise<string>;
+	formatEvent: (args: any) => Promise<StreamEvent>;
 }
 
 export const tools = {
-  [readToolDefinition.name]: readToolDefinition,
-  [attemptCompletionToolDefinition.name]: attemptCompletionToolDefinition,
-  [writeToolDefinition.name]: writeToolDefinition,
-  [updateTodoListToolDefinition.name]: updateTodoListToolDefinition,
-  [bashToolDefinition.name]: bashToolDefinition,
-  // TODO: add the rest
+	[readToolDefinition.name]: readToolDefinition,
+	[attemptCompletionToolDefinition.name]: attemptCompletionToolDefinition,
+	[writeToolDefinition.name]: writeToolDefinition,
+	[updateTodoListToolDefinition.name]: updateTodoListToolDefinition,
+	[bashToolDefinition.name]: bashToolDefinition,
+	// TODO: add the rest
 };
 
 export const commonTools = [
-    attemptCompletionToolDefinition,
-    updateTodoListToolDefinition,
-]
+	attemptCompletionToolDefinition,
+	updateTodoListToolDefinition,
+];

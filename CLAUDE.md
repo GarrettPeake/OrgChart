@@ -4,14 +4,14 @@ This is an app called org chart. It is composed of three components:
 
 1. Interface: The CLI tool used by the user
 2. Agents: LLM agents configured with:
-    1. Model: The model which is used by the agent
-    2. System prompt: The system prompt given to the agent
-    1. ID: A short ID for the agent,  i.e. "UXDesignMaster"
-    1. Name: A friendly, informative name of the agent, i.e. "UX Master Designer"
-    3. Description: Short description of this employee's purpose and toolset, i.e. "A master of user experience design"
-    5. Tools: An array of tools usable by the agent
-    1. Level: The level of this agent, described below
-    1. Temperature: Passed to the model to control its level of randomness
+   1. Model: The model which is used by the agent
+   2. System prompt: The system prompt given to the agent
+   3. ID: A short ID for the agent, i.e. "UXDesignMaster"
+   4. Name: A friendly, informative name of the agent, i.e. "UX Master Designer"
+   5. Description: Short description of this employee's purpose and toolset, i.e. "A master of user experience design"
+   6. Tools: An array of tools usable by the agent
+   7. Level: The level of this agent, described below
+   8. Temperature: Passed to the model to control its level of randomness
 3. Tools: Tools usable by an Agent
 
 The app will be written in TypeScript to be run locally using NodeJs. It will use the `ink` package on NPM to create a beautiful user interface. It will use the OpenAI API spec to make LLM calls, for now only making calls to OpenRouter but this will be abstracted to `LLMProvider.ts`.
@@ -21,19 +21,20 @@ The app will be written in TypeScript to be run locally using NodeJs. It will us
 An agent is just like any other coding agent. It is given a task, and then can perform tool calls to execute the task and finally invokes the `attempt_completion` tool to finish the task. The key difference with OrgChart is that agents can directly invoke other agents of a lower `Level` to complete subtasks. This enables agents to delegate tasks such as search, summarization, planning, or execution to other agents.
 
 Example: The user might send the task "Create a django, react app with a landing page, username and password login page, and application page that shows the user's current balance. The user can add to their balance by checking out with stripe. Make a corresponding backend that supports these operations and remains extensible for future operations. Show me a plan before implementing." to the:
-* Technical Product Manager agent. The TPM (L9) can then invoke a:
-    * Designer (L8) with the same task. The Designer might invoke a:
-        * Principal UX Designer (L7) to create the user workflows and define all of the necessary functionalities, then a:
-        * Principal Frontend Engineer (L7) to create a plan for implementing those functionalities in React, then a:
-        * Principal Backend Engineer (L7) to design the Django API required to implement the features while maintaining extensibility, and finally pass the aggregated plan to a:
-        * Design Reviewer (L0) to review the design and suggest modifications
-The Designer then returns the design to the TPM who shows it to the user. The TPM's context window is very clean while executing the task perfectly. It only contains the user's request and the design -- any file reading, researching, and thinking was done by the invoked agents. If the user asks for modifications, the TPM would invoke a Designer once again who would delegate the edits to the engineers if necessary. Then for implementation the TPM could pass the design to an L8 Product Manager who would invoke L7 principles to break the design down into sub tasks and then give subtasks to invoked L6 Senior Engineers, who might break them down further and give them to L5 Engineers and so forth.
+
+- Technical Product Manager agent. The TPM (L9) can then invoke a:
+  _ Designer (L8) with the same task. The Designer might invoke a:
+  _ Principal UX Designer (L7) to create the user workflows and define all of the necessary functionalities, then a:
+  _ Principal Frontend Engineer (L7) to create a plan for implementing those functionalities in React, then a:
+  _ Principal Backend Engineer (L7) to design the Django API required to implement the features while maintaining extensibility, and finally pass the aggregated plan to a: \* Design Reviewer (L0) to review the design and suggest modifications
+  The Designer then returns the design to the TPM who shows it to the user. The TPM's context window is very clean while executing the task perfectly. It only contains the user's request and the design -- any file reading, researching, and thinking was done by the invoked agents. If the user asks for modifications, the TPM would invoke a Designer once again who would delegate the edits to the engineers if necessary. Then for implementation the TPM could pass the design to an L8 Product Manager who would invoke L7 principles to break the design down into sub tasks and then give subtasks to invoked L6 Senior Engineers, who might break them down further and give them to L5 Engineers and so forth.
 
 It should be clear from the above example that a tree structure emerges as agents are invoked. Once an invoked agent uses the `attempt_completion` tool, it is considered dead and therefore any context it generated is lost, only the modifications it made and the message it returned in `attempt_completion` remain. If the invoking agent requires followup work, it must treat it as a separate task for a new agent. There are many agents that are L0 such as researcher, design reviewer, etc. Since these agents are L0, they can be invoked by any agent and cannot invoke other agents.
 
 The tool used by an agent to invoke another agent is `delegate_task` and accepts the following arguments:
-* Task: A string with a detailed description of the task to be completed by the invoked agent
-* AgentId: The id of the agent to delegate to selected from an enum
+
+- Task: A string with a detailed description of the task to be completed by the invoked agent
+- AgentId: The id of the agent to delegate to selected from an enum
 
 ## Interface
 

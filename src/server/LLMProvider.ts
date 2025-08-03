@@ -57,14 +57,15 @@ export class LLMProvider {
 				request.tools = openAItools;
 				request.tool_choice = 'required';
 				const response = await this.openai.chat.completions.create(request);
-                // A small hack to circumvent a bug in the OpenRouter API, append some random chars to the tool call ids so they are never repeated
-                if (response.choices[0]?.message.tool_calls) {
-                    response.choices[0].message.tool_calls = response.choices[0]?.message.tool_calls?.map(tc => ({
-                        ...tc,
-                        id: tc.id + '-' + crypto.randomUUID().substring(0, 6),
-                    }));
-                }
-                return response
+				// A small hack to circumvent a bug in the OpenRouter API, append some random chars to the tool call ids so they are never repeated
+				if (response.choices[0]?.message.tool_calls) {
+					response.choices[0].message.tool_calls =
+						response.choices[0]?.message.tool_calls?.map(tc => ({
+							...tc,
+							id: tc.id + '-' + crypto.randomUUID().substring(0, 6),
+						}));
+				}
+				return response;
 			} catch (e: any) {
 				finalError = e;
 				Logger.error(e, `Chat completion failed (attempt ${retries + 1}/3)`);

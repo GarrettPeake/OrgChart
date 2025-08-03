@@ -17,7 +17,7 @@ import {
 } from '../tools/UpdateTodoListTool.js';
 import {ModelInformation} from '../agents/ModelInfo.js';
 import {CompletionUsage} from 'openai/resources.js';
-import { getConfig } from '../utils/Configuration.js';
+import {getConfig} from '../utils/Configuration.js';
 
 export type AgentStatus = 'executing' | 'waiting' | 'exited';
 
