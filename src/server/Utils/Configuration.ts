@@ -5,6 +5,7 @@ export type OrgChartConfig = {
 	rootDir: string;
 	orgChartDir: string;
 	ignorePatterns: string[];
+	maxAgentIterations: number;
 };
 
 let config: OrgChartConfig | undefined = undefined;
@@ -28,12 +29,14 @@ export const updateConfig = (
 
 const initConfig = () => {
 	const rootDir = process.cwd();
-	const tempDir = path.join(rootDir, '.orgchart');
-	fs.mkdirSync(tempDir, {recursive: true});
+	const orgChartDir = path.join(rootDir, '.orgchart');
+	fs.mkdirSync(orgChartDir, {recursive: true});
 	const ignorePatterns = ['node_modules'];
+	const maxAgentIterations = 30;
 	config = {
 		rootDir,
-		orgChartDir: tempDir,
+		orgChartDir,
 		ignorePatterns,
+		maxAgentIterations,
 	};
 };

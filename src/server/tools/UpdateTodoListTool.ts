@@ -57,8 +57,8 @@ export const updateTodoListToolDefinition: ToolDefinition = {
 							? ' '
 							: i.status === 'in_progress'
 							? '+'
-							: 'X'
-					}] \"${i.title}\": ${i.detailed_description}`,
+							: '✓'
+					}] \"${i.title}\"`,
 			)
 			.join('\n'),
 	}),

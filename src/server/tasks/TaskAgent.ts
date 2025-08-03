@@ -17,6 +17,7 @@ import {
 } from '../tools/UpdateTodoListTool.js';
 import {ModelInformation} from '../agents/ModelInfo.js';
 import {CompletionUsage} from 'openai/resources.js';
+import { getConfig } from '../utils/Configuration.js';
 
 export type AgentStatus = 'executing' | 'waiting' | 'exited';
 
@@ -143,7 +144,7 @@ export class TaskAgent {
 			}
 
 			let iterations = 0;
-			const maxIterations = 5; // Prevent infinite loops
+			const maxIterations = getConfig().maxAgentIterations; // Prevent infinite loops
 
 			while (iterations < maxIterations) {
 				this.status = 'executing';
