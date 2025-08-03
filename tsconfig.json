@@ -4,8 +4,14 @@
 		"outDir": "dist",
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
-		"lib": ["es2021"]
+		"lib": ["es2021"],
+		"baseUrl": "./",
+		"paths": {
+			"@/*": ["src/*"],
+			"@cli/*": ["src/cli/*"],
+			"@server/*": ["src/server/*"]
+		}
 	},
-	"include": ["src"],
+	"include": ["src", "tst"],
 	"exclude": ["node_modules", "dist"]
 }

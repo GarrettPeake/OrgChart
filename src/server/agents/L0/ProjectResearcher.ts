@@ -1,4 +1,4 @@
-import {getAllFiles} from '../../tasks/Utils.js';
+import {getFileTree} from '../../utils/FileSystemUtils.js';
 import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
 import {commonTools} from '../../tools/index.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
@@ -76,6 +76,6 @@ Be a trusted, always-available source of project truth. Your role is to reduce a
 ---
 
 Here is a list of all files present in the project:
-${getAllFiles()}
+${getFileTree()}
 `,
 };
