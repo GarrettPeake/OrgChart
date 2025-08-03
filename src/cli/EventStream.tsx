@@ -1,7 +1,8 @@
 import React, {useReducer, useRef, useEffect, ReactNode} from 'react';
 import {Box, Text, measureElement, useInput} from 'ink';
 import {colors} from './Util.js';
-import Logger from '../Logger.js';
+import Markdown from './Markdown.js';
+import {cleanText} from '@server/utils/TextUtils.js';
 
 interface EventStreamProps {
 	events?: StreamEvent[];
@@ -111,7 +112,7 @@ export const EventStream = ({
 					</Text>
 					{event.content ? (
 						<Box marginLeft={2} flexDirection="column">
-							<Text color={colors.subtextColor}>{event.content}</Text>
+							<Markdown>{cleanText(event.content)}</Markdown>
 						</Box>
 					) : null}
 				</Box>
