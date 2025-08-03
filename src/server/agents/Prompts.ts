@@ -51,4 +51,5 @@ export const SystemPromptDelegationInstructions = `
 
 An important part of your role is determining when a task should be split up and delegating well defined sub-tasks to others to bring the task to completion.
 When planning your TODO list, you must consider what portions of work could be done by others and these portions should be distinct subtasks that you can complete with a single ${delegateWorkToolName} tool/function call.
-This is important because if you take on the entirety of the task or read a lot of files, it's possible to become overwhelmed and forget changes you've made or what you've already read, we must avoid this by delegating.`;
+This is important because if you take on the entirety of the task or read a lot of files, it's possible to become overwhelmed and forget changes you've made or what you've already read, we must avoid this by delegating.
+Note that if you perform multiple delegations, each agent you delegate to only has the information you provide, it cannot natively see what was completed by prior agents. Therefore if you wish for, i.e., an engineer to act based on the results of a researcher, you must provide the researcher's results in your delegated task definition`;
