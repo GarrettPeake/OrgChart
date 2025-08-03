@@ -4,10 +4,9 @@
 	"main": "src/App.tsx",
 	"type": "module",
 	"scripts": {
-		"build": "rm -rf dist && vite-node build",
-		"build:watch": "tsc --watch",
-		"start": "vite-node -w --env-file=.env src/App.tsx",
-		"dev": "npm run build && DEV=true npm run start",
+		"build": "rm -rf dist && tsc",
+		"dev": "vite-node --env-file=.env src/App.tsx",
+		"dev:watch": "vite-node -w --env-file=.env src/App.tsx",
 		"test": "vitest run"
 	},
 	"author": "Garrett Peake",
@@ -22,14 +21,13 @@
 		"ink-spinner": "^5.0.0",
 		"ink-text-input": "^6.0.0",
 		"mammoth": "^1.9.1",
-		"marked-terminal": "6.1.0",
+		"marked-terminal": "^7.3.0",
 		"meow": "^11.0.0",
 		"openai": "5.11.0",
 		"os": "^0.1.2",
 		"pdf-parse": "^1.1.1",
 		"pino": "^9.7.0",
-		"react": "^18.3.1",
-		"vite-node": "^3.2.4"
+		"react": "^18.3.1"
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^3.0.1",
@@ -48,6 +46,7 @@
 		"react-devtools-core": "^4.19.1",
 		"typescript": "^5.0.3",
 		"vite-tsconfig-paths": "^5.1.4",
+		"vite-node": "^3.2.4",
 		"vitest": "^3.2.4"
 	},
 	"prettier": "@vdemedes/prettier-config"

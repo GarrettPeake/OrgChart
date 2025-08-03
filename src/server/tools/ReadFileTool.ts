@@ -1,7 +1,7 @@
 import {ToolDefinition} from './index.js';
 import Logger from '../../Logger.js';
 import {StreamEvent} from '../../cli/EventStream.js';
-import { cleanText } from '../utils/TextUtils.js';
+import { cleanText } from '../../shared/utils/TextUtils.js';
 
 const descriptionForAgent = `Read the contents of a file at the specified path. Use this when you need to examine the contents of an existing file you do not know the contents of, for example to analyze code, review text files, or extract information from configuration files. Automatically extracts raw text from PDF and DOCX files. May not be suitable for other types of binary files, as it returns the raw content as a string.`;
 

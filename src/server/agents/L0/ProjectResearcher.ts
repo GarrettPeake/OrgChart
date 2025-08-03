@@ -1,8 +1,6 @@
 import {getFileTree} from '../../utils/FileSystemUtils.js';
-import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
 import {commonTools} from '../../tools/index.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
-import {updateTodoListToolDefinition} from '../../tools/UpdateTodoListTool.js';
 import {Agent} from '../Agents.js';
 import {SystemPromptSharedAgentBehavior} from '../Prompts.js';
 

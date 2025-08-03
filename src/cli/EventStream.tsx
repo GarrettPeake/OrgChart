@@ -2,7 +2,7 @@ import React, {useReducer, useRef, useEffect, ReactNode} from 'react';
 import {Box, Text, measureElement, useInput} from 'ink';
 import {colors} from './Util.js';
 import Markdown from './Markdown.js';
-import {cleanText} from '@server/utils/TextUtils.js';
+import {cleanText} from '../shared/utils/TextUtils.js';
 
 interface EventStreamProps {
 	events?: StreamEvent[];
