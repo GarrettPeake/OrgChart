@@ -24,7 +24,6 @@
 
 - Tool that uses fast model to extract key symbols
 - Enable MCP servers with MCP SDK so we can use Context7
-- As you type your prompt, have the TPM model with only the system prompt say how it’s going to delegate the work. This delegation gets passed in the prompt to the real TPM agent
 - Define a browser user agent that has access to Playwright MCP
 - Define a command runner agent that accepts a bash command, determines if it's safe, then runs it and summarizes the results
 

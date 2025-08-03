@@ -46,7 +46,6 @@ export const initContextLogger = (runId: string, baseAgent: TaskAgent) => {
 				}
 				// Ensure the directory exists
 				const file_path = path.join(baseDir, ...agentPath, 'context.json');
-				Logger.info(file_path);
 				const dir = path.dirname(file_path);
 				await fs.mkdir(dir, {recursive: true});
 				// Write the content to the file

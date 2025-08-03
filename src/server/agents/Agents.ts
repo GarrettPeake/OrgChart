@@ -9,6 +9,7 @@ import {AssociateDesigner} from './Designer/AssociateDesigner.js';
 import {JuniorDesigner} from './Designer/JuniorDesigner.js';
 import {SeniorDesigner} from './Designer/SeniorDesigner.js';
 import {LLMModel} from './ModelInfo.js';
+import {CommandRunner} from './L0/CommandRunner.js';
 
 export interface Agent {
 	model: LLMModel; // The model which is used by the agent
@@ -38,4 +39,5 @@ export const agents: Record<string, Agent> = {
 	// L0 Agents
 	[CodeReviewer.id]: CodeReviewer,
 	[ProjectResearcher.id]: ProjectResearcher,
+	[CommandRunner.id]: CommandRunner,
 };

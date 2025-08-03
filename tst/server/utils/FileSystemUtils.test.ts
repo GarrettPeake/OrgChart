@@ -1,10 +1,4 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import {describe, it, expect, beforeEach, afterEach, test} from 'vitest';
+import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';

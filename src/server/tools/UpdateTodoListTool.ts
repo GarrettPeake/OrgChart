@@ -43,7 +43,7 @@ export const updateTodoListToolDefinition: ToolDefinition = {
 		},
 		required: ['todo_items'],
 	},
-	enact: async (args: {todo_items: TodoListItem[]}): Promise<string> =>
+	enact: async (_: {todo_items: TodoListItem[]}): Promise<string> =>
 		'TODO list successfully updated',
 	formatEvent: async (args: {
 		todo_items: TodoListItem[];
