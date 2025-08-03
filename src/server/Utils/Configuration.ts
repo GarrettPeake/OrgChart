@@ -1,8 +1,9 @@
+import fs from 'fs';
 import path from 'path';
 
 export type OrgChartConfig = {
 	rootDir: string;
-	tempDir: string;
+	orgChartDir: string;
 	ignorePatterns: string[];
 };
 
@@ -28,10 +29,11 @@ export const updateConfig = (
 const initConfig = () => {
 	const rootDir = process.cwd();
 	const tempDir = path.join(rootDir, '.orgchart');
-	const ignorePatterns = ["node_modules"];
+	fs.mkdirSync(tempDir, {recursive: true});
+	const ignorePatterns = ['node_modules'];
 	config = {
 		rootDir,
-		tempDir,
+		orgChartDir: tempDir,
 		ignorePatterns,
 	};
 };

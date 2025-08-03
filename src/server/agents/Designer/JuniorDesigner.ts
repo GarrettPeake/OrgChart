@@ -1,13 +1,9 @@
 import {getFileTree} from '../../utils/FileSystemUtils.js';
-import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
 import {commonTools} from '../../tools/index.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {writeToolDefinition} from '../../tools/WriteTool.js';
 import {Agent} from '../Agents.js';
-import {
-	SystemPromptSharedAgentBehavior,
-	SystemPromptWriteRoleAttemptCompletionInstructions,
-} from '../Prompts.js';
+import {SystemPromptSharedAgentBehavior} from '../Prompts.js';
 
 export const JuniorDesigner: Agent = {
 	model: 'google/gemini-2.5-flash',
@@ -64,10 +60,6 @@ You should follow these steps to solve all problems assigned to you:
 - Review your own design work for potential usability issues, accessibility problems, and visual inconsistencies.
 - Follow the principle of least surprise - implement solutions that behave as other designers and users would expect.
 - Leave the design system in better condition than you found it. If there are small formatting or quality of life changes that should be fixed in the normal course of your work, you are at liberty to address them.
-
----
-
-${SystemPromptWriteRoleAttemptCompletionInstructions}
 
 ---
 

@@ -4,10 +4,7 @@ import {commonTools} from '../../tools/index.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {updateTodoListToolDefinition} from '../../tools/UpdateTodoListTool.js';
 import {Agent} from '../Agents.js';
-import {
-	SystemPromptDelegationInstructions,
-	SystemPromptSharedAgentBehavior,
-} from '../Prompts.js';
+import {SystemPromptSharedAgentBehavior} from '../Prompts.js';
 
 export const ProjectResearcher: Agent = {
 	model: 'google/gemini-2.5-flash',

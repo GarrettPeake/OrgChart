@@ -2,3 +2,5 @@
 node_modules
 dist
 coverage
+.orgchart/ContextLogs/
+.orgchart/app.log

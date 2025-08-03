@@ -23,11 +23,7 @@ const buildFileTreeDfs = (
 	prefix: number[] = [], // 0 = no more children, 1 = final child, 2 = more children
 ): string => {
 	// Construct a string representing the nesting of this line item
-	const levelPrefix = prefix
-		.map((it, index) =>
-			it === 0 ? ' ' : it === 1 ? '└' : index === prefix.length - 1 ? '├' : '|',
-		)
-		.join('');
+	const levelPrefix = buildPrefixString(prefix);
 	// If this was the final child of the direct parent, mark the prefix as having no more children
 	if (prefix[prefix.length - 1] === 1) {
 		prefix[prefix.length - 1] = 0;
@@ -59,6 +55,10 @@ const buildFileTreeDfs = (
 							prefix.concat([index === children.length - 1 ? 1 : 2]),
 						);
 				}
+			} else {
+				res += `\n${buildPrefixString(
+					prefix.concat([1]),
+				)}...<further folder depth truncated>`;
 			}
 			return res;
 		}
@@ -67,4 +67,12 @@ const buildFileTreeDfs = (
 	} catch {
 		return `${levelPrefix}${path.basename(absolutePath)}: NO ACCESS`;
 	}
+};
+
+const buildPrefixString = (prefix: number[]): string => {
+	return prefix
+		.map((it, index) =>
+			it === 0 ? ' ' : it === 1 ? '└' : index === prefix.length - 1 ? '├' : '|',
+		)
+		.join('');
 };

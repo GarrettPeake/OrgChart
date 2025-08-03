@@ -2,12 +2,11 @@ import {pino} from 'pino';
 import path from 'path';
 import fs from 'fs/promises';
 import {TaskAgent} from './server/tasks/TaskAgent.js';
-
-const __dirname = import.meta.dirname;
+import {getConfig} from './server/utils/Configuration.js';
 
 const fileTransport = pino.transport({
 	target: 'pino/file',
-	options: {destination: `${__dirname}/app.log`},
+	options: {destination: path.join(getConfig().orgChartDir, 'app.log')},
 });
 
 const Logger = pino(
@@ -32,7 +31,7 @@ export let ContextLogger: {
 	getAgentLogger: (agentId: string) => () => Promise<void>;
 };
 export const initContextLogger = (runId: string, baseAgent: TaskAgent) => {
-	const baseDir = path.join(__dirname, 'ContextLogs', runId);
+	const baseDir = path.join(getConfig().orgChartDir, 'ContextLogs', runId);
 	ContextLogger = {
 		getAgentLogger: (agentId: string) => async () => {
 			try {

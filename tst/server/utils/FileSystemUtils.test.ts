@@ -20,7 +20,7 @@ describe('GetFileTree', () => {
 	}
 
 	async function createTestDir(dirPath: string) {
-		const fullPath = path.join(testProjectRoot, dirPath, "filename.txt");
+		const fullPath = path.join(testProjectRoot, dirPath, 'filename.txt');
 		await fs.mkdir(path.dirname(fullPath), {recursive: true});
 	}
 
@@ -69,6 +69,7 @@ ${testProjectRoot}/
 	it('respects max depth', async () => {
 		await createTestFile('l1/l2/l3/package.json');
 		await createTestFile('l1/l2/l3/package2.json');
+		await createTestFile('l1/l2/l4/package2.json');
 		await createTestFile('l1/l2/package2.json');
 		await createTestFile('tp1/package2.json');
 		expect(getFileTree(testProjectRoot, 2)).toEqual(
@@ -76,7 +77,10 @@ ${testProjectRoot}/
 ${testProjectRoot}/
 ├l1/
 |└l2/
-| ├l3/${/** Subitems are not shown */ ''}
+| ├l3/
+| |└...<further folder depth truncated>
+| ├l4/
+| |└...<further folder depth truncated>
 | └package2.json
 └tp1/
  └package2.json

@@ -50,6 +50,8 @@ Technical Product Manager - <Main task>
 Attempted to make flappy bird, Senior engineer relied on itself too much and ended up spending ~$2 rather than delegating everything. Flappy bird never worked, some crashes likely hurt the prospects. The agents persistently tried to figure out how to test it launching a bunch of researchers
 TODO list made the researchers behave significantly better, no infinite loops
 
+Researcher tends to add TODO list tasks but not perform any tool uses, then complete them and keep adding tasks
+
 ## Notes
 
 * Qwen3-coder is super capable and cheap but only 250k (Kimi K-2 is stupid cheap but only 37k context)
