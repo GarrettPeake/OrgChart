@@ -64,8 +64,10 @@ const buildFileTreeDfs = (
 		}
 		// For files we can just return the line item
 		return `${levelPrefix}${path.basename(absolutePath)}`;
-	} catch {
-		return `${levelPrefix}${path.basename(absolutePath)}: NO ACCESS`;
+	} catch (e: any) {
+		return `${levelPrefix}${path.basename(absolutePath)} -> error: ${
+			e.message
+		}`;
 	}
 };
 

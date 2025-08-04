@@ -66,7 +66,7 @@ export class TaskAgent {
 				return this.delegateWork(args);
 			}
 
-			const tool = tools[toolName];
+			const tool = tools.find(i => i.name === toolName);
 			if (tool === undefined) {
 				return 'Failed to use tool, no tool of that type exists';
 			}

@@ -1,7 +1,5 @@
 import {getFileTree} from '../../utils/FileSystemUtils.js';
-import {attemptCompletionToolDefinition} from '../../tools/AttemptCompletionTool.js';
-import {commonTools} from '../../tools/index.js';
-import {readToolDefinition} from '../../tools/ReadFileTool.js';
+import {commonTools, readTools} from '../../tools/index.js';
 import {Agent} from '../Agents.js';
 import {SystemPromptSharedAgentBehavior} from '../Prompts.js';
 
@@ -15,7 +13,7 @@ export const CodeReviewer: Agent = {
 	level: 0,
 	model: 'google/gemini-2.5-flash',
 	temperature: 0.1,
-	tools: () => [...commonTools, readToolDefinition],
+	tools: () => [...commonTools, ...readTools],
 	system_prompt: () => `
 As a Code Reviewer, you are responsible for evaluating code quality, identifying potential issues, and providing constructive feedback to improve the codebase. Your expertise helps maintain high standards of code quality across the project.
 Remember that your goal is to help improve the codebase and support the development team. Your reviews should leave the code in better shape and developers with a clearer understanding of best practices.

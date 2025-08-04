@@ -4,6 +4,8 @@ import {readToolDefinition} from './ReadFileTool.js';
 import {updateTodoListToolDefinition} from './UpdateTodoListTool.js';
 import {writeToolDefinition} from './WriteTool.js';
 import {bashToolDefinition} from './BashTool.js';
+import {grepToolDefinition} from './GrepTool.js';
+import {fileTreeToolDefinition} from './FileTreeTool.js';
 
 export interface ToolDefinition {
 	name: string;
@@ -18,16 +20,26 @@ export interface ToolDefinition {
 	formatEvent: (args: any) => Promise<StreamEvent>;
 }
 
-export const tools = {
-	[readToolDefinition.name]: readToolDefinition,
-	[attemptCompletionToolDefinition.name]: attemptCompletionToolDefinition,
-	[writeToolDefinition.name]: writeToolDefinition,
-	[updateTodoListToolDefinition.name]: updateTodoListToolDefinition,
-	[bashToolDefinition.name]: bashToolDefinition,
-	// TODO: add the rest
-};
-
 export const commonTools = [
 	attemptCompletionToolDefinition,
 	updateTodoListToolDefinition,
+];
+
+export const readTools = [
+	readToolDefinition,
+	grepToolDefinition,
+	fileTreeToolDefinition,
+];
+
+export const writeTools = [writeToolDefinition];
+
+export const tools: ToolDefinition[] = [
+	// Common
+	...commonTools,
+	// Read
+	...readTools,
+	// Write
+	...writeTools,
+	// Special
+	bashToolDefinition,
 ];

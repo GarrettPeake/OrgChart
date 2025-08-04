@@ -1,6 +1,6 @@
 import {globSync} from 'glob';
 import {ToolDefinition} from './index.js';
-import {read, readFile, readFileSync} from 'fs';
+import {readFileSync} from 'fs';
 import {StreamEvent} from '../../cli/EventStream.js';
 export const grepToolDefinition: ToolDefinition = {
 	name: 'Grep',
