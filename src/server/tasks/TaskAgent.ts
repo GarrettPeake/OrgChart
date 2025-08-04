@@ -152,20 +152,28 @@ export class TaskAgent {
 	 */
 	async sendInput(input: string): Promise<string> {
 		await this.stopExecution(); // Stop the current execution
-		this.status = 'executing'; // Set the correct state, if the agent is paused this will restart it
-		// Append to the context
+		// Append the new message to the context
+        if (this.status !== 'created' && this.status !== 'exited') {
+            // If this is occuring mid conversation, we should insert an agent acknowledgement of the previous tool result before injecting a user message
+            // This prevents the conversation from have two messages in a row from the user/tool which causes the model to ignore one
+            this.addToContext({
+                role: 'assistant',
+                content: "Great, I'll continue working now",
+            });
+        }
 		this.addToContext({
-			role: 'user',
+            role: 'user',
 			content: cleanText(input),
 		});
 		this.writeEvent({
-			title: `Starting Task - ${this.agent.name}`,
+            title: `Starting Task - ${this.agent.name}`,
 			content: `${input}`,
 		});
 		if (!this.promise) {
-			this.promise = this.startTaskLoop();
+            this.promise = this.startTaskLoop();
+            this.promise.then(() => (this.promise = undefined)); // When the task finishes, remove it from the class
 		}
-		this.promise.then(() => (this.promise = undefined)); // When the task finishes, remove it from the class
+        this.status = 'executing'; // Set the correct state, if the agent is paused this will restart it
 		return this.promise;
 	}
 
