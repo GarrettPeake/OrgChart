@@ -9,7 +9,8 @@ export const grepToolDefinition: ToolDefinition = {
 - Supports full regex syntax (eg. "log.*Error", "function\\\\s+\\\\w+", etc.)
 - Filter files by pattern with the include parameter (eg. "*.js", "*.{ts,tsx}")
 - Returns file paths with at least one match
-- Use this tool when you need to find files containing specific patterns`,
+- Use this tool when you need to find specific patterns within the text
+- Do not use this tool to read the entirety of files`,
 	inputSchema: {
 		type: 'object',
 		properties: {

@@ -3,7 +3,7 @@ import {Box, Text, useInput, useStdout} from 'ink';
 import {Agent} from '../server/agents/Agents.js';
 import {AgentTree} from './AgentTree.js';
 import {StreamEvent, EventStream} from './EventStream.js';
-import {CommandPanel} from './CommandPanel.js';
+import {CommandPanel, CommandPanelConfiguration} from './CommandPanel.js';
 import {TaskAgent} from '../server/tasks/TaskAgent.js';
 import Logger, {initContextLogger} from '../Logger.js';
 import {colors, useStdOutDim} from './Util.js';
@@ -26,12 +26,31 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 	const [focusedSection, setFocusedSection] =
 		useState<FocusSection>('eventStream');
 	const [runId, _] = useState(crypto.randomUUID());
+	const [commandPanelConfiguration, setCommandPanelConfiguration] =
+		useState<CommandPanelConfiguration>({status: 'text'});
 
-	const writeEvent = useCallback((event: StreamEvent) => {
-		setEvents(prev => [...prev, event]);
-	}, []);
+	const writeEvent = (event: StreamEvent) => {
+		if (event.id) {
+			// We're updating an existing event or the user provided an id to use
+			setEvents(prev => {
+				const insert_index = prev.findIndex(i => i.id === event.id);
+				if (insert_index === -1) {
+					return [...prev, event];
+				}
+				const r = [...prev];
+				r[insert_index] = event;
+				return r;
+			});
+		} else {
+			// Adding a new event
+			event.id = crypto.randomUUID();
+			setEvents(prev => [...prev, event]);
+		}
+		return event.id;
+	};
 
 	const handleCommandSubmit = async (command: string) => {
+		// TODO: This should interrupt the deepest, non-exited agent (just traverse to the final child until you hit an exit) and invoke runtask on it after interrupting the current promise
 		// Add the command as a task
 		setTaskPromise(taskRunner!.runTask(command));
 	};
@@ -52,8 +71,19 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 		}
 		if (key.escape) {
 			// TODO: This should find the currently executing child and stop the promise. That will prevent the currently executing
-			writeEvent({title: 'Stopping agent', content: ''});
-			return;
+			if (taskRunner) {
+				// Find the currently executing taskRunner
+				let node = taskRunner;
+				while (node.children.length > 0) {
+					let nextNode = node.children[node.children.length - 1];
+					if (nextNode && nextNode?.status !== 'exited') {
+						node = nextNode;
+					}
+				}
+				if (node?.cancelTask()) {
+					writeEvent({title: 'Stopping agent', content: ''});
+				}
+			}
 		}
 	});
 
@@ -170,7 +200,10 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 				marginBottom={bottomMargin}
 				height={footerHeight}
 			>
-				<CommandPanel onCommandSubmit={handleCommandSubmit} />
+				<CommandPanel
+					onCommandSubmit={handleCommandSubmit}
+					configuration={{status: 'text'}}
+				/>
 			</Box>
 		</Box>
 	);

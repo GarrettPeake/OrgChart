@@ -21,10 +21,6 @@ export class LLMProvider {
 			const error = new Error(
 				'OpenRouter API key is required. Set OPENROUTER_API_KEY environment variable.',
 			);
-			Logger.error(
-				error,
-				'LLMProvider initialization failed - missing API key',
-			);
 			throw error;
 		}
 
@@ -40,7 +36,7 @@ export class LLMProvider {
 	): Promise<ChatCompletionResponse> {
 		let retries = 0;
 		let finalError: Error | null = null;
-		const Logger = await import('@/Logger.js'); // Handle a config -> llmProvider -> logger -> config circular import
+		const Logger = (await import('@/Logger.js')).default; // Handle a config -> llmProvider -> logger -> config circular import
 		while (retries < 3) {
 			try {
 				const openAItools = tools.map(

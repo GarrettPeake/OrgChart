@@ -13,6 +13,7 @@ interface EventStreamProps {
 export interface StreamEvent {
 	title: string;
 	content: string;
+	id?: string;
 }
 
 const reducer = (state: any, action: any) => {

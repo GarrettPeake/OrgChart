@@ -19,7 +19,7 @@ import {ModelInformation} from '../agents/ModelInfo.js';
 import {CompletionUsage} from 'openai/resources.js';
 import {getConfig} from '../utils/Configuration.js';
 
-export type AgentStatus = 'executing' | 'waiting' | 'exited';
+export type AgentStatus = 'executing' | 'waiting' | 'exited' | 'halted';
 
 export class TaskAgent {
 	private writeEvent: (event: StreamEvent) => void;
@@ -32,6 +32,7 @@ export class TaskAgent {
 	public todoList: TodoListItem[] = [];
 	// Initialize context with system prompt and user input
 	public context: ChatMessage[];
+	private canceller: any = {};
 
 	constructor(writeEvent: (event: StreamEvent) => void, agent: Agent) {
 		this.writeEvent = writeEvent;
@@ -81,7 +82,6 @@ export class TaskAgent {
 	}
 
 	async delegateWork(args: any): Promise<string> {
-		this.status = 'waiting';
 		const targetAgent = agents[args.agentId];
 		if (!targetAgent) {
 			Logger.error(`Delegation failure - agent '${args.agentId}' not found`);
@@ -112,11 +112,31 @@ export class TaskAgent {
 	}
 
 	/**
+	 * Cancel the currently executing task
+	 * @returns boolean denoting whether there was a task to cancel
+	 */
+	cancelTask() {
+		if (this.canceller.cancel) {
+			this.canceller.cancel();
+			this.canceller = {};
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Main task loop modifying context as it progresses
 	 * @param input The user message to append to the current context before starting the cycles with the LLM
 	 * @returns A task completion message when the LLM has enacted complete task
 	 */
 	async runTask(input: string): Promise<string> {
+		this.cancelTask();
+		const token = {isCancelled: false};
+		this.canceller.cancel = () => (token.isCancelled = true);
+		return this.runTaskCancellable(input, token);
+	}
+
+	private async runTaskCancellable(input: string, token: any): Promise<string> {
 		try {
 			this.writeEvent({
 				title: `Task Started - ${this.agent.name}`,
@@ -139,6 +159,15 @@ export class TaskAgent {
 			while (iterations < maxIterations) {
 				this.status = 'executing';
 				iterations++;
+
+				if (token.isCancelled) {
+					this.writeEvent({
+						title: `Task Cancelled - ${this.agent.name}`,
+						content: '',
+					});
+					this.status = 'halted';
+					while ((this.status = 'halted')) {} // Pause this agent until and external process modifies it's status
+				}
 
 				// On the final iteration, tell the agent that it is being forced to complete the task with the knowledge it already has
 				if (iterations === maxIterations - 1) {
@@ -200,6 +229,7 @@ export class TaskAgent {
 				// Handle tool calls
 				if (message.tool_calls && message.tool_calls.length > 0) {
 					for (const toolCall of message.tool_calls) {
+						this.status = 'waiting';
 						const toolResult = await this.executeToolCall(toolCall);
 						Logger.info(
 							`Agent: ${this.agent.name} used ${
