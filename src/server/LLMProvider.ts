@@ -1,7 +1,6 @@
 import {OpenAI} from 'openai';
 import {ToolDefinition} from './tools/index.js';
 import {ChatCompletionTool} from 'openai/resources/chat/completions.mjs';
-import Logger from '../Logger.js';
 
 export type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 export type ToolCall = OpenAI.Chat.Completions.ChatCompletionMessageToolCall;
@@ -41,6 +40,7 @@ export class LLMProvider {
 	): Promise<ChatCompletionResponse> {
 		let retries = 0;
 		let finalError: Error | null = null;
+		const Logger = await import('@/Logger.js'); // Handle a config -> llmProvider -> logger -> config circular import
 		while (retries < 3) {
 			try {
 				const openAItools = tools.map(

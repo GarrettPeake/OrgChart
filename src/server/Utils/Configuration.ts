@@ -10,37 +10,25 @@ export type OrgChartConfig = {
 	llmProvider: LLMProvider;
 };
 
-let config: OrgChartConfig | undefined = undefined;
-export const getConfig = (): OrgChartConfig => {
-	if (!config) {
-		initConfig();
-	}
-	return config!;
-};
+let config: OrgChartConfig = (() => {
+	const rootDir = process.cwd();
+	const orgChartDir = path.join(rootDir, '.orgchart');
+	fs.mkdirSync(orgChartDir, {recursive: true});
+	return {
+		rootDir,
+		orgChartDir,
+		ignorePatterns: ['node_modules'],
+		maxAgentIterations: 30,
+		llmProvider: new LLMProvider(),
+	};
+})();
+
+export const getConfig = (): OrgChartConfig => config;
 
 export const updateConfig = (
 	key: keyof OrgChartConfig,
 	value: any,
 ): OrgChartConfig => {
-	if (!config) {
-		initConfig();
-	}
 	config![key] = value;
-	return config!;
-};
-
-const initConfig = () => {
-	const rootDir = process.cwd();
-	const orgChartDir = path.join(rootDir, '.orgchart');
-	fs.mkdirSync(orgChartDir, {recursive: true});
-	const ignorePatterns = ['node_modules'];
-	const maxAgentIterations = 30;
-	const llmProvider = new LLMProvider();
-	config = {
-		rootDir,
-		orgChartDir,
-		ignorePatterns,
-		maxAgentIterations,
-		llmProvider,
-	};
+	return config;
 };
