@@ -5,7 +5,6 @@ import {AgentTree} from './AgentTree.js';
 import {StreamEvent, EventStream} from './EventStream.js';
 import {CommandPanel} from './CommandPanel.js';
 import {TaskAgent} from '../server/tasks/TaskAgent.js';
-import {LLMProvider} from '../server/LLMProvider.js';
 import Logger, {initContextLogger} from '../Logger.js';
 import {colors, useStdOutDim} from './Util.js';
 
@@ -59,11 +58,10 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 	});
 
 	useEffect(() => {
-		// Initialize LLMProvider and TaskRunner when component mounts
+		// Initialize TaskRunner when component mounts
 		Logger.info(`Using ${agent.name} to execute: '${task}'`);
 		try {
-			const llmProvider = new LLMProvider();
-			const runner = new TaskAgent(llmProvider, writeEvent, agent);
+			const runner = new TaskAgent(writeEvent, agent);
 			setTaskRunner(runner);
 			initContextLogger(runId, runner);
 

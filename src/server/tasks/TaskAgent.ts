@@ -1,5 +1,5 @@
 import {Agent, agents} from '../agents/Agents.js';
-import {LLMProvider, ChatMessage, ToolCall} from '../LLMProvider.js';
+import {ChatMessage, ToolCall} from '../LLMProvider.js';
 import {
 	delegateWorkTool,
 	delegateWorkToolName,
@@ -22,7 +22,6 @@ import {getConfig} from '../utils/Configuration.js';
 export type AgentStatus = 'executing' | 'waiting' | 'exited';
 
 export class TaskAgent {
-	private llmProvider: LLMProvider;
 	private writeEvent: (event: StreamEvent) => void;
 	public agent: Agent;
 	public children: TaskAgent[] = [];
@@ -34,12 +33,7 @@ export class TaskAgent {
 	// Initialize context with system prompt and user input
 	public context: ChatMessage[];
 
-	constructor(
-		llmProvider: LLMProvider,
-		writeEvent: (event: StreamEvent) => void,
-		agent: Agent,
-	) {
-		this.llmProvider = llmProvider;
+	constructor(writeEvent: (event: StreamEvent) => void, agent: Agent) {
 		this.writeEvent = writeEvent;
 		this.agent = agent;
 		this.context = [
@@ -94,11 +88,7 @@ export class TaskAgent {
 			return `Delegation failure - agent '${args.agentId}' not found`;
 		}
 
-		const childTaskRunner = new TaskAgent(
-			this.llmProvider,
-			this.writeEvent,
-			targetAgent,
-		);
+		const childTaskRunner = new TaskAgent(this.writeEvent, targetAgent);
 		this.children.push(childTaskRunner);
 		return childTaskRunner.runTask(args.task);
 	}
@@ -159,7 +149,7 @@ export class TaskAgent {
 				}
 
 				// Call the LLM
-				const response = await this.llmProvider.chatCompletion(
+				const response = await getConfig().llmProvider.chatCompletion(
 					{
 						model: this.agent.model,
 						messages: this.context,

@@ -3,7 +3,7 @@
 ## Gemini Cli notes
 
 - Compression: context > 70% -> take most recent 30% and use compression prompt to generate a single context
-- Context constructio
+- Context construction
 - Function scheduler
   - Each tool function has a status like waiting for approval
   - Main loop just adds to the function scheduler then waits on the function scheduler
@@ -16,7 +16,6 @@
 - See Core prompts
 - Lots of useful utils:
   - Tools
-  - getFolderStructure
   - Interesting: speakerChecker
   - Shell safety
 
