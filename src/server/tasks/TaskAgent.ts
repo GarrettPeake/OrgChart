@@ -18,21 +18,41 @@ import {
 import {ModelInformation} from '../agents/ModelInfo.js';
 import {CompletionUsage} from 'openai/resources.js';
 import {getConfig} from '../utils/Configuration.js';
+import {cleanText} from '@/shared/utils/TextUtils.js';
 
-export type AgentStatus = 'executing' | 'waiting' | 'exited' | 'halted';
+export type AgentStatus =
+	| 'created'
+	| 'executing'
+	| 'waiting'
+	| 'paused'
+	| 'exited';
 
+/**
+ * Implements a task state machine with the following transitions
+ * created -> executing (when task is started)
+ * executing -> paused (when interrupted by the user)
+ * executing -> exited (when the task is complete)
+ * executing -> waiting (when using a tool)
+ * waiting -> executing (when tool use is complete)
+ * paused -> executing (when resumed by the user)
+ * paused -> exited (when killed by the user)
+ * exited -> executing (when a new task is received)
+ */
 export class TaskAgent {
 	private writeEvent: (event: StreamEvent) => void;
 	public agent: Agent;
 	public children: TaskAgent[] = [];
-	public status: AgentStatus = 'waiting';
+	public status: AgentStatus = 'created';
 	public cost: number = 0.0;
 	public contextPercent: number = 0.000001;
 	public agentId: string = crypto.randomUUID();
 	public todoList: TodoListItem[] = [];
 	// Initialize context with system prompt and user input
 	public context: ChatMessage[];
-	private canceller: any = {};
+	// Keep track of the task promise being executed
+	private shouldStop = false;
+	private shouldExit = false;
+	private promise: Promise<string> | undefined;
 
 	constructor(writeEvent: (event: StreamEvent) => void, agent: Agent) {
 		this.writeEvent = writeEvent;
@@ -90,7 +110,7 @@ export class TaskAgent {
 
 		const childTaskRunner = new TaskAgent(this.writeEvent, targetAgent);
 		this.children.push(childTaskRunner);
-		return childTaskRunner.runTask(args.task);
+		return childTaskRunner.sendInput(args.task);
 	}
 
 	updateUsages(usage: CompletionUsage) {
@@ -112,42 +132,45 @@ export class TaskAgent {
 	}
 
 	/**
-	 * Cancel the currently executing task
+	 * Stop the currently executing task ensuring the state is created, exited, or paused
+	 * If the agent is mid execution, this will simply cause it to pause
 	 * @returns boolean denoting whether there was a task to cancel
 	 */
-	cancelTask() {
-		if (this.canceller.cancel) {
-			this.canceller.cancel();
-			this.canceller = {};
-			return true;
+	async stopExecution() {
+		this.shouldStop = true;
+		// Wait for the main thread to take the pause (bypass if we're in created, exited, or paused already)
+		while (this.status === 'executing' || this.status === 'waiting') {
+			await new Promise(resolve => setTimeout(resolve, 50));
 		}
-		return false;
+		this.shouldStop = false;
 	}
 
 	/**
-	 * Main task loop modifying context as it progresses
+	 * Starts or continues the main task execution
 	 * @param input The user message to append to the current context before starting the cycles with the LLM
 	 * @returns A task completion message when the LLM has enacted complete task
 	 */
-	async runTask(input: string): Promise<string> {
-		this.cancelTask();
-		const token = {isCancelled: false};
-		this.canceller.cancel = () => (token.isCancelled = true);
-		return this.runTaskCancellable(input, token);
+	async sendInput(input: string): Promise<string> {
+		await this.stopExecution(); // Stop the current execution
+		this.status = 'executing'; // Set the correct state, if the agent is paused this will restart it
+		// Append to the context
+		this.addToContext({
+			role: 'user',
+			content: cleanText(input),
+		});
+		this.writeEvent({
+			title: `Starting Task - ${this.agent.name}`,
+			content: `${input}`,
+		});
+		if (!this.promise) {
+			this.promise = this.startTaskLoop();
+		}
+		this.promise.then(() => (this.promise = undefined)); // When the task finishes, remove it from the class
+		return this.promise;
 	}
 
-	private async runTaskCancellable(input: string, token: any): Promise<string> {
+	private async startTaskLoop(): Promise<string> {
 		try {
-			this.writeEvent({
-				title: `Task Started - ${this.agent.name}`,
-				content: `${input}`,
-			});
-
-			this.addToContext({
-				role: 'user',
-				content: input,
-			});
-
 			let tools = this.agent.tools();
 			if (this.agent.level > 0) {
 				tools = tools.concat([delegateWorkTool(this.agent.level)]);
@@ -157,16 +180,18 @@ export class TaskAgent {
 			const maxIterations = getConfig().maxAgentIterations; // Prevent infinite loops
 
 			while (iterations < maxIterations) {
-				this.status = 'executing';
 				iterations++;
 
-				if (token.isCancelled) {
+				if (this.shouldStop) {
 					this.writeEvent({
-						title: `Task Cancelled - ${this.agent.name}`,
+						title: `Task execution paused, waiting for input - ${this.agent.name}`,
 						content: '',
 					});
-					this.status = 'halted';
-					while ((this.status = 'halted')) {} // Pause this agent until and external process modifies it's status
+					this.status = 'paused';
+					// Pause this agent until an external process modifies it's status, sleeping for 50ms at a time
+					while (this.status === 'paused') {
+						await new Promise(resolve => setTimeout(resolve, 50));
+					}
 				}
 
 				// On the final iteration, tell the agent that it is being forced to complete the task with the knowledge it already has

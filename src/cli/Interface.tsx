@@ -22,7 +22,6 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 	const [events, setEvents] = useState<StreamEvent[]>([]);
 	const [totalCost, setTotalCost] = useState<number>(0);
 	const [taskRunner, setTaskRunner] = useState<TaskAgent | null>(null);
-	const [taskPromise, setTaskPromise] = useState<Promise<string> | null>(null);
 	const [focusedSection, setFocusedSection] =
 		useState<FocusSection>('eventStream');
 	const [runId, _] = useState(crypto.randomUUID());
@@ -50,9 +49,18 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 	};
 
 	const handleCommandSubmit = async (command: string) => {
-		// TODO: This should interrupt the deepest, non-exited agent (just traverse to the final child until you hit an exit) and invoke runtask on it after interrupting the current promise
-		// Add the command as a task
-		setTaskPromise(taskRunner!.runTask(command));
+		// Add the command as a task to either the root agent or the currently executing agent
+		if (taskRunner) {
+			// Find the currently executing taskRunner
+			let node = taskRunner;
+			while (node.children.length > 0) {
+				let nextNode = node.children[node.children.length - 1];
+				if (nextNode && nextNode?.status !== 'exited') {
+					node = nextNode;
+				}
+			}
+			node?.sendInput(command);
+		}
 	};
 
 	// Handle tab key navigation
@@ -80,9 +88,7 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 						node = nextNode;
 					}
 				}
-				if (node?.cancelTask()) {
-					writeEvent({title: 'Stopping agent', content: ''});
-				}
+				node?.stopExecution();
 			}
 		}
 	});
@@ -96,7 +102,7 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 			initContextLogger(runId, runner);
 
 			// Start the task
-			setTaskPromise(runner.runTask(task));
+			runner.sendInput(task);
 		} catch (error) {
 			Logger.error(error, 'Failed to initialize and start task');
 			writeEvent({
