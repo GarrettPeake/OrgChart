@@ -71,7 +71,7 @@ ${testProjectRoot}/
 ${testProjectRoot}/
 ├l1/
 │└l2/
-│ ├ l3/
+│ ├l3/
 │ │└...<further folder depth truncated>
 │ ├l4/
 │ │└...<further folder depth truncated>

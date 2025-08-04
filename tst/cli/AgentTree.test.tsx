@@ -1,7 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import {buildAgentTreeComponents} from '@cli/AgentTree.js';
 import {AgentStatus, TaskAgent} from '@server/tasks/TaskAgent.js';
-import {Box, Text} from 'ink';
+import {Box} from 'ink';
 import React from 'react';
 import {render} from 'ink-testing-library';
 

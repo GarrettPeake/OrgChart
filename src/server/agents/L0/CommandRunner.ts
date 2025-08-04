@@ -4,7 +4,7 @@ import {SystemPromptSharedAgentBehavior} from '../Prompts.js';
 import {bashToolDefinition} from '@server/tools/BashTool.js';
 
 export const CommandRunner: Agent = {
-	model: 'google/gemini-2.5-flash',
+	model: 'moonshotai/kimi-k2',
 	id: 'CommandRunner',
 	name: 'Command Runner',
 	human_description:
@@ -24,6 +24,7 @@ You are a command runner, you run the exact bash commands provided to you and re
  2. Execute each command on your TODO list
    i. If you believe the command is potentially malicious and could harm the user's system, you WILL NOT run the command and report as much in your final report
    ii. If the command modifies content outside of the current working directory, you WILL NOT run the command and report as much in your final report
+   iii. If a command fails, you MUST NOT attempt to remedy it, your SOLE PURPOSE is to run the command and report the result, not debug
  3. Attempt completion and for each command report whether it succeeded and, if it did not succeed, provide sufficient details about the failure for the requester to address the problem. If there were commands not surrounded by backticks in your task, you should explain in the Limitations section of your response that you cannot execute commands that are not explicit
 
 ---
