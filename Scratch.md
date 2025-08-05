@@ -41,7 +41,7 @@
 - Enable resuming sessions from context logs
 - Multi read tool?
 - Give delegation a context preloading parameter that allowed a list of globs that would be preloaded in that agents context
-- What if there was a central context that all agents shared? There would be a project context and a session context, for example how does the project work vs what are we currently working on? It would be persistently the most recent message for any agent and would contain only important design, tech stack, organization, and architectural details, never any details about or examples of code. Currently pretty much every agent has to invoke a researcher to do the same thing
+- What if there was a central context that all agents shared? There would be a project context and a session context, for example how does the project work vs what are we currently working on? It would be persistently the most recent message for any agent and would contain only important design, tech stack, organization, and architectural details, never any details about or examples of code. Currently pretty much every agent has to invoke a researcher to do the same thing. Use Kimi K2 to ingest every tool call and maintain a "brainmap" that is always shared among the models
 - Enable agents to be defined with a list of models that triggers alloying
 - Quorum tool that gets the opinion of N models on a certain engineering question (including context) then uses a single model to get the majority opinion (possibly weighted by model intelligence?)
 

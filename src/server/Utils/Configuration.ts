@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import {LLMProvider} from '../LLMProvider.js';
+import {LLMProvider} from './provider/LLMProvider.js';
 
 export type OrgChartConfig = {
 	rootDir: string;

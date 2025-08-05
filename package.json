@@ -14,6 +14,7 @@
 	"license": "Apache-2.0",
 	"description": "Assemble an organization of agents to complete a task",
 	"dependencies": {
+		"axios": "^1.11.0",
 		"fullscreen-ink": "^0.1.0",
 		"glob": "^11.0.3",
 		"ignore": "^7.0.5",
@@ -23,7 +24,6 @@
 		"mammoth": "^1.9.1",
 		"marked-terminal": "^7.3.0",
 		"meow": "^11.0.0",
-		"openai": "5.11.0",
 		"pdf-parse": "^1.1.1",
 		"pino": "^9.7.0",
 		"react": "^18.3.1"
@@ -44,8 +44,8 @@
 		"prettier": "^2.8.7",
 		"react-devtools-core": "^4.19.1",
 		"typescript": "^5.0.3",
-		"vite-tsconfig-paths": "^5.1.4",
 		"vite-node": "^3.2.4",
+		"vite-tsconfig-paths": "^5.1.4",
 		"vitest": "^3.2.4"
 	},
 	"prettier": "@vdemedes/prettier-config"

@@ -5,9 +5,15 @@ type GeminiModel =
 	| 'google/gemini-2.5-flash'
 	| 'google/gemini-2.5-pro';
 
-type OtherModel = 'moonshotai/kimi-k2' | 'qwen/qwen3-coder';
+type OpenAiModel = 'openai/gpt-4o-mini';
 
-export type LLMModel = ClaudeModel | GeminiModel | OtherModel;
+type OtherModel =
+	| 'moonshotai/kimi-k2'
+	| 'qwen/qwen3-coder'
+	| 'deepseek/deepseek-chat-v3-0324'
+	| 'deepseek/deepseek-r1-0528';
+
+export type LLMModel = ClaudeModel | GeminiModel | OpenAiModel | OtherModel;
 
 export type ModelInfo = {
 	context: number;
@@ -43,15 +49,31 @@ export const ModelInformation: Record<LLMModel, ModelInfo> = {
 		input_token_cost_per_m: 1.25,
 		output_token_cost_per_m: 10.0,
 	},
+	// OpenAI Models
+	'openai/gpt-4o-mini': {
+		context: 128_000,
+		input_token_cost_per_m: 0.15,
+		output_token_cost_per_m: 0.6,
+	},
 	// Other Models
 	'moonshotai/kimi-k2': {
 		context: 32_768,
-		input_token_cost_per_m: 0.088,
-		output_token_cost_per_m: 0.088,
+		input_token_cost_per_m: 0.14,
+		output_token_cost_per_m: 2.49,
 	},
 	'qwen/qwen3-coder': {
 		context: 262_144,
 		input_token_cost_per_m: 0.3,
 		output_token_cost_per_m: 1.2,
+	},
+	'deepseek/deepseek-chat-v3-0324': {
+		context: 163_840,
+		input_token_cost_per_m: 0.34,
+		output_token_cost_per_m: 0.88,
+	},
+	'deepseek/deepseek-r1-0528': {
+		context: 163_840,
+		input_token_cost_per_m: 0.5,
+		output_token_cost_per_m: 0.85,
 	},
 };

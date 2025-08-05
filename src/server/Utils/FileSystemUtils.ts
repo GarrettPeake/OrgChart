@@ -2,6 +2,10 @@ import {GitIgnoreParser} from './GitIgnoreParser.js';
 import {getConfig} from './Configuration.js';
 import {lstatSync, readdirSync} from 'fs';
 import path from 'path';
+// @ts-ignore
+import pdf from 'pdf-parse/lib/pdf-parse';
+import mammoth from 'mammoth';
+import Logger from '@/Logger.js';
 
 // Get all files as a tree structure that are not part of the gitignore or known
 export const getFileTree = (
@@ -77,4 +81,41 @@ const buildPrefixString = (prefix: number[]): string => {
 			it === 0 ? ' ' : it === 1 ? '└' : index === prefix.length - 1 ? '├' : '│',
 		)
 		.join('');
+};
+
+export const readFile = async (file_path: string): Promise<string> => {
+	const fs = await import('fs/promises');
+	const path = await import('path');
+
+	try {
+		const filePath = path.resolve(file_path);
+		const fileExtension = path.extname(filePath).toLowerCase();
+
+		if (fileExtension === '.pdf') {
+			const buffer = await fs.readFile(filePath);
+			const data = await pdf(buffer);
+			return data.text;
+		} else if (fileExtension === '.docx') {
+			const buffer = await fs.readFile(filePath);
+			const result = await mammoth.extractRawText({buffer});
+			return result.value;
+		} else {
+			const content = await fs.readFile(filePath, 'utf-8');
+			return content;
+		}
+	} catch (error) {
+		Logger.error(error, `Failed to read file: ${file_path}`);
+		if (
+			error instanceof Error &&
+			error.message.includes('no such file or directory')
+		) {
+			Logger.error(error, 'Failed to read file');
+			return `No such file or directory: ${file_path}`;
+		}
+		throw new Error(
+			`Failed to read file ${file_path}: ${
+				error instanceof Error ? error.message : 'Unknown error'
+			}`,
+		);
+	}
 };
