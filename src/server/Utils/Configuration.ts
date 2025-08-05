@@ -25,10 +25,10 @@ let config: OrgChartConfig = (() => {
 
 export const getConfig = (): OrgChartConfig => config;
 
-export const updateConfig = (
-	key: keyof OrgChartConfig,
-	value: any,
+export const updateConfig = <K extends keyof OrgChartConfig>(
+	key: K,
+	value: OrgChartConfig[K],
 ): OrgChartConfig => {
-	config![key] = value;
+	config[key] = value;
 	return config;
 };

@@ -1,4 +1,3 @@
-
 const projectContextTemplate = `
 # Collective Project Context
 
@@ -15,15 +14,13 @@ INSTRUCTIONS: Provide context based on every file present in the project that is
     * Describe how every thing/concept/input/output/background process/network call/etc interacts
     * Provide a logical hierarchy of components. You should provide this as a directed graph where the highest-order components are at the top
     * Take creative freedom and eagerness to include anything else that you believe is relevant to understanding the project as this should be a complete mental map of the project
-`
+`;
 
 /**
  * Retrieve the current context, this will block if there are updates being made
  */
-const getContextSnapshot = async (): string => {
+const getContextSnapshot = async () => '';
 
-}
-
-const updateContext: string = () => {
-
-}
+const updateContext = () => {
+	return '';
+};
