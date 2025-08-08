@@ -1,7 +1,9 @@
-import {execSync} from 'child_process';
+import {spawnSync} from 'child_process';
 import {ToolDefinition} from './index.js';
 import Logger from '../../Logger.js';
 import {StreamEvent} from '../../cli/EventStream.js';
+import {getConfig} from '../utils/Configuration.js';
+import {TaskAgent} from '../tasks/TaskAgent.js';
 
 export const bashToolName = 'Bash';
 
@@ -18,6 +20,16 @@ export const bashToolDefinition: ToolDefinition = {
 				description:
 					'The CLI command to execute. This should be valid for the current operating system. Ensure the command is properly formatted and does not contain any harmful instructions.',
 			},
+			followup_input: {
+				type: 'array',
+				description:
+					'Array of followup inputs to be sent to the command being executed. For instance for `npm init` you can provide the package name, version, etc. to be entered into the interactive process.',
+				items: {
+					type: 'string',
+					description:
+						'An input to be sent, ANSI escape codes are supported, \\n can be used as the enter key',
+				},
+			},
 			requires_approval: {
 				type: 'boolean',
 				description:
@@ -29,14 +41,19 @@ export const bashToolDefinition: ToolDefinition = {
 	enact: async (args: {
 		command: string;
 		requires_approval: boolean;
-	}): Promise<string> => runCommandSafely(args.command),
+		followup_input?: string[];
+	}): Promise<string> => runCommandSafely(args.command, args.followup_input),
 	formatEvent: async (args: {
 		command: string;
 		requires_approval: boolean;
-	}): Promise<StreamEvent> => ({title: `Bash(${args.command})`, content: ''}), // TODO: Update event to append result
+		followup_input: string[];
+	}): Promise<StreamEvent> => ({
+		title: `Bash(${args.command})`,
+		content: `Additional Inputs: ${args.followup_input}` || '',
+	}), // TODO: Update event to append result
 };
 
-function runCommandSafely(command: string): string {
+function runCommandSafely(command: string, inputs?: string[]): string {
 	Logger.info(`Executing command: ${command}`);
 	if (
 		command.includes('rm -rf') ||
@@ -46,10 +63,14 @@ function runCommandSafely(command: string): string {
 		Logger.info(`Blocking execution of: ${command}`);
 		return "Unable to execute commands matching ['rm -rf', '~', 'shutdown']";
 	}
-	const stdout = execSync(command, {
+	const result = spawnSync(command, {
+		cwd: getConfig().rootDir,
+		input: inputs?.join(''),
+		shell: true,
 		timeout: 10000,
-	});
-	let result = new TextDecoder('utf-8').decode(stdout);
+		encoding: 'utf-8',
+	}).stdout;
+
 	Logger.info(`Command result: ${result}`);
 	return result;
 }
