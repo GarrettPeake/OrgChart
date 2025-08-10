@@ -1,4 +1,4 @@
-import {StreamEvent} from '../../cli/EventStream.js';
+import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
 
 export const editToolDefinition: ToolDefinition = {
@@ -41,10 +41,16 @@ export const editToolDefinition: ToolDefinition = {
 	formatEvent: async (args: {
 		file_path: string;
 		edits: {old_string: string; new_string: string}[];
-	}): Promise<StreamEvent> => ({
+	}): Promise<OrgchartEvent> => ({
 		title: `Edit File(${args.file_path})`,
-		content: Object.entries(args.edits)
-			.map(e => `SEARCH: ${e[0]}\nREPLACE: ${e[1]}`)
-			.join('\n\n'),
+		id: crypto.randomUUID(),
+		content: [
+			{
+				type: DisplayContentType.TEXT,
+				content: Object.entries(args.edits)
+					.map(e => `SEARCH: ${e[0]}\nREPLACE: ${e[1]}`)
+					.join('\n\n'),
+			},
+		],
 	}),
 };

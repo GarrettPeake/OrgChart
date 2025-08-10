@@ -1,4 +1,4 @@
-import {StreamEvent} from '../../cli/EventStream.js';
+import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
 
 export const askQuestionToolName = 'AskQuestion';
@@ -20,8 +20,14 @@ export const askQuestionToolDefinition: ToolDefinition = {
 		required: ['question'],
 	},
 	enact: async (args: {question: string}): Promise<string> => 'Answer',
-	formatEvent: async (args: {question: string}): Promise<StreamEvent> => ({
+	formatEvent: async (args: {question: string}): Promise<OrgchartEvent> => ({
 		title: `Question from Agent`,
-		content: args.question,
+		id: crypto.randomUUID(),
+		content: [
+			{
+				type: DisplayContentType.TEXT,
+				content: args.question,
+			},
+		],
 	}),
 };

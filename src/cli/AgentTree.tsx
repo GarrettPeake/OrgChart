@@ -1,10 +1,10 @@
 import React from 'react';
 import {Box, Text} from 'ink';
-import {TaskAgent} from '../server/tasks/TaskAgent.js';
-import {colors} from './Util.js';
+import {colors} from '@cli/Util.js';
+import {AgentStatus, RunningAgentInfo} from '@server/IOTypes.js';
 
 interface AgentTreeProps {
-	rootTaskRunner: TaskAgent | null;
+	rootTaskRunner: RunningAgentInfo | undefined;
 }
 
 export const AgentTree: React.FC<AgentTreeProps> = ({rootTaskRunner}) => {
@@ -16,14 +16,14 @@ export const AgentTree: React.FC<AgentTreeProps> = ({rootTaskRunner}) => {
 };
 
 export const buildAgentTreeComponents = (
-	rootTaskRunner: TaskAgent | null,
+	rootTaskRunner: RunningAgentInfo | undefined,
 ): React.ReactNode => {
 	if (!rootTaskRunner) {
 		return null;
 	}
 
 	const buildTreeDfs = (
-		runner: TaskAgent,
+		agentInfo: RunningAgentInfo,
 		prefix: number[] = [], // 0 = no more children, 1 = final child, 2 = more children
 	): React.ReactNode => {
 		const levelPrefix = prefix
@@ -38,21 +38,26 @@ export const buildAgentTreeComponents = (
 			)
 			.join('');
 
-		const agentInfo = (
+		// If this was the final child of the direct parent, mark the prefix as having no more children
+		if (prefix[prefix.length - 1] === 1) {
+			prefix[prefix.length - 1] = 0;
+		}
+
+		const agentTextLine = (
 			<Text
-				dimColor={runner.status === 'exited'}
+				dimColor={agentInfo.status === AgentStatus.EXITED}
 				color={
-					runner.status === 'executing'
+					agentInfo.status === AgentStatus.EXECUTING
 						? colors.highlightColor
-						: runner.status === 'waiting'
+						: agentInfo.status === AgentStatus.WAITING
 						? colors.textColor
 						: colors.subtextColor
 				}
 				bold
 			>
-				{runner.agent?.name || 'initializing'}:{' '}
-				{runner.contextPercent.toFixed(1)}% - ${runner.cost.toFixed(2)} (
-				{runner.status})
+				{agentInfo.name}:{' '}
+				{(agentInfo.contextUsage / agentInfo.maxContext).toFixed(1)}% - $
+				{agentInfo.cost.toFixed(2)} ({agentInfo.status})
 			</Text>
 		);
 
@@ -61,13 +66,13 @@ export const buildAgentTreeComponents = (
 				<Box flexDirection="row" flexShrink={0}>
 					<Text color={colors.textColor} bold>
 						{levelPrefix}
-						{agentInfo}
+						{agentTextLine}
 					</Text>
 				</Box>
-				{runner.children.map((child, index) => {
-					const isLastChild = index === runner.children.length - 1;
+				{agentInfo.children?.map((child, index) => {
+					const isLastChild = index === agentInfo.children!.length - 1;
 					return (
-						<React.Fragment key={child.agent?.id || index}>
+						<React.Fragment key={child.id || index}>
 							{buildTreeDfs(child, [...prefix, isLastChild ? 1 : 2])}
 						</React.Fragment>
 					);

@@ -1,19 +1,15 @@
 import React, {useReducer, useRef, useEffect, ReactNode} from 'react';
 import {Box, Text, measureElement, useInput} from 'ink';
-import {colors} from './Util.js';
-import Markdown from './Markdown.js';
-import {cleanText} from '../shared/utils/TextUtils.js';
+import {colors} from '@cli/Util.js';
+import Markdown from '@cli/Markdown.js';
+import {cleanText} from '@/shared/utils/TextUtils.js';
+import {OrgchartEvent} from '@server/IOTypes.js';
+import Logger from '@/Logger.js';
 
 interface EventStreamProps {
-	events?: StreamEvent[];
+	events?: OrgchartEvent[];
 	focused?: boolean;
 	height: number;
-}
-
-export interface StreamEvent {
-	title: string;
-	content: string;
-	id?: string;
 }
 
 const reducer = (state: any, action: any) => {
@@ -101,7 +97,7 @@ function ScrollArea({height, children, focused}: ScrollAreaProps) {
 
 export const EventStream = ({
 	events = [],
-	focused = false,
+	focused = true,
 	height,
 }: EventStreamProps) => (
 	<Box flexDirection="column" paddingX={1} height={height}>
@@ -111,11 +107,15 @@ export const EventStream = ({
 					<Text bold color={colors.accentColor}>
 						• {event.title}
 					</Text>
-					{event.content ? (
-						<Box marginLeft={2} flexDirection="column">
-							<Markdown>{cleanText(event.content)}</Markdown>
+					{event.content.map((contentChunk, chunkIndex) => (
+						<Box
+							key={`content-${index}-${chunkIndex}`}
+							marginLeft={2}
+							flexDirection="column"
+						>
+							<Markdown>{cleanText(contentChunk.content)}</Markdown>
 						</Box>
-					) : null}
+					))}
 				</Box>
 			))}
 		</ScrollArea>

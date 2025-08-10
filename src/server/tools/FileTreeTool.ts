@@ -1,5 +1,5 @@
 import {ToolDefinition} from './index.js';
-import {StreamEvent} from '../../cli/EventStream.js';
+import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {getFileTree} from '../utils/FileSystemUtils.js';
 
 export const fileTreeToolDefinition: ToolDefinition = {
@@ -18,8 +18,14 @@ export const fileTreeToolDefinition: ToolDefinition = {
 	},
 	enact: async (args: {path: string}): Promise<string> =>
 		getFileTree(args.path),
-	formatEvent: async (args: {path: string}): Promise<StreamEvent> => ({
+	formatEvent: async (args: {path: string}): Promise<OrgchartEvent> => ({
 		title: `FileTree(${args.path})`,
-		content: 'File tree provided to agent', // TODO: Print the first few lines
+		id: crypto.randomUUID(),
+		content: [
+			{
+				type: DisplayContentType.TEXT,
+				content: 'File tree provided to agent', // TODO: Print the first few lines
+			},
+		],
 	}),
 };

@@ -1,5 +1,5 @@
 import {ToolDefinition} from './index.js';
-import {StreamEvent} from '../../cli/EventStream.js';
+import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 
 const descriptionForAgent = `Update your TODO list`;
 export const updateTodoListToolName = 'UpdateTodoList';
@@ -47,19 +47,25 @@ export const updateTodoListToolDefinition: ToolDefinition = {
 		'TODO list successfully updated',
 	formatEvent: async (args: {
 		todo_items: TodoListItem[];
-	}): Promise<StreamEvent> => ({
+	}): Promise<OrgchartEvent> => ({
 		title: `UpdateTodoList`,
-		content: args.todo_items
-			.map(
-				i =>
-					` * [${
-						i.status === 'pending'
-							? ' '
-							: i.status === 'in_progress'
-							? '+'
-							: '✓'
-					}] \"${i.title}\"`,
-			)
-			.join('\n'),
+		id: crypto.randomUUID(),
+		content: [
+			{
+				type: DisplayContentType.TEXT,
+				content: args.todo_items
+					.map(
+						i =>
+							` * [${
+								i.status === 'pending'
+									? ' '
+									: i.status === 'in_progress'
+									? '+'
+									: '✓'
+							}] \"${i.title}\"`,
+					)
+					.join('\n'),
+			},
+		],
 	}),
 };

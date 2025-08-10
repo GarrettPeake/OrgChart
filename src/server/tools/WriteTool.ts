@@ -1,4 +1,4 @@
-import {StreamEvent} from '../../cli/EventStream.js';
+import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -50,8 +50,14 @@ export const writeToolDefinition: ToolDefinition = {
 	formatEvent: async (args: {
 		file_path: string;
 		content: string;
-	}): Promise<StreamEvent> => ({
+	}): Promise<OrgchartEvent> => ({
 		title: `Write(${args.file_path})`,
-		content: args.content.split('\n').slice(0, 8).join('\n'),
+		id: crypto.randomUUID(),
+		content: [
+			{
+				type: DisplayContentType.TEXT,
+				content: args.content.split('\n').slice(0, 8).join('\n'),
+			},
+		],
 	}),
 };

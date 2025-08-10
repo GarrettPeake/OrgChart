@@ -12,7 +12,7 @@ export type OrgChartConfig = {
 
 let config: OrgChartConfig = (() => {
 	const rootDir = process.cwd();
-	const orgChartDir = path.join(rootDir, '.orgchart');
+	const orgChartDir = path.join(rootDir, '/.orgchart');
 	fs.mkdirSync(orgChartDir, {recursive: true});
 	return {
 		rootDir,

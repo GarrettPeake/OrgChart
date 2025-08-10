@@ -1,7 +1,7 @@
 import {globSync} from 'glob';
 import {ToolDefinition} from './index.js';
 import {readFileSync} from 'fs';
-import {StreamEvent} from '../../cli/EventStream.js';
+import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 export const grepToolDefinition: ToolDefinition = {
 	name: 'Grep',
 	descriptionForAgent: `- Fast content search tool that works with any codebase size
@@ -40,9 +40,15 @@ export const grepToolDefinition: ToolDefinition = {
 		pattern: string;
 		path: string;
 		include: string;
-	}): Promise<StreamEvent> => ({
+	}): Promise<OrgchartEvent> => ({
 		title: `Grep(${args.pattern} in ${args.include} under ${args.path})`,
-		content: grep(args.pattern, args.path, args.include).join('\n'),
+		id: crypto.randomUUID(),
+		content: [
+			{
+				type: DisplayContentType.TEXT,
+				content: grep(args.pattern, args.path, args.include).join('\n'),
+			},
+		],
 	}),
 };
 

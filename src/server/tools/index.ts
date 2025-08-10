@@ -1,4 +1,3 @@
-import {StreamEvent} from '../../cli/EventStream.js';
 import {attemptCompletionToolDefinition} from './AttemptCompletionTool.js';
 import {readToolDefinition} from './ReadFileTool.js';
 import {updateTodoListToolDefinition} from './UpdateTodoListTool.js';
@@ -6,6 +5,7 @@ import {writeToolDefinition} from './WriteTool.js';
 import {bashToolDefinition} from './BashTool.js';
 import {grepToolDefinition} from './GrepTool.js';
 import {fileTreeToolDefinition} from './FileTreeTool.js';
+import {OrgchartEvent} from '../IOTypes.js';
 
 export interface ToolDefinition {
 	name: string;
@@ -17,7 +17,7 @@ export interface ToolDefinition {
 		[key: string]: any;
 	};
 	enact: (args: any) => Promise<string>;
-	formatEvent: (args: any) => Promise<StreamEvent>;
+	formatEvent: (args: any) => Promise<OrgchartEvent>;
 }
 
 export const commonTools = [

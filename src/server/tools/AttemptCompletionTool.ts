@@ -1,4 +1,4 @@
-import {StreamEvent} from '../../cli/EventStream.js';
+import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
 
 export const attemptCompletionToolName = 'AttemptCompletion';
@@ -23,8 +23,14 @@ export const attemptCompletionToolDefinition: ToolDefinition = {
 	},
 	enact: async (args: {result: string}): Promise<string> =>
 		'Handled in Task.ts',
-	formatEvent: async (args: {result: string}): Promise<StreamEvent> => ({
+	formatEvent: async (args: {result: string}): Promise<OrgchartEvent> => ({
 		title: 'Task Complete',
-		content: args.result,
+		id: crypto.randomUUID(),
+		content: [
+			{
+				type: DisplayContentType.TEXT,
+				content: args.result,
+			},
+		],
 	}),
 };

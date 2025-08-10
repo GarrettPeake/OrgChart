@@ -1,120 +1,60 @@
-import React, {useState, useCallback, useEffect} from 'react';
-import {Box, Text, useInput, useStdout} from 'ink';
-import {Agent} from '../server/agents/Agents.js';
-import {AgentTree} from './AgentTree.js';
-import {StreamEvent, EventStream} from './EventStream.js';
-import {CommandPanel, CommandPanelConfiguration} from './CommandPanel.js';
-import {TaskAgent} from '../server/tasks/TaskAgent.js';
-import Logger, {initContextLogger} from '../Logger.js';
-import {colors, useStdOutDim} from './Util.js';
-
-type FocusSection = 'agentTree' | 'eventStream';
+import React, {useEffect, useState} from 'react';
+import {Box, Text, useInput} from 'ink';
+import {AgentTree} from '@cli/AgentTree.js';
+import {EventStream} from '@cli/EventStream.js';
+import {CommandPanel} from '@cli/CommandPanel.js';
+import {colors, useStdOutDim} from '@cli/Util.js';
+import {getAgentTypes, PromiseServer} from '@server/PromiseServer.js';
+import {CommandType, OrgchartEvent} from '@server/IOTypes.js';
+import Logger from '@/Logger.js';
 
 interface InterfaceProps {
-	agent: Agent;
+	agent: string;
 	task: string;
 }
 
 export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
+	const [rootAgentInfo, setRootAgentInfo] = useState(
+		getAgentTypes().find(e => e.id === agent)!,
+	);
+	const [server, setServer] = useState<PromiseServer>();
 	const currentDir = process.cwd();
-	const {stdout} = useStdout();
 	const screenDimensions = useStdOutDim();
-	const [events, setEvents] = useState<StreamEvent[]>([]);
 	const [totalCost, setTotalCost] = useState<number>(0);
-	const [taskRunner, setTaskRunner] = useState<TaskAgent | null>(null);
-	const [focusedSection, setFocusedSection] =
-		useState<FocusSection>('eventStream');
-	const [runId, _] = useState(crypto.randomUUID());
-	const [commandPanelConfiguration, setCommandPanelConfiguration] =
-		useState<CommandPanelConfiguration>({status: 'text'});
+	const [events, setEvents] = useState<OrgchartEvent[]>([]);
 
-	const writeEvent = (event: StreamEvent) => {
-		if (event.id) {
-			// We're updating an existing event or the user provided an id to use
-			setEvents(prev => {
-				const insert_index = prev.findIndex(i => i.id === event.id);
-				if (insert_index === -1) {
-					return [...prev, event];
-				}
-				const r = [...prev];
-				r[insert_index] = event;
-				return r;
-			});
-		} else {
-			// Adding a new event
-			event.id = crypto.randomUUID();
-			setEvents(prev => [...prev, event]);
-		}
-		return event.id;
-	};
+	// Initialize the server
+	useEffect(() => {
+		setServer(new PromiseServer(agent, task));
+	}, [agent, task]);
+
+	// Refresh state from the server through polling
+	useEffect(() => {
+		if (!server) return;
+
+		const interval = setInterval(() => {
+			const newEventsJson = JSON.stringify(server.getEvents());
+			if (newEventsJson !== JSON.stringify(events)) {
+				setEvents(JSON.parse(newEventsJson));
+			}
+		}, 250);
+
+		return () => clearInterval(interval);
+	}, [server]);
 
 	const handleCommandSubmit = async (command: string) => {
-		// Add the command as a task to either the root agent or the currently executing agent
-		if (taskRunner) {
-			// Find the currently executing taskRunner
-			let node = taskRunner;
-			while (node.children.length > 0) {
-				let nextNode = node.children[node.children.length - 1];
-				if (nextNode && nextNode?.status !== 'exited') {
-					node = nextNode;
-				}
-			}
-			node?.sendInput(command);
-		}
+		server!.sendCommand({type: CommandType.TASK, task: command});
 	};
 
 	// Handle tab key navigation
-	useInput((input, key) => {
-		if (key.tab) {
-			setFocusedSection(prevFocus => {
-				switch (prevFocus) {
-					case 'agentTree':
-						return 'eventStream';
-					case 'eventStream':
-						return 'agentTree';
-					default:
-						return 'eventStream';
-				}
-			});
-		}
+	useInput((_, key) => {
 		if (key.escape) {
-			// TODO: This should find the currently executing child and stop the promise. That will prevent the currently executing
-			if (taskRunner) {
-				// Find the currently executing taskRunner
-				let node = taskRunner;
-				while (node.children.length > 0) {
-					let nextNode = node.children[node.children.length - 1];
-					if (nextNode && nextNode?.status !== 'exited') {
-						node = nextNode;
-					}
-				}
-				node?.stopExecution();
-			}
+			server?.pause(); // TODO: When do we stop an agent?
 		}
 	});
 
-	useEffect(() => {
-		// Initialize TaskRunner when component mounts
-		Logger.info(`Using ${agent.name} to execute: '${task}'`);
-		try {
-			const runner = new TaskAgent(writeEvent, agent);
-			setTaskRunner(runner);
-			initContextLogger(runId, runner);
-
-			// Start the task
-			runner.sendInput(task);
-		} catch (error) {
-			Logger.error(error, 'Failed to initialize and start task');
-			writeEvent({
-				title: 'Initialization Error',
-				content:
-					error instanceof Error ? error.message : 'Unknown error occurred',
-			});
-		}
-	}, [agent, task]);
-
 	const headerHeight = 5; // 3 lines of text plus border
-	const topMargin = 1;
+	const topMargin = 0;
 	const footerHeight = 6; // 4 lines of text plus border
 	const bottomMargin = 0;
 	const bodyHeight = Math.max(
@@ -143,15 +83,15 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 				marginTop={topMargin}
 				paddingX={1}
 			>
-				<Box flexDirection="column">
+				<Box flexDirection="column" width={screenDimensions[0] - 2}>
 					<Text bold color={colors.accentColor}>
-						OrgChart - {agent.name}
+						OrgChart - {rootAgentInfo.name}
 					</Text>
 					<Text color={colors.subtextColor}>
 						Working Directory: {currentDir}
 					</Text>
 					<Text color={colors.subtextColor}>
-						RunId: {runId}, Total Cost: ${totalCost.toFixed(2)}
+						RunId: {server?.getRunId()}, Total Cost: ${totalCost.toFixed(2)}
 					</Text>
 				</Box>
 			</Box>
@@ -164,15 +104,11 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 					flexShrink={1}
 					borderDimColor
 					width={75}
-					borderColor={
-						focusedSection === 'agentTree'
-							? colors.highlightColor
-							: colors.subtextColor
-					}
+					borderColor={colors.subtextColor}
 					flexDirection="column"
 					height={bodyHeight}
 				>
-					<AgentTree rootTaskRunner={taskRunner} />
+					<AgentTree rootTaskRunner={server?.getAgentGraph()} />
 				</Box>
 
 				{/* Right column - Event Stream */}
@@ -180,20 +116,12 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 					flexGrow={1}
 					borderStyle="round"
 					borderDimColor
-					borderColor={
-						focusedSection === 'eventStream'
-							? colors.highlightColor
-							: colors.subtextColor
-					}
+					borderColor={colors.subtextColor}
 					flexDirection="column"
 					height={bodyHeight}
 					overflow="hidden"
 				>
-					<EventStream
-						events={events}
-						focused={focusedSection === 'eventStream'}
-						height={bodyHeight - 2}
-					/>
+					<EventStream events={events} height={bodyHeight - 2} />
 				</Box>
 			</Box>
 
@@ -206,10 +134,7 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 				marginBottom={bottomMargin}
 				height={footerHeight}
 			>
-				<CommandPanel
-					onCommandSubmit={handleCommandSubmit}
-					configuration={{status: 'text'}}
-				/>
+				<CommandPanel onCommandSubmit={handleCommandSubmit} />
 			</Box>
 		</Box>
 	);

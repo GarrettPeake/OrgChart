@@ -1,19 +1,19 @@
 import React, {Dispatch, SetStateAction, useState} from 'react';
 import {Box, Text, useInput} from 'ink';
-import {agents, Agent} from '../server/agents/Agents.js';
-import {colors, useStdOutDim} from './Util.js';
+import {colors, useStdOutDim} from '@cli/Util.js';
 import TextInput from 'ink-text-input';
 import BigText from 'ink-big-text';
+import {getAgentTypes} from '@server/PromiseServer.js';
 
 export interface StartMenuProps {
 	setTask: Dispatch<SetStateAction<string | null>>;
-	setAgent: Dispatch<SetStateAction<Agent | null>>;
+	setAgent: Dispatch<SetStateAction<string | null>>;
 }
 
 export const StartMenu: React.FC<StartMenuProps> = ({setTask, setAgent}) => {
-	const agentList = Object.values(agents);
+	const agentList = getAgentTypes();
 	const [selectedIndex, setSelectedIndex] = useState(0);
-	const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+	const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 	const [tempTask, setTempTask] = useState<string>('');
 	const screenDimensions = useStdOutDim();
 
@@ -35,8 +35,8 @@ export const StartMenu: React.FC<StartMenuProps> = ({setTask, setAgent}) => {
 			}
 
 			if (key.return) {
-				setSelectedAgent(agentList[selectedIndex] || null);
-				setAgent(agentList[selectedIndex] || null);
+				setSelectedAgent(agentList[selectedIndex]!.id || null);
+				setAgent(agentList[selectedIndex]!.id || null);
 			}
 		}
 	});
@@ -62,8 +62,10 @@ export const StartMenu: React.FC<StartMenuProps> = ({setTask, setAgent}) => {
 			/>
 			{selectedAgent ? (
 				<>
-					<Text color={colors.textColor}>Selected: {selectedAgent.name}</Text>
-					<Text>{selectedAgent.human_description}</Text>
+					<Text color={colors.textColor}>
+						Selected: {agentList[selectedIndex]!.name}
+					</Text>
+					<Text>{agentList[selectedIndex]!.description}</Text>
 					<Text></Text>
 					<Box
 						borderStyle="round"
@@ -78,7 +80,9 @@ export const StartMenu: React.FC<StartMenuProps> = ({setTask, setAgent}) => {
 							value={tempTask}
 							onChange={setTempTask}
 							onSubmit={handleSubmit}
-							placeholder={`Describe your request for the ${selectedAgent.name}...`}
+							placeholder={`Describe your request for the ${
+								agentList[selectedIndex]!.name
+							}...`}
 						/>
 					</Box>
 					<Box>
@@ -116,7 +120,7 @@ export const StartMenu: React.FC<StartMenuProps> = ({setTask, setAgent}) => {
 												: colors.subtextColor
 										}
 									>
-										{agent.human_description}
+										{agent.description}
 									</Text>
 								</Box>
 							</Box>

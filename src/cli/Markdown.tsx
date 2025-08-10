@@ -3,7 +3,7 @@ import {parse, setOptions} from 'marked';
 import {Text} from 'ink';
 import TerminalRenderer, {TerminalRendererOptions} from 'marked-terminal';
 import chalk from 'chalk';
-import {colors} from './Util.js';
+import {colors} from '@cli/Util.js';
 
 setOptions({
 	renderer: new TerminalRenderer({

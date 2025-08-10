@@ -24,7 +24,6 @@
 - Tool that uses fast model to extract key symbols
 - Enable MCP servers with MCP SDK so we can use Context7
 - Define a browser user agent that has access to Playwright MCP
-- Define a command runner agent that accepts a bash command, determines if it's safe, then runs it and summarizes the results
 
 - Make everything was a TODO list? We make the event stream full width and the agent tree full width and allow tab to toggle between them. Agent tree would then look like:
   Technical Product Manager - <Main task>
@@ -41,9 +40,11 @@
 - Enable resuming sessions from context logs
 - Multi read tool?
 - Give delegation a context preloading parameter that allowed a list of globs that would be preloaded in that agents context
-- What if there was a central context that all agents shared? There would be a project context and a session context, for example how does the project work vs what are we currently working on? It would be persistently the most recent message for any agent and would contain only important design, tech stack, organization, and architectural details, never any details about or examples of code. Currently pretty much every agent has to invoke a researcher to do the same thing. Use Kimi K2 to ingest every tool call and maintain a "brainmap" that is always shared among the models
+- What if there was a central context that all agents shared? There would be a project context and a session context, for example how does the project work vs what are we currently working on? It would be persistently the most recent message for any agent and would contain only important design, tech stack, organization, and architectural details, never any details about or examples of code. Currently pretty much every agent has to invoke a researcher to do the same thing. Use cheap model to ingest every tool call and maintain a "brainmap" that is always shared among the models
 - Enable agents to be defined with a list of models that triggers alloying
 - Quorum tool that gets the opinion of N models on a certain engineering question (including context) then uses a single model to get the majority opinion (possibly weighted by model intelligence?)
+- Give the command runner agent a shell session, undefined to begin with, that they can interact with across turns
+- Consider using a change applier such as https://openrouter.ai/meta-llama/llama-3.2-3b-instruct to perfrom https://docs.morphllm.com/quickstart the why on this is here https://web.archive.org/web/20240823050616/https://www.cursor.com/blog/instant-apply
 
 ## Experiment Results
 

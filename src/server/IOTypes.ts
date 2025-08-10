@@ -1,0 +1,65 @@
+import {agents} from './agents/Agents.js';
+
+export enum DisplayContentType {
+	MARKDOWN,
+	DIFF,
+	TEXT,
+}
+
+export type Approval = {
+	approvalId: string;
+	type: DisplayContentType;
+	content: string;
+};
+
+// REQUEST TYPES
+export enum CommandType {
+	TASK,
+	PAUSE,
+	STOP,
+	APPROVE,
+}
+
+export type OrgchartCommand =
+	| {
+			type: CommandType.APPROVE;
+			eventId: string;
+	  }
+	| {
+			type: CommandType.TASK;
+			task: string;
+	  };
+
+// RETURN TYPES
+export enum AgentStatus {
+	CREATED = 'created',
+	EXECUTING = 'executing',
+	WAITING = 'waiting',
+	PAUSED = 'paused',
+	EXITED = 'exited',
+}
+
+export type StaticAgentInfo = {
+	name: string;
+	id: keyof typeof agents;
+	description: string;
+};
+
+export type RunningAgentInfo = StaticAgentInfo & {
+	cost: number;
+	contextUsage: number;
+	maxContext: number;
+	status: AgentStatus;
+	children?: RunningAgentInfo[];
+};
+
+export type StreamChunk = {
+	type: DisplayContentType;
+	content: string;
+};
+
+export type OrgchartEvent = {
+	title: string;
+	content: StreamChunk[];
+	id: string;
+};

@@ -1,24 +1,16 @@
 import React, {useState} from 'react';
 import {Box, Text} from 'ink';
 import TextInput from 'ink-text-input';
-import {colors} from './Util.js';
-
-export interface CommandPanelConfiguration {
-	status: CommandPanelStatus;
-	options?: string[];
-	textOption?: boolean;
-}
+import {colors} from '@cli/Util.js';
 
 export type CommandPanelStatus = 'text' | 'options';
 
 interface CommandPanelProps {
 	onCommandSubmit: (command: string) => void;
-	configuration: CommandPanelConfiguration;
 }
 
 export const CommandPanel: React.FC<CommandPanelProps> = ({
 	onCommandSubmit,
-	configuration,
 }) => {
 	const [command, setCommand] = useState('');
 

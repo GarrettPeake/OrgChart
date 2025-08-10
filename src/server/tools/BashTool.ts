@@ -1,7 +1,7 @@
 import {spawnSync} from 'child_process';
 import {ToolDefinition} from './index.js';
 import Logger from '../../Logger.js';
-import {StreamEvent} from '../../cli/EventStream.js';
+import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {getConfig} from '../utils/Configuration.js';
 import {TaskAgent} from '../tasks/TaskAgent.js';
 
@@ -47,9 +47,15 @@ export const bashToolDefinition: ToolDefinition = {
 		command: string;
 		requires_approval: boolean;
 		followup_input: string[];
-	}): Promise<StreamEvent> => ({
+	}): Promise<OrgchartEvent> => ({
 		title: `Bash(${args.command})`,
-		content: `Additional Inputs: ${args.followup_input}` || '',
+		id: crypto.randomUUID(),
+		content: [
+			{
+				type: DisplayContentType.TEXT,
+				content: `Additional Inputs: ${args.followup_input}` || '',
+			},
+		],
 	}), // TODO: Update event to append result
 };
 

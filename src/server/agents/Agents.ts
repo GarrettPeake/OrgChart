@@ -10,6 +10,7 @@ import {JuniorDesigner} from './Designer/JuniorDesigner.js';
 import {SeniorDesigner} from './Designer/SeniorDesigner.js';
 import {LLMModel} from './ModelInfo.js';
 import {CommandRunner} from './L0/CommandRunner.js';
+import {StaticAgentInfo} from '../IOTypes.js';
 
 export interface Agent {
 	model: LLMModel; // The model which is used by the agent
@@ -41,3 +42,9 @@ export const agents: Record<string, Agent> = {
 	[ProjectResearcher.id]: ProjectResearcher,
 	[CommandRunner.id]: CommandRunner,
 };
+
+export const toStaticAgentInfo = (agent: Agent): StaticAgentInfo => ({
+	name: agent.name,
+	id: agent.id,
+	description: agent.human_description,
+});

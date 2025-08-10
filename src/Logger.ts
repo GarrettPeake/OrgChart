@@ -28,20 +28,20 @@ export default Logger;
  * Simple logger to enable creating a directory structure of context json files
  */
 export let ContextLogger: {
-	getAgentLogger: (agentId: string) => () => Promise<void>;
+	getAgentLogger: (agentInstanceId: string) => () => Promise<void>;
 };
 export const initContextLogger = (runId: string, baseAgent: TaskAgent) => {
 	const baseDir = path.join(getConfig().orgChartDir, 'ContextLogs', runId);
 	ContextLogger = {
-		getAgentLogger: (agentId: string) => async () => {
+		getAgentLogger: (agentInstanceId: string) => async () => {
 			try {
 				// Find this agent in the agent tree
-				const [taskAgent, agentPath] = agentDfs(baseAgent, agentId) || [
+				const [taskAgent, agentPath] = agentDfs(baseAgent, agentInstanceId) || [
 					undefined,
 					[],
 				];
 				if (taskAgent === undefined) {
-					Logger.info(`Could not locate ${agentId} in agent tree`);
+					Logger.info(`Could not locate ${agentInstanceId} in agent tree`);
 					return;
 				}
 				// Ensure the directory exists
@@ -55,7 +55,7 @@ export const initContextLogger = (runId: string, baseAgent: TaskAgent) => {
 					'utf8',
 				);
 			} catch (error) {
-				throw new Error(`Failed to write context for ${agentId}: ${error}`);
+				throw new Error(`Failed to write context for ${agentInstanceId}: ${error}`);
 			}
 		},
 	};
@@ -67,8 +67,11 @@ function agentDfs(
 	route: string[] = [],
 	childIndex: number = 0,
 ): [TaskAgent, string[]] | undefined {
-	route = [...route, `${childIndex}-${agent.agent.id}-${agent.agentId}`];
-	if (agent.agentId === targetId) {
+	route = [
+		...route,
+		`${childIndex}-${agent.agent.id}-${agent.agentInstanceId}`,
+	];
+	if (agent.agentInstanceId === targetId) {
 		return [agent, route];
 	} else {
 		for (const [index, child] of agent.children.entries()) {

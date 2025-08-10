@@ -1,5 +1,5 @@
 import {agents} from '../agents/Agents.js';
-import {StreamEvent} from '../../cli/EventStream.js';
+import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
 
 export const delegateWorkToolName = 'DelegateWork';
@@ -49,8 +49,14 @@ export const delegateWorkTool = (level: number): ToolDefinition => ({
 	formatEvent: async (args: {
 		agentId: string;
 		task: string;
-	}): Promise<StreamEvent> => ({
+	}): Promise<OrgchartEvent> => ({
 		title: `Spawn Agent(${agents[args.agentId]})`,
-		content: args.task,
+		id: crypto.randomUUID(),
+		content: [
+			{
+				type: DisplayContentType.TEXT,
+				content: args.task,
+			},
+		],
 	}),
 });

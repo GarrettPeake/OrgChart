@@ -1,4 +1,4 @@
-import {Agent, agents} from '../agents/Agents.js';
+import {Agent, agents, toStaticAgentInfo} from '../agents/Agents.js';
 import {
 	delegateWorkTool,
 	delegateWorkToolName,
@@ -9,7 +9,6 @@ import {
 	attemptCompletionToolName,
 } from '../tools/AttemptCompletionTool.js';
 import {tools} from '../tools/index.js';
-import {StreamEvent} from '../../cli/EventStream.js';
 import {
 	TodoListItem,
 	updateTodoListToolName,
@@ -22,13 +21,12 @@ import {
 	CompletionUsageStats,
 	ToolCall,
 } from '../utils/provider/OpenRouter.js';
-
-export type AgentStatus =
-	| 'created'
-	| 'executing'
-	| 'waiting'
-	| 'paused'
-	| 'exited';
+import {
+	AgentStatus,
+	DisplayContentType,
+	OrgchartEvent,
+	RunningAgentInfo,
+} from '../IOTypes.js';
 
 /**
  * Implements a task state machine with the following transitions
@@ -42,13 +40,13 @@ export type AgentStatus =
  * exited -> executing (when a new task is received)
  */
 export class TaskAgent {
-	private writeEvent: (event: StreamEvent) => void;
+	private writeEvent: (event: OrgchartEvent) => void;
 	public agent: Agent;
 	public children: TaskAgent[] = [];
-	public status: AgentStatus = 'created';
+	public status: AgentStatus = AgentStatus.CREATED;
 	public cost: number = 0.0;
-	public contextPercent: number = 0.000001;
-	public agentId: string = crypto.randomUUID();
+	public contextUsed: number = 0;
+	public agentInstanceId: string = crypto.randomUUID();
 	public todoList: TodoListItem[] = [];
 	// Initialize context with system prompt and user input
 	public context: CompletionInputMessage[];
@@ -57,15 +55,99 @@ export class TaskAgent {
 	private shouldExit = false;
 	private promise: Promise<string> | undefined;
 
-	constructor(writeEvent: (event: StreamEvent) => void, agent: Agent) {
+	constructor(
+		writeEvent: (event: OrgchartEvent) => void,
+		agentId: keyof typeof agents,
+	) {
 		this.writeEvent = writeEvent;
-		this.agent = agent;
+		this.agent = agents[agentId]!;
 		this.context = [
 			{
 				role: 'system',
-				content: agent.system_prompt(),
+				content: this.agent.system_prompt(),
 			},
 		];
+	}
+
+	/**
+	 * Add a specific completion input to context with no extra logic
+	 * @param message The message to add to the context
+	 */
+	addToContext(message: CompletionInputMessage) {
+		this.context.push(message);
+		ContextLogger.getAgentLogger(this.agentInstanceId)();
+	}
+
+	/**
+	 * Convert this task runner, agent, and children into a frontned ingestable data structure
+	 */
+	toRunningAgentInfo(): RunningAgentInfo {
+		return {
+			...toStaticAgentInfo(this.agent),
+			cost: this.cost,
+			status: this.status,
+			contextUsage: this.contextUsed,
+			maxContext: ModelInformation[this.agent.model].context,
+			children: this.children?.map(it => it.toRunningAgentInfo()),
+		};
+	}
+
+	/**
+	 * Stop the currently executing task ensuring the state is created, exited, or paused
+	 * If the agent is mid execution, this will simply cause it to pause
+	 * @returns boolean denoting whether there was a task to cancel
+	 */
+	async stopExecution() {
+		this.shouldStop = true;
+		// Wait for the main thread to take the pause (bypass if we're in created, exited, or paused already)
+		while (
+			this.status === AgentStatus.EXECUTING ||
+			this.status === AgentStatus.WAITING
+		) {
+			await new Promise(resolve => setTimeout(resolve, 50));
+		}
+		this.shouldStop = false;
+	}
+
+	/**
+	 * Starts or continues the main task execution
+	 * @param input The user message to append to the current context before starting the cycles with the LLM
+	 * @returns A task completion message when the LLM has enacted complete task
+	 */
+	async sendInput(input: string): Promise<string> {
+		await this.stopExecution(); // Stop the current execution
+		// Append the new message to the context
+		if (
+			this.status !== AgentStatus.CREATED &&
+			this.status !== AgentStatus.EXITED
+		) {
+			// If this is occuring mid conversation, we should insert an agent acknowledgement of the previous tool result before injecting a user message
+			// This prevents the conversation from have two messages in a row from the user/tool which causes the model to ignore one
+			this.addToContext({
+				role: 'assistant',
+				content: "Great, I'll continue working now",
+			});
+		}
+		this.addToContext({
+			role: 'user',
+			content: cleanText(input),
+		});
+		this.writeEvent({
+			title: `Starting Task - ${this.agent.name}`,
+			id: crypto.randomUUID(),
+			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: `${input}`,
+				},
+			],
+		});
+		if (!this.promise) {
+			this.promise = this.startTaskLoop();
+			this.promise.then(() => (this.promise = undefined)); // When the task finishes, remove it from the class
+		}
+		this.status = AgentStatus.EXECUTING; // Set the correct state, if the agent is paused this will restart it
+		return this.promise;
 	}
 
 	private async executeToolCall(toolCall: ToolCall): Promise<string> {
@@ -100,81 +182,38 @@ export class TaskAgent {
 			}
 			return await tool.enact(args);
 		} catch (e: any) {
+			this.writeEvent({
+				title: `Failure(${toolName})`,
+				id: crypto.randomUUID(),
+				content: [
+					{
+						type: DisplayContentType.TEXT,
+						content: `Error: ${e.message}`,
+					},
+				],
+			});
 			return `Failed to enact tool ${toolName}, received error: ${e.message}`;
 		}
 	}
 
-	async delegateWork(args: any): Promise<string> {
-		const targetAgent = agents[args.agentId];
-		if (!targetAgent) {
+	private async delegateWork(args: any): Promise<string> {
+		if (!(args.agentId in agents)) {
 			Logger.error(`Delegation failure - agent '${args.agentId}' not found`);
 			return `Delegation failure - agent '${args.agentId}' not found`;
 		}
 
-		const childTaskRunner = new TaskAgent(this.writeEvent, targetAgent);
+		const childTaskRunner = new TaskAgent(this.writeEvent, args.agentId);
 		this.children.push(childTaskRunner);
 		return childTaskRunner.sendInput(args.task);
 	}
 
-	updateUsages(usage: CompletionUsageStats) {
+	private updateUsages(usage: CompletionUsageStats) {
 		// Update our context usage and cost usage
-		this.contextPercent =
-			usage.prompt_tokens / ModelInformation[this.agent.model].context;
+		this.contextUsed = usage.prompt_tokens;
 		this.cost += usage.cost;
 		Logger.info(
 			`Request ${this.agent.name} ${usage.prompt_tokens}(${usage.prompt_tokens_details.reasoning_tokens}cache) -> ${usage.completion_tokens}`,
 		);
-	}
-
-	addToContext(message: CompletionInputMessage) {
-		this.context.push(message);
-		ContextLogger.getAgentLogger(this.agentId)();
-	}
-
-	/**
-	 * Stop the currently executing task ensuring the state is created, exited, or paused
-	 * If the agent is mid execution, this will simply cause it to pause
-	 * @returns boolean denoting whether there was a task to cancel
-	 */
-	async stopExecution() {
-		this.shouldStop = true;
-		// Wait for the main thread to take the pause (bypass if we're in created, exited, or paused already)
-		while (this.status === 'executing' || this.status === 'waiting') {
-			await new Promise(resolve => setTimeout(resolve, 50));
-		}
-		this.shouldStop = false;
-	}
-
-	/**
-	 * Starts or continues the main task execution
-	 * @param input The user message to append to the current context before starting the cycles with the LLM
-	 * @returns A task completion message when the LLM has enacted complete task
-	 */
-	async sendInput(input: string): Promise<string> {
-		await this.stopExecution(); // Stop the current execution
-		// Append the new message to the context
-		if (this.status !== 'created' && this.status !== 'exited') {
-			// If this is occuring mid conversation, we should insert an agent acknowledgement of the previous tool result before injecting a user message
-			// This prevents the conversation from have two messages in a row from the user/tool which causes the model to ignore one
-			this.addToContext({
-				role: 'assistant',
-				content: "Great, I'll continue working now",
-			});
-		}
-		this.addToContext({
-			role: 'user',
-			content: cleanText(input),
-		});
-		this.writeEvent({
-			title: `Starting Task - ${this.agent.name}`,
-			content: `${input}`,
-		});
-		if (!this.promise) {
-			this.promise = this.startTaskLoop();
-			this.promise.then(() => (this.promise = undefined)); // When the task finishes, remove it from the class
-		}
-		this.status = 'executing'; // Set the correct state, if the agent is paused this will restart it
-		return this.promise;
 	}
 
 	private async startTaskLoop(): Promise<string> {
@@ -188,16 +227,18 @@ export class TaskAgent {
 			const maxIterations = getConfig().maxAgentIterations; // Prevent infinite loops
 
 			while (iterations < maxIterations) {
+				this.status = AgentStatus.EXECUTING;
 				iterations++;
 
 				if (this.shouldStop) {
 					this.writeEvent({
 						title: `Task execution paused, waiting for input - ${this.agent.name}`,
-						content: '',
+						id: crypto.randomUUID(),
+						content: [],
 					});
-					this.status = 'paused';
+					this.status = AgentStatus.PAUSED;
 					// Pause this agent until an external process modifies it's status, sleeping for 50ms at a time
-					while (this.status === 'paused') {
+					while (this.status === AgentStatus.PAUSED) {
 						await new Promise(resolve => setTimeout(resolve, 50));
 					}
 				}
@@ -237,7 +278,13 @@ export class TaskAgent {
 				if (!choice || !message) {
 					this.writeEvent({
 						title: 'LLM API Error',
-						content: 'No response, retrying',
+						id: crypto.randomUUID(),
+						content: [
+							{
+								type: DisplayContentType.TEXT,
+								content: 'No response, retrying',
+							},
+						],
 					});
 					continue;
 				}
@@ -245,7 +292,13 @@ export class TaskAgent {
 				if (response.id === 'failure') {
 					this.writeEvent({
 						title: 'LLM API Error',
-						content: choice?.message?.content!,
+						id: crypto.randomUUID(),
+						content: [
+							{
+								type: DisplayContentType.TEXT,
+								content: choice?.message?.content!,
+							},
+						],
 					});
 					// Realistically we just want to pause here
 					// TODO: Prompt user for permission to proceed then just infinitely retry
@@ -262,7 +315,7 @@ export class TaskAgent {
 				// Handle tool calls
 				if (message.tool_calls && message.tool_calls.length > 0) {
 					for (const toolCall of message.tool_calls) {
-						this.status = 'waiting';
+						this.status = AgentStatus.WAITING;
 						const toolResult = await this.executeToolCall(toolCall);
 						Logger.info(
 							`Agent: ${this.agent.name} used ${
@@ -279,7 +332,7 @@ export class TaskAgent {
 
 						// Check if task is complete
 						if (toolCall.function.name === attemptCompletionToolName) {
-							this.status = 'exited';
+							this.status = AgentStatus.EXITED;
 							return toolResult;
 						}
 					}
@@ -291,18 +344,32 @@ export class TaskAgent {
 			}
 			this.writeEvent({
 				title: `Agent Max Cycles Exceeded (${maxIterations})`,
-				content: 'Please instruct the agent to continue or correct it',
+				id: crypto.randomUUID(),
+				content: [
+					{
+						type: DisplayContentType.TEXT,
+						content: 'Please instruct the agent to continue or correct it',
+					},
+				],
 			});
 			Logger.info('Loop detected, the user will need to manually continue');
 			return `Forced to stop work after after ${maxIterations} turns`;
 		} catch (error) {
+			this.status = AgentStatus.EXITED;
 			Logger.error(error, 'Task execution failed');
 			const errorMessage =
 				error instanceof Error ? error.message : 'Unknown error';
-			this.writeEvent({title: 'Task Error', content: errorMessage});
+			this.writeEvent({
+				title: 'Task Error',
+				id: crypto.randomUUID(),
+				content: [
+					{
+						type: DisplayContentType.TEXT,
+						content: errorMessage,
+					},
+				],
+			});
 			return errorMessage;
-		} finally {
-			this.status = 'waiting';
 		}
 	}
 }
