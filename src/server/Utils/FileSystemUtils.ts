@@ -119,3 +119,65 @@ export const readFile = async (file_path: string): Promise<string> => {
 		);
 	}
 };
+
+export const getFormattedContext = async (
+	relativeBasePath: string = './',
+	maxDepth: number = 10,
+): Promise<string> => {
+	const config = getConfig();
+	const gip = new GitIgnoreParser(config.rootDir);
+	gip.loadGitRepoPatterns();
+	gip.addPatterns(config.ignorePatterns);
+	const absoluteBasePath = path.join(process.cwd(), relativeBasePath);
+	return await buildFormattedContextDfs(absoluteBasePath, gip, maxDepth);
+};
+
+const buildFormattedContextDfs = async (
+	absolutePath: string,
+	gip: GitIgnoreParser,
+	maxDepth: number,
+	depth: number = 0,
+): Promise<string> => {
+	// Construct a string representing the nesting of this line item
+	const levelPrefix = '#'.repeat(depth + 1) + ' ';
+	// Attempt to access the path, marking it as no access if it fails
+	try {
+		const stats = lstatSync(absolutePath);
+		// For directories we use recursion to construct the path
+		if (stats.isDirectory()) {
+			let res = `${levelPrefix}${
+				depth === 0 ? absolutePath : path.basename(absolutePath)
+			}/  `;
+			// Don't recurse if it would pass the max depth
+			if (depth <= maxDepth) {
+				// Find all children, filtering any that match the git ignore
+				const children = readdirSync(absolutePath, {
+					withFileTypes: true,
+				}).filter(child => !gip.isIgnored(path.join(absolutePath, child.name)));
+				console.log(children.map(it => it.name));
+				// For each child add the recursive result
+				for (const [index, child] of children.entries()) {
+					res +=
+						'\n' +
+						(await buildFormattedContextDfs(
+							path.join(absolutePath, child.name),
+							gip,
+							maxDepth,
+							depth + 1,
+						));
+				}
+			} else {
+				res += `\n${'#'.repeat(depth + 2)}\n<further folder depth truncated>`;
+			}
+			return res;
+		}
+		// For files we can just return the item with content
+		return `${levelPrefix}${path.basename(absolutePath)}\n\n\`\`\`\n${(
+			await readFile(absolutePath)
+		).trim()}\n\`\`\`\n`;
+	} catch (e: any) {
+		return `${levelPrefix}${path.basename(
+			absolutePath,
+		)} (Failed to read content)`;
+	}
+};

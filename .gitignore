@@ -1,6 +1,6 @@
 .env
-node_modules
-dist
-coverage
+node_modules/
+dist/
+coverage/
 .orgchart/ContextLogs/
-.orgchart/app.log
+.orgchart/

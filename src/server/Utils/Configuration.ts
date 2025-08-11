@@ -5,6 +5,7 @@ import {LLMProvider} from './provider/LLMProvider.js';
 export type OrgChartConfig = {
 	rootDir: string;
 	orgChartDir: string;
+	projectContextFile: string;
 	ignorePatterns: string[];
 	maxAgentIterations: number;
 	llmProvider: LLMProvider;
@@ -21,6 +22,7 @@ const initializeConfig = (): OrgChartConfig => {
 		config = {
 			rootDir,
 			orgChartDir,
+			projectContextFile: path.join(orgChartDir, 'PROJECT.md'),
 			ignorePatterns: ['node_modules'],
 			maxAgentIterations: 30,
 			get llmProvider() {

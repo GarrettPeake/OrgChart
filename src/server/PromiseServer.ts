@@ -11,6 +11,7 @@ import {
 } from './IOTypes.js';
 import {TaskAgent} from './tasks/TaskAgent.js';
 import {Conversation, ConversationParticipant} from './tasks/Conversation.js';
+import {createInitialContent} from './tasks/ContinuousContext.js';
 
 /**
  * To separate server and UI, we define a "server" based on a promise
@@ -35,12 +36,12 @@ export class PromiseServer {
 
 		// Create conversation between user and main agent
 		this.userConversation = new Conversation();
-        
-        // Send initial task message to the agent
-        this.userConversation.addMessage(
-            ConversationParticipant.PARENT,
-            initialTask,
-        );
+
+		// Send initial task message to the agent
+		this.userConversation.addMessage(
+			ConversationParticipant.PARENT,
+			initialTask,
+		);
 
 		this.taskAgent = new TaskAgent(
 			this.upsertEvent.bind(this),
@@ -52,7 +53,6 @@ export class PromiseServer {
 		(this.userConversation as any).child = this.taskAgent;
 
 		initContextLogger(this.runId, this.taskAgent);
-
 
 		// Start the step interval
 		this.stepInterval = setInterval(() => {
