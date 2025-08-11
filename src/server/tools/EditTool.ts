@@ -1,5 +1,6 @@
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
+import {TaskAgent} from '../tasks/TaskAgent.js';
 
 export const editToolDefinition: ToolDefinition = {
 	name: 'MultiEdit',
@@ -37,20 +38,19 @@ export const editToolDefinition: ToolDefinition = {
 	enact: async (args: {
 		file_path: string;
 		edits: {old_string: string; new_string: string}[];
-	}): Promise<string> => 'NOT IMPLEMENTED',
-	formatEvent: async (args: {
-		file_path: string;
-		edits: {old_string: string; new_string: string}[];
-	}): Promise<OrgchartEvent> => ({
-		title: `Edit File(${args.file_path})`,
-		id: crypto.randomUUID(),
-		content: [
-			{
-				type: DisplayContentType.TEXT,
-				content: Object.entries(args.edits)
-					.map(e => `SEARCH: ${e[0]}\nREPLACE: ${e[1]}`)
-					.join('\n\n'),
-			},
-		],
-	}),
+	}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+		writeEvent({
+			title: `Edit File(${args.file_path})`,
+			id: crypto.randomUUID(),
+			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.edits
+						.map((edit, index) => `Edit ${index + 1}:\nSEARCH: ${edit.old_string}\nREPLACE: ${edit.new_string}`)
+						.join('\n\n'),
+				},
+			],
+		});
+		return 'NOT IMPLEMENTED';
+	},
 };

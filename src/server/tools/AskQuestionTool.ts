@@ -1,5 +1,6 @@
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
+import {TaskAgent} from '../tasks/TaskAgent.js';
 
 export const askQuestionToolName = 'AskQuestion';
 
@@ -19,15 +20,17 @@ export const askQuestionToolDefinition: ToolDefinition = {
 		},
 		required: ['question'],
 	},
-	enact: async (args: {question: string}): Promise<string> => 'Answer',
-	formatEvent: async (args: {question: string}): Promise<OrgchartEvent> => ({
-		title: `Question from Agent`,
-		id: crypto.randomUUID(),
-		content: [
-			{
-				type: DisplayContentType.TEXT,
-				content: args.question,
-			},
-		],
-	}),
+	enact: async (args: {question: string}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+		writeEvent({
+			title: `Question from Agent`,
+			id: crypto.randomUUID(),
+			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.question,
+				},
+			],
+		});
+		return 'Answer';
+	},
 };

@@ -2,6 +2,7 @@ import {globSync} from 'glob';
 import {ToolDefinition} from './index.js';
 import {readFileSync} from 'fs';
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
+import {TaskAgent} from '../tasks/TaskAgent.js';
 export const grepToolDefinition: ToolDefinition = {
 	name: 'Grep',
 	descriptionForAgent: `- Fast content search tool that works with any codebase size
@@ -35,21 +36,20 @@ export const grepToolDefinition: ToolDefinition = {
 		pattern: string;
 		path: string;
 		include: string;
-	}): Promise<string> => grep(args.pattern, args.path, args.include).join('\n'),
-	formatEvent: async (args: {
-		pattern: string;
-		path: string;
-		include: string;
-	}): Promise<OrgchartEvent> => ({
-		title: `Grep(${args.pattern} in ${args.include} under ${args.path})`,
-		id: crypto.randomUUID(),
-		content: [
-			{
-				type: DisplayContentType.TEXT,
-				content: grep(args.pattern, args.path, args.include).join('\n'),
-			},
-		],
-	}),
+	}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+		const results = grep(args.pattern, args.path, args.include);
+		writeEvent({
+			title: `Grep(${args.pattern} in ${args.include} under ${args.path})`,
+			id: crypto.randomUUID(),
+			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: results.join('\n'),
+				},
+			],
+		});
+		return results.join('\n');
+	},
 };
 
 function grep(pattern: string, path: string, include?: string): string[] {

@@ -1,18 +1,11 @@
 import {Agent, agents, toStaticAgentInfo} from '../agents/Agents.js';
-import {
-	delegateWorkTool,
-	delegateWorkToolName,
-} from '../tools/DelegateWorkTool.js';
+import {delegateWorkTool} from '../tools/DelegateWorkTool.js';
 import Logger, {ContextLogger} from '../../Logger.js';
 import {
 	attemptCompletionToolDefinition,
 	attemptCompletionToolName,
 } from '../tools/AttemptCompletionTool.js';
-import {tools} from '../tools/index.js';
-import {
-	TodoListItem,
-	updateTodoListToolName,
-} from '../tools/UpdateTodoListTool.js';
+import {TodoListItem} from '../tools/UpdateTodoListTool.js';
 import {ModelInformation} from '../agents/ModelInfo.js';
 import {getConfig} from '../utils/Configuration.js';
 import {cleanText} from '@/shared/utils/TextUtils.js';
@@ -27,6 +20,7 @@ import {
 	OrgchartEvent,
 	RunningAgentInfo,
 } from '../IOTypes.js';
+import {ToolDefinition} from '../tools/index.js';
 
 /**
  * Implements a task state machine with the following transitions
@@ -54,6 +48,7 @@ export class TaskAgent {
 	private shouldStop = false;
 	private shouldExit = false;
 	private promise: Promise<string> | undefined;
+	private tools: ToolDefinition[] = [];
 
 	constructor(
 		writeEvent: (event: OrgchartEvent) => void,
@@ -90,6 +85,22 @@ export class TaskAgent {
 			maxContext: ModelInformation[this.agent.model].context,
 			children: this.children?.map(it => it.toRunningAgentInfo()),
 		};
+	}
+
+	/**
+	 * Public API to add a child agent
+	 * @param childAgent The TaskAgent to add as a child
+	 */
+	addChild(childAgent: TaskAgent): void {
+		this.children.push(childAgent);
+	}
+
+	/**
+	 * Public API to update the todo list
+	 * @param todoList The new todo list
+	 */
+	updateTodoList(todoList: TodoListItem[]): void {
+		this.todoList = todoList;
 	}
 
 	/**
@@ -162,25 +173,16 @@ export class TaskAgent {
 		}
 
 		try {
-			if (toolName === delegateWorkToolName) {
-				return this.delegateWork(args);
-			}
-
-			const tool = tools.find(i => i.name === toolName);
+			const tool = this.tools.find(i => i.name === toolName);
 			if (tool === undefined) {
 				return 'Failed to use tool, no tool of that type exists';
 			}
-
-			this.writeEvent(await tool.formatEvent(args));
 
 			if (toolName === attemptCompletionToolName) {
 				return args.result;
 			}
 
-			if (toolName === updateTodoListToolName) {
-				this.todoList = args;
-			}
-			return await tool.enact(args);
+			return await tool.enact(args, this, this.writeEvent);
 		} catch (e: any) {
 			this.writeEvent({
 				title: `Failure(${toolName})`,
@@ -196,17 +198,6 @@ export class TaskAgent {
 		}
 	}
 
-	private async delegateWork(args: any): Promise<string> {
-		if (!(args.agentId in agents)) {
-			Logger.error(`Delegation failure - agent '${args.agentId}' not found`);
-			return `Delegation failure - agent '${args.agentId}' not found`;
-		}
-
-		const childTaskRunner = new TaskAgent(this.writeEvent, args.agentId);
-		this.children.push(childTaskRunner);
-		return childTaskRunner.sendInput(args.task);
-	}
-
 	private updateUsages(usage: CompletionUsageStats) {
 		// Update our context usage and cost usage
 		this.contextUsed = usage.prompt_tokens;
@@ -218,9 +209,9 @@ export class TaskAgent {
 
 	private async startTaskLoop(): Promise<string> {
 		try {
-			let tools = this.agent.tools();
+			this.tools = this.agent.tools();
 			if (this.agent.level > 0) {
-				tools = tools.concat([delegateWorkTool(this.agent.level)]);
+				this.tools = this.tools.concat([delegateWorkTool(this.agent.level)]);
 			}
 
 			let iterations = 0;
@@ -261,7 +252,7 @@ export class TaskAgent {
 						stream: false,
 					},
 					iterations !== maxIterations - 1 // On the final iteration, only give the model the complete work tool
-						? tools
+						? this.tools
 						: [attemptCompletionToolDefinition],
 				);
 

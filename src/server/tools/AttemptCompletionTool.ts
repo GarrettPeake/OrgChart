@@ -1,5 +1,6 @@
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
+import {TaskAgent} from '../tasks/TaskAgent.js';
 
 export const attemptCompletionToolName = 'AttemptCompletion';
 
@@ -21,16 +22,17 @@ export const attemptCompletionToolDefinition: ToolDefinition = {
 		},
 		required: ['result'],
 	},
-	enact: async (args: {result: string}): Promise<string> =>
-		'Handled in Task.ts',
-	formatEvent: async (args: {result: string}): Promise<OrgchartEvent> => ({
-		title: 'Task Complete',
-		id: crypto.randomUUID(),
-		content: [
-			{
-				type: DisplayContentType.TEXT,
-				content: args.result,
-			},
-		],
-	}),
+	enact: async (args: {result: string}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+		writeEvent({
+			title: 'Task Complete',
+			id: crypto.randomUUID(),
+			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.result,
+				},
+			],
+		});
+		return 'Handled in Task.ts';
+	},
 };

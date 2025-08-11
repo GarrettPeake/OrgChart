@@ -42,21 +42,19 @@ export const bashToolDefinition: ToolDefinition = {
 		command: string;
 		requires_approval: boolean;
 		followup_input?: string[];
-	}): Promise<string> => runCommandSafely(args.command, args.followup_input),
-	formatEvent: async (args: {
-		command: string;
-		requires_approval: boolean;
-		followup_input: string[];
-	}): Promise<OrgchartEvent> => ({
-		title: `Bash(${args.command})`,
-		id: crypto.randomUUID(),
-		content: [
-			{
-				type: DisplayContentType.TEXT,
-				content: `Additional Inputs: ${args.followup_input}` || '',
-			},
-		],
-	}), // TODO: Update event to append result
+	}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+		writeEvent({
+			title: `Bash(${args.command})`,
+			id: crypto.randomUUID(),
+			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: `Additional Inputs: ${args.followup_input}` || '',
+				},
+			],
+		});
+		return runCommandSafely(args.command, args.followup_input);
+	},
 };
 
 function runCommandSafely(command: string, inputs?: string[]): string {

@@ -1,5 +1,6 @@
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
+import {TaskAgent} from '../tasks/TaskAgent.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -33,7 +34,18 @@ export const writeToolDefinition: ToolDefinition = {
 	enact: async (args: {
 		file_path: string;
 		content: string;
-	}): Promise<string> => {
+	}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+		writeEvent({
+			title: `Write(${args.file_path})`,
+			id: crypto.randomUUID(),
+			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.content.split('\n').slice(0, 8).join('\n'),
+				},
+			],
+		});
+
 		try {
 			// Ensure the directory exists
 			const dir = path.dirname(args.file_path);
@@ -47,17 +59,4 @@ export const writeToolDefinition: ToolDefinition = {
 			throw new Error(`Failed to write file ${args.file_path}: ${error}`);
 		}
 	},
-	formatEvent: async (args: {
-		file_path: string;
-		content: string;
-	}): Promise<OrgchartEvent> => ({
-		title: `Write(${args.file_path})`,
-		id: crypto.randomUUID(),
-		content: [
-			{
-				type: DisplayContentType.TEXT,
-				content: args.content.split('\n').slice(0, 8).join('\n'),
-			},
-		],
-	}),
 };

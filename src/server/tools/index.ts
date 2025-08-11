@@ -6,6 +6,8 @@ import {bashToolDefinition} from './BashTool.js';
 import {grepToolDefinition} from './GrepTool.js';
 import {fileTreeToolDefinition} from './FileTreeTool.js';
 import {OrgchartEvent} from '../IOTypes.js';
+import {TaskAgent} from '../tasks/TaskAgent.js';
+import {delegateWorkTool} from './DelegateWorkTool.js';
 
 export interface ToolDefinition {
 	name: string;
@@ -16,8 +18,11 @@ export interface ToolDefinition {
 		required?: string[];
 		[key: string]: any;
 	};
-	enact: (args: any) => Promise<string>;
-	formatEvent: (args: any) => Promise<OrgchartEvent>;
+	enact: (
+		args: any,
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	) => Promise<string>;
 }
 
 export const commonTools = [

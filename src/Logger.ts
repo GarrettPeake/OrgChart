@@ -55,7 +55,9 @@ export const initContextLogger = (runId: string, baseAgent: TaskAgent) => {
 					'utf8',
 				);
 			} catch (error) {
-				throw new Error(`Failed to write context for ${agentInstanceId}: ${error}`);
+				throw new Error(
+					`Failed to write context for ${agentInstanceId}: ${error}`,
+				);
 			}
 		},
 	};

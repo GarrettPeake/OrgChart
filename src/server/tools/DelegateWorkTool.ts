@@ -1,6 +1,7 @@
 import {agents} from '../agents/Agents.js';
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
+import {TaskAgent} from '../tasks/TaskAgent.js';
 
 export const delegateWorkToolName = 'DelegateWork';
 
@@ -44,19 +45,24 @@ export const delegateWorkTool = (level: number): ToolDefinition => ({
 		},
 		required: ['task', 'agentId'],
 	},
-	enact: async (args: {agentId: string; task: string}): Promise<string> =>
-		'Handled in Task.ts',
-	formatEvent: async (args: {
-		agentId: string;
-		task: string;
-	}): Promise<OrgchartEvent> => ({
-		title: `Spawn Agent(${agents[args.agentId]})`,
-		id: crypto.randomUUID(),
-		content: [
-			{
-				type: DisplayContentType.TEXT,
-				content: args.task,
-			},
-		],
-	}),
+	enact: async (args: {agentId: string; task: string}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+		writeEvent({
+			title: `Spawn Agent(${agents[args.agentId]})`,
+			id: crypto.randomUUID(),
+			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.task,
+				},
+			],
+		});
+
+		if (!(args.agentId in agents)) {
+			return `Delegation failure - agent '${args.agentId}' not found`;
+		}
+
+		const childTaskRunner = new (await import('../tasks/TaskAgent.js')).TaskAgent(writeEvent, args.agentId);
+		invoker.addChild(childTaskRunner);
+		return childTaskRunner.sendInput(args.task);
+	},
 });

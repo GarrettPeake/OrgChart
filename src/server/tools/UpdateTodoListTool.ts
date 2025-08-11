@@ -1,5 +1,6 @@
 import {ToolDefinition} from './index.js';
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
+import {TaskAgent} from '../tasks/TaskAgent.js';
 
 const descriptionForAgent = `Update your TODO list`;
 export const updateTodoListToolName = 'UpdateTodoList';
@@ -43,29 +44,30 @@ export const updateTodoListToolDefinition: ToolDefinition = {
 		},
 		required: ['todo_items'],
 	},
-	enact: async (_: {todo_items: TodoListItem[]}): Promise<string> =>
-		'TODO list successfully updated',
-	formatEvent: async (args: {
-		todo_items: TodoListItem[];
-	}): Promise<OrgchartEvent> => ({
-		title: `UpdateTodoList`,
-		id: crypto.randomUUID(),
-		content: [
-			{
-				type: DisplayContentType.TEXT,
-				content: args.todo_items
-					.map(
-						i =>
-							` * [${
-								i.status === 'pending'
-									? ' '
-									: i.status === 'in_progress'
-									? '+'
-									: '✓'
-							}] \"${i.title}\"`,
-					)
-					.join('\n'),
-			},
-		],
-	}),
+	enact: async (args: {todo_items: TodoListItem[]}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+		writeEvent({
+			title: `UpdateTodoList`,
+			id: crypto.randomUUID(),
+			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.todo_items
+						.map(
+							i =>
+								` * [${
+									i.status === 'pending'
+										? ' '
+										: i.status === 'in_progress'
+										? '+'
+										: '✓'
+								}] \"${i.title}\"`,
+						)
+						.join('\n'),
+				},
+			],
+		});
+		
+		invoker.updateTodoList(args.todo_items);
+		return 'TODO list successfully updated';
+	},
 };

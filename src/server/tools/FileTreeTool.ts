@@ -1,6 +1,7 @@
 import {ToolDefinition} from './index.js';
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {getFileTree} from '../utils/FileSystemUtils.js';
+import {TaskAgent} from '../tasks/TaskAgent.js';
 
 export const fileTreeToolDefinition: ToolDefinition = {
 	name: 'FileTree',
@@ -16,16 +17,17 @@ export const fileTreeToolDefinition: ToolDefinition = {
 		},
 		required: ['path'],
 	},
-	enact: async (args: {path: string}): Promise<string> =>
-		getFileTree(args.path),
-	formatEvent: async (args: {path: string}): Promise<OrgchartEvent> => ({
-		title: `FileTree(${args.path})`,
-		id: crypto.randomUUID(),
-		content: [
-			{
-				type: DisplayContentType.TEXT,
-				content: 'File tree provided to agent', // TODO: Print the first few lines
-			},
-		],
-	}),
+	enact: async (args: {path: string}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+		writeEvent({
+			title: `FileTree(${args.path})`,
+			id: crypto.randomUUID(),
+			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: 'File tree provided to agent',
+				},
+			],
+		});
+		return await getFileTree(args.path);
+	},
 };
