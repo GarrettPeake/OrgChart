@@ -21,6 +21,7 @@ import {
 	RunningAgentInfo,
 } from '../IOTypes.js';
 import {ToolDefinition} from '../tools/index.js';
+import {Conversation, ConversationParticipant} from './Conversation.js';
 
 /**
  * Implements a task state machine with the following transitions
@@ -37,7 +38,7 @@ export class TaskAgent {
 	private writeEvent: (event: OrgchartEvent) => void;
 	public agent: Agent;
 	public children: TaskAgent[] = [];
-	public status: AgentStatus = AgentStatus.CREATED;
+	public status: AgentStatus = AgentStatus.IDLE;
 	public cost: number = 0.0;
 	public contextUsed: number = 0;
 	public agentInstanceId: string = crypto.randomUUID();
@@ -51,13 +52,18 @@ export class TaskAgent {
 	private currentToolCalls: ToolCall[] = [];
 	private currentToolIndex = 0;
 	private tools: ToolDefinition[] = [];
+	// Conversation management
+	public parentConversation: Conversation;
+	public childConversations: Map<TaskAgent, Conversation> = new Map();
 
 	constructor(
 		writeEvent: (event: OrgchartEvent) => void,
 		agentId: keyof typeof agents,
+		parentConversation: Conversation,
 	) {
 		this.writeEvent = writeEvent;
 		this.agent = agents[agentId]!;
+		this.parentConversation = parentConversation;
 		this.context = [
 			{
 				role: 'system',
@@ -70,8 +76,13 @@ export class TaskAgent {
 	 * Add a specific completion input to context with no extra logic
 	 * @param message The message to add to the context
 	 */
-	addToContext(message: CompletionInputMessage) {
-		this.context.push(message);
+	addToContext(message: CompletionInputMessage, index?: number) {
+		if (index !== undefined && index !== -1) {
+			Logger.info(`Replacing index ${index} with ${message.content}`);
+			this.context[index] = message;
+		} else {
+			this.context.push(message);
+		}
 		ContextLogger.getAgentLogger(this.agentInstanceId)();
 	}
 
@@ -93,8 +104,9 @@ export class TaskAgent {
 	 * Public API to add a child agent
 	 * @param childAgent The TaskAgent to add as a child
 	 */
-	addChild(childAgent: TaskAgent): void {
+	addChild(childAgent: TaskAgent, conversation: Conversation): void {
 		this.children.push(childAgent);
+		this.childConversations.set(childAgent, conversation);
 	}
 
 	/**
@@ -103,6 +115,25 @@ export class TaskAgent {
 	 */
 	updateTodoList(todoList: TodoListItem[]): void {
 		this.todoList = todoList;
+	}
+
+	/**
+	 * Send a message to parent through conversation
+	 */
+	sendMessageToParent(message: string): void {
+		// Since this agent is the child, it sends message as CHILD
+		this.parentConversation.addMessage(ConversationParticipant.CHILD, message);
+	}
+
+	/**
+	 * Send a message to a child through conversation
+	 */
+	sendMessageToChild(child: TaskAgent, message: string): void {
+		const conversation = this.childConversations.get(child);
+		if (conversation) {
+			// Since this agent is the parent, it sends message as PARENT
+			conversation.addMessage(ConversationParticipant.PARENT, message);
+		}
 	}
 
 	/**
@@ -134,46 +165,49 @@ export class TaskAgent {
 	}
 
 	/**
-	 * Add user input to context and transition to THINKING state
-	 * @param input The user message to append to the current context
+	 * Check for messages from parent conversation and handle them
 	 */
-	sendInput(input: string): void {
-		// Append the new message to the context
-		if (
-			this.status !== AgentStatus.CREATED &&
-			this.status !== AgentStatus.IDLE
-		) {
-			// If this is occuring mid conversation, we should insert an agent acknowledgement of the previous tool result before injecting a user message
-			// This prevents the conversation from have two messages in a row from the user/tool which causes the model to ignore one
-			this.addToContext({
-				role: 'assistant',
-				content: "Great, I'll continue working now",
-			});
-		}
-		this.addToContext({
-			role: 'user',
-			content: cleanText(input),
-		});
-		this.writeEvent({
-			title: `Starting Task - ${this.agent.name}`,
-			id: crypto.randomUUID(),
-			content: [
-				{
-					type: DisplayContentType.TEXT,
-					content: `${input}`,
-				},
-			],
-		});
+	private checkParentConversation(): void {
+		if (this.parentConversation.hasMessage(ConversationParticipant.PARENT)) {
+			const message = this.parentConversation.takeMessage(
+				ConversationParticipant.PARENT,
+			);
+			if (message) {
+				// Append the new message to the context
+				if (this.status !== AgentStatus.IDLE) {
+					// If this is occurring mid conversation, we should insert an agent acknowledgement of the previous tool result before injecting a user message
+					// This prevents the conversation from having two messages in a row from the user/tool which causes the model to ignore one
+					this.addToContext({
+						role: 'assistant',
+						content: "Great, I'll continue working now",
+					});
+				}
+				this.addToContext({
+					role: 'user',
+					content: cleanText(message.content),
+				});
+				this.writeEvent({
+					title: `Starting Task - ${this.agent.name}`,
+					id: crypto.randomUUID(),
+					content: [
+						{
+							type: DisplayContentType.TEXT,
+							content: `${message.content}`,
+						},
+					],
+				});
 
-		// Initialize tools for this agent
-		this.tools = this.agent.tools();
-		if (this.agent.level > 0) {
-			this.tools = this.tools.concat([delegateWorkTool(this.agent.level)]);
-		}
+				// Initialize tools for this agent
+				this.tools = this.agent.tools();
+				if (this.agent.level > 0) {
+					this.tools = this.tools.concat([delegateWorkTool(this.agent.level)]);
+				}
 
-		// Reset iteration count and transition to THINKING
-		this.iterationCount = 0;
-		this.status = AgentStatus.THINKING;
+				// Reset iteration count and transition to THINKING
+				this.iterationCount = 0;
+				this.status = AgentStatus.THINKING;
+			}
+		}
 	}
 
 	private async executeToolCall(toolCall: ToolCall): Promise<string> {
@@ -193,11 +227,7 @@ export class TaskAgent {
 				return 'Failed to use tool, no tool of that type exists';
 			}
 
-			if (toolName === attemptCompletionToolName) {
-				return args.result;
-			}
-
-			return await tool.enact(args, this, this.writeEvent);
+			return await tool.enact(args, this, this.writeEvent, toolCall.id);
 		} catch (e: any) {
 			this.writeEvent({
 				title: `Failure(${toolName})`,
@@ -231,12 +261,17 @@ export class TaskAgent {
 
 		// Handle current state
 		switch (this.status) {
-			case AgentStatus.CREATED:
 			case AgentStatus.IDLE:
+				// Check for parent messages in IDLE state
+				this.checkParentConversation();
+				break;
+
 			case AgentStatus.PAUSED:
 				return;
 
 			case AgentStatus.THINKING:
+				// Check for parent messages in THINKING state
+				this.checkParentConversation();
 				this.stepThinking();
 				break;
 
@@ -245,8 +280,46 @@ export class TaskAgent {
 				break;
 
 			case AgentStatus.WAITING:
+				// Check for child messages in WAITING state
+				this.checkChildConversations();
 				this.stepWaiting();
 				break;
+		}
+	}
+
+	/**
+	 * Check for messages from child conversations and handle them
+	 */
+	private checkChildConversations(): void {
+		for (const [child, conversation] of this.childConversations.entries()) {
+			if (conversation.hasMessage(ConversationParticipant.CHILD)) {
+				const message = conversation.takeMessage(ConversationParticipant.CHILD);
+				if (message && conversation.pendingToolCallId) {
+					// Remove the temporary tool response
+					const replaceIndex = this.context.findIndex(
+						e =>
+							e.role === 'tool' &&
+							e.tool_call_id === conversation.pendingToolCallId,
+					);
+
+					// Add the tool result to context
+					this.addToContext(
+						{
+							role: 'tool',
+							content: message.content,
+							tool_call_id: conversation.pendingToolCallId,
+						},
+						replaceIndex,
+					);
+
+					// Clear the pending tool call
+					conversation.pendingToolCallId = undefined;
+
+					// Transition to thinking to continue processing
+					this.status = AgentStatus.THINKING;
+					break; // Only process one child result per step
+				}
+			}
 		}
 	}
 
@@ -278,7 +351,7 @@ export class TaskAgent {
 		this.iterationCount++;
 
 		// On the final iteration, tell the agent that it is being forced to complete the task
-		if (this.iterationCount === maxIterations) {
+		if (this.iterationCount === maxIterations - 1) {
 			this.addToContext({
 				role: 'user',
 				content: `You have run out of time and must provide a response to the requester given the information you already have/work you've already completed. If you were unable to finish the task completely, ensure the requester is made aware and you provide enough context for the requester to continue the task where you left off`,
@@ -287,7 +360,7 @@ export class TaskAgent {
 
 		// Make LLM call
 		const toolsToUse =
-			this.iterationCount < maxIterations
+			this.iterationCount < maxIterations - 1
 				? this.tools
 				: [attemptCompletionToolDefinition];
 
@@ -318,6 +391,7 @@ export class TaskAgent {
 			})
 			.catch(error => {
 				this.isLLMCallInProgress = false;
+				// Handle the error unless agent was paused, in which case we ignore it
 				if (this.status !== AgentStatus.PAUSED) {
 					this.handleError(error);
 				}
@@ -332,7 +406,7 @@ export class TaskAgent {
 
 		// Extract the information we care about
 		const choice = response?.choices?.[0];
-		const message = response?.choices?.[0]?.message;
+		const message = choice?.message;
 
 		// Handle the LLM not producing a response
 		if (!choice || !message) {
@@ -431,6 +505,8 @@ export class TaskAgent {
 
 				// Check if task is complete
 				if (toolCall.function.name === attemptCompletionToolName) {
+					// Send completion message to parent if we have a parent conversation
+					this.sendMessageToParent(toolResult);
 					this.status = AgentStatus.IDLE;
 					return;
 				}
@@ -449,11 +525,8 @@ export class TaskAgent {
 	private stepWaiting(): void {
 		// Check if all children are complete
 		const activeChildren = this.children.filter(
-			child =>
-				child.status !== AgentStatus.IDLE &&
-				child.status !== AgentStatus.CREATED,
+			child => child.status !== AgentStatus.IDLE,
 		);
-
 		if (activeChildren.length === 0) {
 			// All children are done, transition back to thinking
 			this.status = AgentStatus.THINKING;

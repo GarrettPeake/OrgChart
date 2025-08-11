@@ -22,6 +22,7 @@ export interface ToolDefinition {
 		args: any,
 		invoker: TaskAgent,
 		writeEvent: (event: OrgchartEvent) => void,
+		toolCallId?: string,
 	) => Promise<string>;
 }
 

@@ -182,8 +182,8 @@ describe('buildAgentTreeComponents', () => {
 	});
 
 	it('should handle edge case with zero context usage', () => {
-		const rootAgent = new MockTaskAgent('1', 'Root', 0, 0, AgentStatus.CREATED);
+		const rootAgent = new MockTaskAgent('1', 'Root', 0, 0, AgentStatus.IDLE);
 		const output = renderTree(rootAgent);
-		expect(output).toContain('Root: 0.0% - $0.00 (created)');
+		expect(output).toContain('Root: 0.0% - $0.00 (idle)');
 	});
 });

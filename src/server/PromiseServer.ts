@@ -10,6 +10,7 @@ import {
 	StaticAgentInfo,
 } from './IOTypes.js';
 import {TaskAgent} from './tasks/TaskAgent.js';
+import {Conversation, ConversationParticipant} from './tasks/Conversation.js';
 
 /**
  * To separate server and UI, we define a "server" based on a promise
@@ -23,6 +24,7 @@ export class PromiseServer {
 	private events: OrgchartEvent[] = [];
 	private runId: string = crypto.randomUUID();
 	private stepInterval: NodeJS.Timeout | null = null;
+	private userConversation: Conversation;
 
 	constructor(agentId: keyof typeof agents, initialTask: string) {
 		// TODO initialize logger
@@ -30,9 +32,27 @@ export class PromiseServer {
 		Logger.info(
 			`Starting server with agent ${agentId} and task '${initialTask}'`,
 		);
-		this.taskAgent = new TaskAgent(this.upsertEvent.bind(this), agentId);
+
+		// Create conversation between user and main agent
+		this.userConversation = new Conversation();
+        
+        // Send initial task message to the agent
+        this.userConversation.addMessage(
+            ConversationParticipant.PARENT,
+            initialTask,
+        );
+
+		this.taskAgent = new TaskAgent(
+			this.upsertEvent.bind(this),
+			agentId,
+			this.userConversation,
+		);
+
+		// Update the conversation to reference the created task agent
+		(this.userConversation as any).child = this.taskAgent;
+
 		initContextLogger(this.runId, this.taskAgent);
-		this.taskAgent.sendInput(initialTask);
+
 
 		// Start the step interval
 		this.stepInterval = setInterval(() => {
@@ -54,23 +74,14 @@ export class PromiseServer {
 
 	// Agent interaction
 	sendCommand(command: OrgchartCommand) {
-		// Add the command as a task to either the root agent or the currently executing agent
-		// Find the currently executing taskRunner
-		let node = this.taskAgent;
-		while (node.children.length > 0) {
-			let nextNode = node.children[node.children.length - 1];
-			if (
-				nextNode &&
-				nextNode?.status !== AgentStatus.IDLE &&
-				nextNode?.status !== AgentStatus.CREATED
-			) {
-				node = nextNode;
-			}
-		}
 		// Act on the command based on type
 		switch (command.type) {
 			case CommandType.TASK:
-				node.sendInput(command.task);
+				// Send message through the user conversation
+				this.userConversation.addMessage(
+					ConversationParticipant.PARENT,
+					command.task,
+				);
 				break;
 			case CommandType.APPROVE:
 				break;
@@ -94,11 +105,7 @@ export class PromiseServer {
 		let node = this.taskAgent;
 		while (node.children.length > 0) {
 			let nextNode = node.children[node.children.length - 1];
-			if (
-				nextNode &&
-				nextNode?.status !== AgentStatus.IDLE &&
-				nextNode?.status !== AgentStatus.CREATED
-			) {
+			if (nextNode && nextNode?.status !== AgentStatus.IDLE) {
 				node = nextNode;
 			}
 		}

@@ -2,6 +2,7 @@ import {agents} from '../agents/Agents.js';
 import {AgentStatus, DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
 import {TaskAgent} from '../tasks/TaskAgent.js';
+import {Conversation, ConversationParticipant} from '../tasks/Conversation.js';
 
 export const delegateWorkToolName = 'DelegateWork';
 
@@ -49,10 +50,12 @@ export const delegateWorkTool = (level: number): ToolDefinition => ({
 		args: {agentId: string; task: string},
 		invoker: TaskAgent,
 		writeEvent: (event: OrgchartEvent) => void,
+		toolCallId?: string,
 	): Promise<string> => {
+		const eventId = crypto.randomUUID();
 		writeEvent({
-			title: `Spawn Agent(${agents[args.agentId]})`,
-			id: crypto.randomUUID(),
+			title: `DelegateWork(${agents[args.agentId]?.name})`,
+			id: eventId,
 			content: [
 				{
 					type: DisplayContentType.TEXT,
@@ -62,12 +65,32 @@ export const delegateWorkTool = (level: number): ToolDefinition => ({
 		});
 
 		if (!(args.agentId in agents)) {
-			return `Delegation failure - agent '${args.agentId}' not found`;
+			writeEvent({
+				title: `DelegateWork - Failed`,
+				id: eventId,
+				content: [
+					{
+						type: DisplayContentType.TEXT,
+						content: args.task,
+					},
+				],
+			});
+			return `Cannot delegate to agent '${args.agentId}' as it does not exist`;
 		}
 
-		const childTaskRunner = new TaskAgent(writeEvent, args.agentId);
-		invoker.addChild(childTaskRunner);
-		childTaskRunner.sendInput(args.task);
+		// Create conversation between parent and child
+		const conversation = new Conversation();
+		// Store the tool call ID so we can match the result later
+		conversation.pendingToolCallId = toolCallId;
+		// Set the initial message as the task
+		conversation.addMessage(ConversationParticipant.PARENT, args.task);
+
+		const childTaskRunner = new TaskAgent(
+			writeEvent,
+			args.agentId,
+			conversation,
+		);
+		invoker.addChild(childTaskRunner, conversation);
 
 		// Set the invoker to WAITING state so it waits for the child to complete
 		invoker.status = AgentStatus.WAITING;

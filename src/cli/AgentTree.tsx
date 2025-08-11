@@ -45,10 +45,7 @@ export const buildAgentTreeComponents = (
 
 		const agentTextLine = (
 			<Text
-				dimColor={
-					agentInfo.status === AgentStatus.IDLE ||
-					agentInfo.status === AgentStatus.CREATED
-				}
+				dimColor={agentInfo.status === AgentStatus.IDLE}
 				color={
 					agentInfo.status === AgentStatus.THINKING ||
 					agentInfo.status === AgentStatus.ACTING
@@ -60,8 +57,8 @@ export const buildAgentTreeComponents = (
 				bold
 			>
 				{agentInfo.name}:{' '}
-				{((agentInfo.contextUsage / agentInfo.maxContext) * 100).toFixed(1)}% - $
-				{agentInfo.cost.toFixed(2)} ({agentInfo.status})
+				{((agentInfo.contextUsage / agentInfo.maxContext) * 100).toFixed(1)}% -
+				${agentInfo.cost.toFixed(2)} ({agentInfo.status})
 			</Text>
 		);
 

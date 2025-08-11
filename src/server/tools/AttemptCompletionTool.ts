@@ -37,6 +37,6 @@ export const attemptCompletionToolDefinition: ToolDefinition = {
 				},
 			],
 		});
-		return 'Handled in Task.ts';
+		return args.result;
 	},
 };

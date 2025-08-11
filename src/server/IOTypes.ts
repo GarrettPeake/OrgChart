@@ -32,7 +32,6 @@ export type OrgchartCommand =
 
 // RETURN TYPES
 export enum AgentStatus {
-	CREATED = 'created',
 	IDLE = 'idle',
 	THINKING = 'thinking',
 	ACTING = 'acting',
