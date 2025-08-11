@@ -17,7 +17,11 @@ export const fileTreeToolDefinition: ToolDefinition = {
 		},
 		required: ['path'],
 	},
-	enact: async (args: {path: string}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+	enact: async (
+		args: {path: string},
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	): Promise<string> => {
 		writeEvent({
 			title: `FileTree(${args.path})`,
 			id: crypto.randomUUID(),

@@ -31,10 +31,14 @@ export const writeToolDefinition: ToolDefinition = {
 		},
 		required: ['file_path', 'content'],
 	},
-	enact: async (args: {
-		file_path: string;
-		content: string;
-	}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+	enact: async (
+		args: {
+			file_path: string;
+			content: string;
+		},
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	): Promise<string> => {
 		writeEvent({
 			title: `Write(${args.file_path})`,
 			id: crypto.randomUUID(),

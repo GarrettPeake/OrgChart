@@ -38,11 +38,15 @@ export const bashToolDefinition: ToolDefinition = {
 		},
 		required: ['command', 'requires_approval'],
 	},
-	enact: async (args: {
-		command: string;
-		requires_approval: boolean;
-		followup_input?: string[];
-	}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+	enact: async (
+		args: {
+			command: string;
+			requires_approval: boolean;
+			followup_input?: string[];
+		},
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	): Promise<string> => {
 		writeEvent({
 			title: `Bash(${args.command})`,
 			id: crypto.randomUUID(),

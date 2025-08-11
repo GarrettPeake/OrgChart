@@ -32,11 +32,15 @@ export const grepToolDefinition: ToolDefinition = {
 		},
 		required: ['pattern', 'path'],
 	},
-	enact: async (args: {
-		pattern: string;
-		path: string;
-		include: string;
-	}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+	enact: async (
+		args: {
+			pattern: string;
+			path: string;
+			include: string;
+		},
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	): Promise<string> => {
 		const results = grep(args.pattern, args.path, args.include);
 		writeEvent({
 			title: `Grep(${args.pattern} in ${args.include} under ${args.path})`,

@@ -1,5 +1,5 @@
 import {agents} from '../agents/Agents.js';
-import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
+import {AgentStatus, DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
 import {TaskAgent} from '../tasks/TaskAgent.js';
 
@@ -45,7 +45,11 @@ export const delegateWorkTool = (level: number): ToolDefinition => ({
 		},
 		required: ['task', 'agentId'],
 	},
-	enact: async (args: {agentId: string; task: string}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+	enact: async (
+		args: {agentId: string; task: string},
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	): Promise<string> => {
 		writeEvent({
 			title: `Spawn Agent(${agents[args.agentId]})`,
 			id: crypto.randomUUID(),
@@ -61,8 +65,16 @@ export const delegateWorkTool = (level: number): ToolDefinition => ({
 			return `Delegation failure - agent '${args.agentId}' not found`;
 		}
 
-		const childTaskRunner = new (await import('../tasks/TaskAgent.js')).TaskAgent(writeEvent, args.agentId);
+		const childTaskRunner = new TaskAgent(writeEvent, args.agentId);
 		invoker.addChild(childTaskRunner);
-		return childTaskRunner.sendInput(args.task);
+		childTaskRunner.sendInput(args.task);
+
+		// Set the invoker to WAITING state so it waits for the child to complete
+		invoker.status = AgentStatus.WAITING;
+
+		const agent = agents[args.agentId as keyof typeof agents];
+		return `Delegated task to ${
+			agent?.name || args.agentId
+		}. Waiting for completion...`;
 	},
 });

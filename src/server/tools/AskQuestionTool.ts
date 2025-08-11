@@ -20,7 +20,11 @@ export const askQuestionToolDefinition: ToolDefinition = {
 		},
 		required: ['question'],
 	},
-	enact: async (args: {question: string}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+	enact: async (
+		args: {question: string},
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	): Promise<string> => {
 		writeEvent({
 			title: `Question from Agent`,
 			id: crypto.randomUUID(),

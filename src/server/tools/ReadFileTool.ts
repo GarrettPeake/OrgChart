@@ -22,7 +22,11 @@ export const readToolDefinition: ToolDefinition = {
 		},
 		required: ['file_path', 'justification'],
 	},
-	enact: async (args: {file_path: string}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+	enact: async (
+		args: {file_path: string},
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	): Promise<string> => {
 		writeEvent({
 			title: `Read(${args.file_path})`,
 			id: crypto.randomUUID(),

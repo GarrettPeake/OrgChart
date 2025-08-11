@@ -35,10 +35,14 @@ export const editToolDefinition: ToolDefinition = {
 		},
 		required: ['file_path', 'edits'],
 	},
-	enact: async (args: {
-		file_path: string;
-		edits: {old_string: string; new_string: string}[];
-	}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+	enact: async (
+		args: {
+			file_path: string;
+			edits: {old_string: string; new_string: string}[];
+		},
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	): Promise<string> => {
 		writeEvent({
 			title: `Edit File(${args.file_path})`,
 			id: crypto.randomUUID(),
@@ -46,7 +50,12 @@ export const editToolDefinition: ToolDefinition = {
 				{
 					type: DisplayContentType.TEXT,
 					content: args.edits
-						.map((edit, index) => `Edit ${index + 1}:\nSEARCH: ${edit.old_string}\nREPLACE: ${edit.new_string}`)
+						.map(
+							(edit, index) =>
+								`Edit ${index + 1}:\nSEARCH: ${edit.old_string}\nREPLACE: ${
+									edit.new_string
+								}`,
+						)
 						.join('\n\n'),
 				},
 			],

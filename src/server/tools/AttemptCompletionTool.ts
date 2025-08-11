@@ -22,7 +22,11 @@ export const attemptCompletionToolDefinition: ToolDefinition = {
 		},
 		required: ['result'],
 	},
-	enact: async (args: {result: string}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+	enact: async (
+		args: {result: string},
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	): Promise<string> => {
 		writeEvent({
 			title: 'Task Complete',
 			id: crypto.randomUUID(),

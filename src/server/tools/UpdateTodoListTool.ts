@@ -44,7 +44,11 @@ export const updateTodoListToolDefinition: ToolDefinition = {
 		},
 		required: ['todo_items'],
 	},
-	enact: async (args: {todo_items: TodoListItem[]}, invoker: TaskAgent, writeEvent: (event: OrgchartEvent) => void): Promise<string> => {
+	enact: async (
+		args: {todo_items: TodoListItem[]},
+		invoker: TaskAgent,
+		writeEvent: (event: OrgchartEvent) => void,
+	): Promise<string> => {
 		writeEvent({
 			title: `UpdateTodoList`,
 			id: crypto.randomUUID(),
@@ -66,7 +70,7 @@ export const updateTodoListToolDefinition: ToolDefinition = {
 				},
 			],
 		});
-		
+
 		invoker.updateTodoList(args.todo_items);
 		return 'TODO list successfully updated';
 	},

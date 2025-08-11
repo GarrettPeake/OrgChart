@@ -19,10 +19,10 @@ import {TaskAgent} from './tasks/TaskAgent.js';
  * If needed, this promise server could be wrapped or replaced with an HTTP, STDIO, or other
  */
 export class PromiseServer {
-	private promise: Promise<string>;
 	private taskAgent: TaskAgent;
 	private events: OrgchartEvent[] = [];
 	private runId: string = crypto.randomUUID();
+	private stepInterval: NodeJS.Timeout | null = null;
 
 	constructor(agentId: keyof typeof agents, initialTask: string) {
 		// TODO initialize logger
@@ -31,9 +31,13 @@ export class PromiseServer {
 			`Starting server with agent ${agentId} and task '${initialTask}'`,
 		);
 		this.taskAgent = new TaskAgent(this.upsertEvent.bind(this), agentId);
-		this.promise = this.taskAgent.sendInput(initialTask);
-		this.promise.catch(e => Logger.error(e, 'Encountered error'));
 		initContextLogger(this.runId, this.taskAgent);
+		this.taskAgent.sendInput(initialTask);
+
+		// Start the step interval
+		this.stepInterval = setInterval(() => {
+			this.taskAgent.step();
+		}, 250);
 	}
 
 	getRunId() {
@@ -55,7 +59,11 @@ export class PromiseServer {
 		let node = this.taskAgent;
 		while (node.children.length > 0) {
 			let nextNode = node.children[node.children.length - 1];
-			if (nextNode && nextNode?.status !== AgentStatus.EXITED) {
+			if (
+				nextNode &&
+				nextNode?.status !== AgentStatus.IDLE &&
+				nextNode?.status !== AgentStatus.CREATED
+			) {
 				node = nextNode;
 			}
 		}
@@ -81,16 +89,20 @@ export class PromiseServer {
 		return [];
 	}
 
-	async pause() {
+	pause() {
 		// Find the currently executing taskRunner
 		let node = this.taskAgent;
 		while (node.children.length > 0) {
 			let nextNode = node.children[node.children.length - 1];
-			if (nextNode && nextNode?.status !== AgentStatus.EXITED) {
+			if (
+				nextNode &&
+				nextNode?.status !== AgentStatus.IDLE &&
+				nextNode?.status !== AgentStatus.CREATED
+			) {
 				node = nextNode;
 			}
 		}
-		await node?.stopExecution();
+		node?.pause();
 	}
 
 	/**
@@ -100,6 +112,16 @@ export class PromiseServer {
 	 */
 	getEvents(agentId?: string): OrgchartEvent[] {
 		return this.events;
+	}
+
+	/**
+	 * Stop the server and cleanup resources
+	 */
+	stop(): void {
+		if (this.stepInterval) {
+			clearInterval(this.stepInterval);
+			this.stepInterval = null;
+		}
 	}
 }
 
