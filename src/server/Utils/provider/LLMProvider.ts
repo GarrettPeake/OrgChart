@@ -50,8 +50,8 @@ export class LLMProvider {
 			try {
 				request = {
 					...request,
-					tools: convertTools(tools),
-					tool_choice: 'required',
+					tools: tools.length > 0 ? convertTools(tools) : undefined,
+					tool_choice: tools.length > 0 ? 'required' : undefined,
 					usage: {include: true},
 				};
 				const response = (await fetch(this.completionUrl, {

@@ -124,11 +124,10 @@ export const createInitialContent = async () => {
 			{
 				model: 'openai/gpt-oss-120b',
 				messages: context,
-				tool_choice: 'none',
 				temperature: 0.2,
 				stream: false,
 				provider: {
-					sort: 'throughput',
+					sort: 'price',
 				},
 			},
 			[],
@@ -150,7 +149,7 @@ export const createInitialContent = async () => {
 				);
 			}
 		});
-    await fs.writeFile(
+	await fs.writeFile(
 		path.join(getConfig().orgChartDir, 'FULL_CONTEXT.md'),
 		await getFormattedContext(),
 		'utf8',

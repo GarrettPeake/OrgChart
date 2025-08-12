@@ -28,6 +28,7 @@ export class PromiseServer {
 	private userConversation: Conversation;
 
 	constructor(agentId: keyof typeof agents, initialTask: string) {
+		createInitialContent();
 		// TODO initialize logger
 		// TODO initialize config
 		Logger.info(

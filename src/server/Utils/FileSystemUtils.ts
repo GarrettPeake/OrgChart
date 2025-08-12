@@ -127,7 +127,7 @@ export const getFormattedContext = async (
 	const config = getConfig();
 	const gip = new GitIgnoreParser(config.rootDir);
 	gip.loadGitRepoPatterns();
-	gip.addPatterns(config.ignorePatterns);
+	gip.addPatterns([...config.ignorePatterns, 'package-lock.json']); // TODO: Standardize a list of files to be ignored, or even create an AI powered ".aiignore"
 	const absoluteBasePath = path.join(process.cwd(), relativeBasePath);
 	return await buildFormattedContextDfs(absoluteBasePath, gip, maxDepth);
 };
