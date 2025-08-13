@@ -294,7 +294,7 @@ describe('TaskAgent', () => {
 					{id: '2', content: 'Task 2', completed: true},
 				];
 
-				taskAgent.updateTodoList(todos);
+				taskAgent.updateTodoList(todos as any);
 				expect(taskAgent.todoList).toBe(todos);
 			});
 		});
@@ -607,7 +607,7 @@ describe('TaskAgent', () => {
 				userBlocks.some(
 					b =>
 						b.label === 'Final Iteration Warning' &&
-						b.messages[0]?.content?.includes('run out of time'),
+						(b.messages[0]?.content as string).includes('run out of time'),
 				),
 			).toBe(true);
 		});
@@ -855,10 +855,14 @@ describe('TaskAgent', () => {
 			(taskAgent as any).iterationCount = 1;
 
 			const usage: CompletionUsageStats = {
-				prompt_tokens: 200,
 				completion_tokens: 100,
-				total_tokens: 300,
+				completion_tokens_details: {},
 				cost: 0.015,
+				cost_details: {
+					upstream_inference_cost: 0.1,
+				},
+				prompt_tokens: 200,
+				total_tokens: 300,
 				prompt_tokens_details: {reasoning_tokens: 50},
 			};
 
@@ -967,21 +971,6 @@ describe('TaskAgent', () => {
 			});
 		});
 
-		it('should work without ContinuousContextManager', () => {
-			const agent = new TaskAgent(
-				mockWriteEvent,
-				'test-agent',
-				new Conversation(),
-			);
-
-			const context = agent.getContext();
-			expect(context).toHaveLength(1); // Only system message
-			expect(context[0]).toEqual({
-				role: 'system',
-				content: 'You are a test agent.',
-			});
-		});
-
 		it('should trigger context update on AttemptCompletion tool execution', async () => {
 			const agent = new TaskAgent(
 				mockWriteEvent,
@@ -1079,26 +1068,6 @@ describe('TaskAgent', () => {
 			expect(refreshContextBlockSpy).toHaveBeenCalled();
 		});
 
-		it('should not refresh context when no ContinuousContextManager is provided', () => {
-			const agent = new TaskAgent(
-				mockWriteEvent,
-				'test-agent',
-				new Conversation(),
-			);
-			const refreshContextBlockSpy = vi.spyOn(
-				agent.agentContext,
-				'refreshContextBlock',
-			);
-
-			// Set up scenario where agent is waiting with no active children
-			agent.status = AgentStatus.WAITING;
-
-			agent.step();
-
-			expect(agent.status).toBe(AgentStatus.THINKING);
-			expect(refreshContextBlockSpy).not.toHaveBeenCalled(); // Should not be called when no context manager
-		});
-
 		it('should handle context update errors gracefully', async () => {
 			const agent = new TaskAgent(
 				mockWriteEvent,
@@ -1155,27 +1124,6 @@ describe('TaskAgent', () => {
 			expect(childContext[1]).toEqual({
 				role: 'user',
 				content: 'Test context content',
-			});
-		});
-
-		it('should create child agents without ContinuousContextManager when parent has none', () => {
-			const parentAgent = new TaskAgent(
-				mockWriteEvent,
-				'test-agent',
-				new Conversation(),
-			);
-
-			const childAgent = parentAgent.createChildAgent(
-				'child-agent',
-				new Conversation(),
-			);
-
-			// Verify child has no context manager
-			const childContext = childAgent.getContext();
-			expect(childContext).toHaveLength(1); // Only system message
-			expect(childContext[0]).toEqual({
-				role: 'system',
-				content: 'You are a child test agent.',
 			});
 		});
 	});

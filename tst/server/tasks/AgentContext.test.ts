@@ -365,7 +365,7 @@ describe('AgentContext', () => {
 			// System + Tool (assistant message + tool result)
 			expect(messages).toHaveLength(3);
 			expect(messages[1]?.role).toBe('assistant');
-			expect(messages[1]?.tool_calls).toEqual([toolCall]);
+			expect((messages[1] as any)?.tool_calls).toEqual([toolCall]);
 			expect(messages[2]?.role).toBe('tool');
 			expect(messages[2]?.content).toBe('Tool result');
 		});

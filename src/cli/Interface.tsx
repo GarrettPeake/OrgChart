@@ -5,7 +5,7 @@ import {EventStream} from '@cli/EventStream.js';
 import {CommandPanel} from '@cli/CommandPanel.js';
 import {colors, useStdOutDim} from '@cli/Util.js';
 import {getAgentTypes, PromiseServer} from '@server/PromiseServer.js';
-import {CommandType, OrgchartEvent} from '@server/IOTypes.js';
+import {OrgchartEvent} from '@server/IOTypes.js';
 import Logger from '@/Logger.js';
 
 interface InterfaceProps {
@@ -43,7 +43,7 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 	}, [server, events]);
 
 	const handleCommandSubmit = async (command: string) => {
-		server!.sendCommand({type: CommandType.TASK, task: command});
+		server!.sendCommand(command);
 	};
 
 	// Handle tab key navigation

@@ -13,22 +13,7 @@ export type Approval = {
 };
 
 // REQUEST TYPES
-export enum CommandType {
-	TASK,
-	PAUSE,
-	STOP,
-	APPROVE,
-}
-
-export type OrgchartCommand =
-	| {
-			type: CommandType.APPROVE;
-			eventId: string;
-	  }
-	| {
-			type: CommandType.TASK;
-			task: string;
-	  };
+export type OrgchartCommand = string;
 
 // RETURN TYPES
 export enum AgentStatus {
