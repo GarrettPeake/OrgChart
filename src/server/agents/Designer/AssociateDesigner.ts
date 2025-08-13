@@ -4,7 +4,7 @@ import {
 	SystemPromptSharedAgentBehavior,
 } from '../Prompts.js';
 import {getFileTree} from '../../utils/FileSystemUtils.js';
-import {commonTools, readTools, writeTools} from '../../tools/index.js';
+import {getToolset} from '../../tools/index.js';
 
 export const AssociateDesigner: Agent = {
 	id: 'AssociateDesigner',
@@ -16,7 +16,7 @@ export const AssociateDesigner: Agent = {
 	level: 5,
 	temperature: 0.5,
 	model: 'google/gemini-2.5-flash',
-	tools: () => [...commonTools, ...readTools, ...writeTools],
+	tools: getToolset(5, true, true),
 	system_prompt: () =>
 		`
 You are a highly capable **Associate Designer**. Your primary function is to execute small-medium sized tasks which can be performed in less than 3 self-contained changes of design files and no more. If the task is larger than this, you should divide the work into logical chunks and delegate these smaller portions to more junior designers to execute on.

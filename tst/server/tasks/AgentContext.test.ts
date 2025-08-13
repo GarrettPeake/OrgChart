@@ -30,8 +30,8 @@ vi.mock('@/Logger.js', () => ({
 }));
 
 // Mock ContinuousContextManager
-vi.mock('@/server/tasks/ContinuousContext.js', () => ({
-	ContinuousContextManager: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/workflows/ContinuousContext.js', () => ({
+	ContinuousContextManager: vi.fn(() => ({
 		getCurrentContextContent: vi.fn().mockReturnValue('Mock context content'),
 	})),
 }));
@@ -421,8 +421,9 @@ describe('AgentContext', () => {
 	describe('continuous context integration', () => {
 		it('should refresh context blocks from continuous context manager', () => {
 			const mockContent = '# Updated Project Context\n\nNew information here.';
-			(
-				mockContinuousContextManager.getCurrentContextContent as MockedFunction<any>
+			// Correctly mock the method on the instance
+			vi.mocked(
+				mockContinuousContextManager.getCurrentContextContent,
 			).mockReturnValue(mockContent);
 
 			agentContext.refreshContextBlock();
@@ -451,8 +452,9 @@ describe('AgentContext', () => {
 		});
 
 		it('should handle empty context content gracefully', () => {
-			(
-				mockContinuousContextManager.getCurrentContextContent as MockedFunction<any>
+			// Correctly mock the method on the instance
+			vi.mocked(
+				mockContinuousContextManager.getCurrentContextContent,
 			).mockReturnValue('');
 
 			agentContext.refreshContextBlock();
@@ -562,8 +564,8 @@ describe('AgentContext', () => {
 			});
 
 			const messages = agentContext.toCompletionMessages();
-			// Should still work, just with the empty message array
-			expect(messages).toContain(...blocks[0]!.messages);
+			// Just has the system prompt
+			expect(messages).toHaveLength(1);
 		});
 
 		it('should maintain timestamp metadata consistently', () => {

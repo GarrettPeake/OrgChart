@@ -22,7 +22,7 @@ export interface Agent {
 	temperature: number; // Controls the model's level of randomness
 	thinkingBudget?: number;
 	system_prompt: () => string; // A function to generate the system prompt given to the agent
-	tools: () => ToolDefinition[]; // An array of tools usable by the agent
+	tools: ToolDefinition[]; // An array of tools usable by the agent
 }
 
 export const agents: Record<string, Agent> = {

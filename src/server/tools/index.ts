@@ -39,13 +39,16 @@ export const readTools = [
 
 export const writeTools = [writeToolDefinition];
 
-export const tools: ToolDefinition[] = [
-	// Common
-	...commonTools,
-	// Read
-	...readTools,
-	// Write
-	...writeTools,
-	// Special
-	bashToolDefinition,
+export const getToolset = (
+	level: number,
+	canRead: boolean,
+	canWrite: boolean,
+	additionalTools: ToolDefinition[] = [],
+): ToolDefinition[] => [
+	attemptCompletionToolDefinition,
+	updateTodoListToolDefinition(level > 0),
+	delegateWorkTool(level),
+	...(canRead ? readTools : []),
+	...(canWrite ? writeTools : []),
+	...additionalTools,
 ];

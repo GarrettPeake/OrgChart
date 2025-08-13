@@ -1,4 +1,4 @@
-import {commonTools} from '../../tools/index.js';
+import {getToolset} from '@/server/tools/index.js';
 import {Agent} from '../Agents.js';
 import {
 	SystemPromptDelegationInstructions,
@@ -16,7 +16,7 @@ export const TechnicalProductManager: Agent = {
 	level: 9,
 	temperature: 0.7,
 	thinkingBudget: 1000,
-	tools: () => [...commonTools],
+	tools: getToolset(9, false, false),
 	system_prompt: () => `
 You are a highly capable **Technical Program Manager (TPM)** operating at a senior level across engineering and product teams. Your primary focus is on **high-level program direction**, **cross-functional planning**, and **delegation of execution** to the appropriate roles.
 

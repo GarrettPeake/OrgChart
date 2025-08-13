@@ -8,10 +8,13 @@ export const updateTodoListToolName = 'UpdateTodoList';
 export type TodoListItem = {
 	title: string;
 	detailed_description: string;
+	best_agent_for_task?: string;
 	status: 'pending' | 'in_progress' | 'completed';
 };
 
-export const updateTodoListToolDefinition: ToolDefinition = {
+export const updateTodoListToolDefinition = (
+	canDelegate: boolean,
+): ToolDefinition => ({
 	name: updateTodoListToolName,
 	descriptionForAgent,
 	inputSchema: {
@@ -31,6 +34,13 @@ export const updateTodoListToolDefinition: ToolDefinition = {
 							description:
 								'A detailed description of what must be completed in scope of the subtask',
 						},
+						best_agent_for_task: canDelegate
+							? {
+									type: 'string',
+									description:
+										'A detailed description of what must be completed in scope of the subtask',
+							  }
+							: undefined,
 						status: {
 							type: 'string',
 							description: 'A concise title for the ',
@@ -74,4 +84,4 @@ export const updateTodoListToolDefinition: ToolDefinition = {
 		invoker.updateTodoList(args.todo_items);
 		return 'TODO list successfully updated';
 	},
-};
+});

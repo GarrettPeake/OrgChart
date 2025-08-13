@@ -1,6 +1,5 @@
 import {Agent, agents, toStaticAgentInfo} from '../agents/Agents.js';
-import {delegateWorkTool} from '../tools/DelegateWorkTool.js';
-import Logger, {ContextLogger} from '../../Logger.js';
+import Logger from '../../Logger.js';
 import {
 	attemptCompletionToolDefinition,
 	attemptCompletionToolName,
@@ -214,10 +213,7 @@ export class TaskAgent {
 				});
 
 				// Initialize tools for this agent
-				this.tools = this.agent.tools();
-				if (this.agent.level > 0) {
-					this.tools = this.tools.concat([delegateWorkTool(this.agent.level)]);
-				}
+				this.tools = this.agent.tools;
 
 				// Reset iteration count and transition to THINKING
 				this.iterationCount = 0;

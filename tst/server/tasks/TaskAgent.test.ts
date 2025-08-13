@@ -13,7 +13,6 @@ import {
 	type MockedFunction,
 } from 'vitest';
 import {TaskAgent} from '@/server/tasks/TaskAgent.js';
-import {agents} from '@/server/agents/Agents.js';
 import {
 	Conversation,
 	ConversationParticipant,
@@ -100,7 +99,7 @@ vi.mock('@/server/agents/ModelInfo.js', () => ({
 	},
 }));
 
-vi.mock('@/server/tasks/ContinuousContext.js', () => ({
+vi.mock('@/server/workflows/ContinuousContext.js', () => ({
 	ContinuousContextManager: vi.fn().mockImplementation(() => ({
 		getCurrentContextContent: vi.fn().mockReturnValue('Mock project context'),
 		updateContext: vi.fn().mockResolvedValue(undefined),

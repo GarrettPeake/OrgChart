@@ -1,8 +1,8 @@
 import {getFileTree} from '../../utils/FileSystemUtils.js';
-import {commonTools, readTools, writeTools} from '../../tools/index.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {Agent} from '../Agents.js';
 import {SystemPromptSharedAgentBehavior} from '../Prompts.js';
+import { getToolset } from '@/server/tools/index.js';
 
 export const JuniorDesigner: Agent = {
 	model: 'google/gemini-2.5-flash',
@@ -14,7 +14,7 @@ export const JuniorDesigner: Agent = {
 		'Performs small design tasks with a well-defined scope that require modification of only a few design files or components.',
 	level: 4,
 	temperature: 0.6,
-	tools: () => [...commonTools, ...readTools, ...writeTools],
+	tools: getToolset(4, true, true),
 	system_prompt: () => `
 You are a highly capable **Junior Designer**. Your primary function is to execute small design tasks that can be completed by creating or modifying only a few design files or components, focusing on UI/UX design.
 

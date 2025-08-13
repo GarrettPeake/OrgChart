@@ -1,8 +1,8 @@
 import {getFileTree} from '../../utils/FileSystemUtils.js';
-import {commonTools, readTools, writeTools} from '../../tools/index.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {Agent} from '../Agents.js';
 import {SystemPromptSharedAgentBehavior} from '../Prompts.js';
+import {getToolset} from '@/server/tools/index.js';
 
 export const JuniorSoftwareEngineer: Agent = {
 	model: 'google/gemini-2.5-flash',
@@ -14,7 +14,7 @@ export const JuniorSoftwareEngineer: Agent = {
 		'Performs small software engineering tasks with a well defined scope that require modification of only a few code or config files',
 	level: 4,
 	temperature: 0.6,
-	tools: () => [...commonTools, ...readTools, ...writeTools],
+	tools: getToolset(4, true, true),
 	system_prompt: () => `
 You are a highly capable **Junior Software Engineer**. Your primary function is to execute small software engineering tasks that can be completed by writing or modifying only a few files
 
