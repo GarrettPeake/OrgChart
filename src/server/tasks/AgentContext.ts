@@ -32,12 +32,12 @@ export interface ContextBlock {
  */
 export class AgentContext {
 	private blocks: ContextBlock[] = [];
-	private continuousContextManager?: ContinuousContextManager;
+	private continuousContextManager: ContinuousContextManager;
 	private agentInstanceId?: string;
 
 	constructor(
 		systemPrompt: string,
-		continuousContextManager?: ContinuousContextManager,
+		continuousContextManager: ContinuousContextManager,
 		agentInstanceId?: string,
 	) {
 		// Initialize with system block

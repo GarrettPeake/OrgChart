@@ -1,6 +1,6 @@
 # AI-generated ignore patterns
-# Generated on: 2025-08-13T05:46:07.257Z
-# Reasoning: These patterns target typical build artifacts (dist/, build/, out/), package manager directories and lock files (node_modules/, .pnpm-store/, package-lock.json, yarn.lock, pnpm-lock.yaml), caches and temporary folders (.cache/, .temp/), IDE/editor configuration (.vscode/, .idea/), OS-specific metadata (.DS_Store, Thumbs.db), log files (*.log, logs/), test coverage outputs (coverage/, .nyc_output/), and environment-specific configuration files (.env*, .env.local, .env.production). Excluding these reduces token noise while preserving all source code, documentation, and essential configuration files needed for development and AI assistance.
+# Generated on: 2025-08-13T06:30:13.636Z
+# Reasoning: These patterns target typical build artifacts (dist/, build/, out/), package manager artifacts and lock files (node_modules/, .pnpm-store/, package-lock.json, etc.), caches and temporary directories (.cache/, .temp/), IDE/editor configuration directories (.vscode/, .idea/), OS-specific files (.DS_Store, Thumbs.db), log files (*.log, logs/), test coverage outputs (coverage/, .nyc_output/), and environment configuration files (.env, .env.*). License files are also excluded as they are large and not needed for code analysis. The patterns avoid excluding source code, documentation, and essential configuration files.
 
 dist/
 build/
@@ -22,5 +22,7 @@ coverage/
 .nyc_output/
 .env
 .env.*
-.env.local
-.env.production
+LICENSE*
+LICENSE.*
+LICENSE.md
+LICENSE.txt

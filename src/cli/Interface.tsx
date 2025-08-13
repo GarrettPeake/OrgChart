@@ -4,19 +4,10 @@ import {AgentTree} from '@cli/AgentTree.js';
 import {EventStream} from '@cli/EventStream.js';
 import {CommandPanel} from '@cli/CommandPanel.js';
 import {colors, useStdOutDim} from '@cli/Util.js';
-import {getAgentTypes, PromiseServer} from '@server/PromiseServer.js';
+import {PromiseServer} from '@server/PromiseServer.js';
 import {OrgchartEvent} from '@server/IOTypes.js';
-import Logger from '@/Logger.js';
 
-interface InterfaceProps {
-	agent: string;
-	task: string;
-}
-
-export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
-	const [rootAgentInfo, setRootAgentInfo] = useState(
-		getAgentTypes().find(e => e.id === agent)!,
-	);
+export const Interface = () => {
 	const [server, setServer] = useState<PromiseServer>();
 	const currentDir = process.cwd();
 	const screenDimensions = useStdOutDim();
@@ -25,8 +16,8 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 
 	// Initialize the server
 	useEffect(() => {
-		setServer(new PromiseServer(agent, task));
-	}, [agent, task]);
+		setServer(new PromiseServer());
+	}, []);
 
 	// Refresh state from the server through polling
 	useEffect(() => {
@@ -85,13 +76,15 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 			>
 				<Box flexDirection="column" width={screenDimensions[0] - 2}>
 					<Text bold color={colors.accentColor}>
-						OrgChart - {rootAgentInfo.name}
+						OrgChart
 					</Text>
 					<Text color={colors.subtextColor}>
 						Working Directory: {currentDir}
 					</Text>
 					<Text color={colors.subtextColor}>
-						RunId: {server?.getRunId()}, Total Cost: ${totalCost.toFixed(2)}
+						{`RunId: ${server?.getRunId()}, Total Cost: ${totalCost.toFixed(
+							2,
+						)}`}
 					</Text>
 				</Box>
 			</Box>

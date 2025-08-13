@@ -6,6 +6,7 @@ export type OrgChartConfig = {
 	rootDir: string;
 	orgChartDir: string;
 	projectContextFile: string;
+	aiIgnoreFile: string;
 	ignorePatterns: string[];
 	maxAgentIterations: number;
 	llmProvider: LLMProvider;
@@ -23,6 +24,7 @@ const initializeConfig = (): OrgChartConfig => {
 			rootDir,
 			orgChartDir,
 			projectContextFile: path.join(orgChartDir, 'PROJECT.md'),
+			aiIgnoreFile: path.join(orgChartDir, '.aiignore'),
 			ignorePatterns: ['node_modules'],
 			maxAgentIterations: 30,
 			get llmProvider() {

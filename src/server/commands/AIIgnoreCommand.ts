@@ -3,7 +3,25 @@ import {getFileTree} from '../utils/FileSystemUtils.js';
 import {getConfig} from '../utils/Configuration.js';
 import Logger from '@/Logger.js';
 import fs from 'fs/promises';
-import path from 'path';
+
+const SYSTEM_PROMPT = `
+You are an expert in software development and project structure analysis.
+You will be provided with file trees and you must determine which files AI assistants typically won't need access to for code analysis and assistance.
+The file tree will also contain the token count of each file, if the token count is very high for a single file, it is likely best to add an ignore path for it.
+You should only ignore files that are displayed in the file tree. 
+
+You want to focus on:
+- Build artifacts (dist/, build/, out/)
+- License files (LICENSE, LICENSE.md, licenses from other projects included for attribution purposes)
+- Package management files (node_modules/, .pnpm-store/)
+- Lock files (package-lock.json, yarn.lock, pnpm-lock.yaml)
+- Cache directories (.cache/, .temp/)
+- IDE/editor files (.vscode/, .idea/)
+- OS files (.DS_Store, Thumbs.db)
+- Log files (*.log, logs/)
+- Test coverage (coverage/, .nyc_output/)
+- Environment files (.env.local, .env.production)
+`;
 
 export class AIIgnoreCommand extends BaseCommand {
 	name = 'aiignore';
@@ -18,9 +36,6 @@ export class AIIgnoreCommand extends BaseCommand {
 			const fileTree = getFileTree(undefined, 15, true);
 			const config = getConfig();
 
-			// Create a prompt for the AI to analyze the file structure
-			const prompt = this.createAnalysisPrompt(fileTree);
-
 			// Use the gpt-oss model to analyze the file tree
 			const response = await config.llmProvider.chatCompletion(
 				{
@@ -28,22 +43,11 @@ export class AIIgnoreCommand extends BaseCommand {
 					messages: [
 						{
 							role: 'system',
-							content: `You are an expert in software development and project structure analysis. Your task is to analyze a file tree and generate gitignore-style patterns for files and directories that AI assistants typically don't need access to for code analysis and assistance.
-
-Focus on:
-- Build artifacts (dist/, build/, out/)
-- Package management files (node_modules/, .pnpm-store/)
-- Lock files (package-lock.json, yarn.lock, pnpm-lock.yaml)
-- Cache directories (.cache/, .temp/)
-- IDE/editor files (.vscode/, .idea/)
-- OS files (.DS_Store, Thumbs.db)
-- Log files (*.log, logs/)
-- Test coverage (coverage/, .nyc_output/)
-- Environment files (.env.local, .env.production)`,
+							content: SYSTEM_PROMPT,
 						},
 						{
 							role: 'user',
-							content: prompt,
+							content: fileTree,
 						},
 					],
 					temperature: 0.2,
@@ -104,7 +108,6 @@ Focus on:
 			}
 
 			// Save the patterns to .aiignore file
-			const aiIgnorePath = path.join(config.rootDir, '.aiignore');
 			const content = [
 				'# AI-generated ignore patterns',
 				`# Generated on: ${new Date().toISOString()}`,
@@ -113,7 +116,7 @@ Focus on:
 				...result.patterns,
 			].join('\n');
 
-			await fs.writeFile(aiIgnorePath, content, 'utf8');
+			await fs.writeFile(config.aiIgnoreFile, content, 'utf8');
 
 			Logger.info(`Generated ${result.patterns.length} AI ignore patterns`);
 
@@ -122,7 +125,7 @@ Focus on:
 				{
 					patterns: result.patterns,
 					reasoning: result.reasoning,
-					filePath: aiIgnorePath,
+					filePath: config.aiIgnoreFile,
 				},
 			);
 		} catch (error) {
@@ -133,27 +136,5 @@ Focus on:
 				}`,
 			);
 		}
-	}
-
-	private createAnalysisPrompt(fileTree: string): string {
-		return `Please analyze the following file tree structure with token counts and generate gitignore-style patterns for files and directories that AI assistants typically don't need for code analysis and development assistance.
-
-File tree with token counts:
-
-\`\`\`
-${fileTree}
-\`\`\`
-
-Generate patterns that would exclude:
-1. Build outputs and compiled artifacts
-2. Package manager files and lock files
-3. Cache and temporary files
-4. IDE/editor specific files
-5. OS-specific files
-6. Log files and debug outputs
-7. Test coverage reports
-8. Environment-specific configuration files
-
-Focus on common patterns that would reduce noise for AI without excluding important source code, documentation, or configuration files that are essential for understanding the project.`;
 	}
 }

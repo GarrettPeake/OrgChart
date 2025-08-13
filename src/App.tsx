@@ -3,8 +3,8 @@
 import React from 'react';
 import {withFullScreen} from 'fullscreen-ink';
 import meow from 'meow';
-import {Cli} from './cli/Cli.js';
 import Logger from './Logger.js';
+import { Interface } from './cli/Interface.js';
 
 export const cli = meow(
 	`
@@ -26,4 +26,4 @@ Logger.info(
 	'======================= STARTING NEW RUN ===============================',
 );
 
-withFullScreen(<Cli />, {exitOnCtrlC: true}).start();
+withFullScreen(<Interface/>, {exitOnCtrlC: true}).start();
