@@ -208,7 +208,7 @@ describe('ContinuousContextManager', () => {
 				startFileWatching as MockedFunction<typeof startFileWatching>
 			).mock.calls;
 			expect(mockCalls).toHaveLength(1);
-			fileWatchingCallback = mockCalls[0][1];
+			fileWatchingCallback = mockCalls[0]![1];
 
 			vi.clearAllMocks();
 		});
@@ -310,7 +310,7 @@ describe('ContinuousContextManager', () => {
 				startFileWatching as MockedFunction<typeof startFileWatching>
 			).mock.calls;
 			expect(mockCalls).toHaveLength(1);
-			fileWatchingCallback = mockCalls[0][1];
+			fileWatchingCallback = mockCalls[0]![1];
 
 			vi.clearAllMocks();
 		});
@@ -498,7 +498,7 @@ describe('ContinuousContextManager', () => {
 			// Verify the GitIgnoreParser was configured with additional patterns
 			const gitIgnoreParser = (
 				startFileWatching as MockedFunction<typeof startFileWatching>
-			).mock.calls[0][2];
+			).mock.calls[0]![2];
 			expect(gitIgnoreParser).toBeDefined();
 		});
 	});
@@ -529,7 +529,7 @@ describe('ContinuousContextManager', () => {
 				startFileWatching as MockedFunction<typeof startFileWatching>
 			).mock.calls;
 			expect(mockCalls).toHaveLength(1);
-			fileWatchingCallback = mockCalls[0][1];
+			fileWatchingCallback = mockCalls[0]![1];
 		});
 
 		it('should use relative paths in mutation tracking', async () => {

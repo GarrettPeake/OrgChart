@@ -89,6 +89,7 @@ export const delegateWorkTool = (level: number): ToolDefinition => ({
 			writeEvent,
 			args.agentId,
 			conversation,
+			invoker.continuousContextManager,
 		);
 		invoker.addChild(childTaskRunner, conversation);
 

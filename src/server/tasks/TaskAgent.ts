@@ -38,7 +38,7 @@ import {ContinuousContextManager} from '../workflows/ContinuousContext.js';
  */
 export class TaskAgent {
 	private writeEvent: (event: OrgchartEvent) => void;
-	public agent: Agent;
+	public readonly agent: Agent;
 	public children: TaskAgent[] = [];
 	public status: AgentStatus = AgentStatus.IDLE;
 	public cost: number = 0.0;
@@ -46,7 +46,7 @@ export class TaskAgent {
 	public agentInstanceId: string = crypto.randomUUID();
 	public todoList: TodoListItem[] = [];
 	// Smart context management using blocks
-	public agentContext: AgentContext;
+	public readonly agentContext: AgentContext;
 	// Step-based execution state
 	private iterationCount: number = 0;
 	private isLLMCallInProgress = false;
@@ -58,13 +58,13 @@ export class TaskAgent {
 	public parentConversation: Conversation;
 	public childConversations: Map<TaskAgent, Conversation> = new Map();
 	// Context management
-	private continuousContextManager?: ContinuousContextManager;
+	public readonly continuousContextManager: ContinuousContextManager;
 
 	constructor(
 		writeEvent: (event: OrgchartEvent) => void,
 		agentId: keyof typeof agents,
 		parentConversation: Conversation,
-		continuousContextManager?: ContinuousContextManager,
+		continuousContextManager: ContinuousContextManager,
 	) {
 		this.writeEvent = writeEvent;
 		this.agent = agents[agentId]!;
