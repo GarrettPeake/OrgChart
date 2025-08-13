@@ -39,13 +39,7 @@ Focus on:
 - OS files (.DS_Store, Thumbs.db)
 - Log files (*.log, logs/)
 - Test coverage (coverage/, .nyc_output/)
-- Environment files (.env.local, .env.production)
-
-Return ONLY a JSON object with this structure:
-{
-  "patterns": ["pattern1", "pattern2", ...],
-  "reasoning": "Brief explanation of the patterns chosen"
-}`,
+- Environment files (.env.local, .env.production)`,
 						},
 						{
 							role: 'user',
@@ -56,6 +50,33 @@ Return ONLY a JSON object with this structure:
 					stream: false,
 					provider: {
 						sort: 'throughput',
+					},
+					response_format: {
+						type: 'json_schema',
+						json_schema: {
+							name: 'aiignore_patterns',
+							strict: true,
+							schema: {
+								type: 'object',
+								properties: {
+									patterns: {
+										type: 'array',
+										items: {
+											type: 'string',
+										},
+										description:
+											'Array of gitignore-style patterns for files/directories AI should ignore',
+									},
+									reasoning: {
+										type: 'string',
+										description:
+											'Brief explanation of the patterns chosen and why they help reduce AI context noise',
+									},
+								},
+								required: ['patterns', 'reasoning'],
+								additionalProperties: false,
+							},
+						},
 					},
 				},
 				[],
@@ -68,7 +89,7 @@ Return ONLY a JSON object with this structure:
 				return this.error('No response received from AI model');
 			}
 
-			// Parse the JSON response
+			// Parse the structured JSON response
 			let result;
 			try {
 				result = JSON.parse(message);
@@ -77,6 +98,7 @@ Return ONLY a JSON object with this structure:
 				return this.error('Failed to parse AI response as JSON');
 			}
 
+			// Validate the structured response (should be guaranteed by schema)
 			if (!result.patterns || !Array.isArray(result.patterns)) {
 				return this.error('Invalid response format from AI model');
 			}

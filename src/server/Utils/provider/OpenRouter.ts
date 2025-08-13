@@ -95,7 +95,7 @@ export interface ChatCompletionRequest {
 
 	// Allows to force the model to produce specific output format.
 	// See models page and note on this docs page for which models support it.
-	response_format?: {type: 'json_object'};
+	response_format?: {type: 'json_schema'; json_schema: any};
 
 	stop?: string | string[];
 	stream?: boolean; // Enable streaming

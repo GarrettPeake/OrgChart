@@ -96,4 +96,87 @@ ${testProjectRoot}/
             `.trim(),
 		);
 	});
+
+	it('includes token counts when includeTokenCounts is true', async () => {
+		// Create test files with known content
+		await createTestFile('test1.txt', 'Hello world this is a test file');
+		await createTestFile('test2.js', 'function test() { return "hello"; }');
+		await createTestFile(
+			'subfolder/test3.md',
+			'# Markdown\n\nThis is markdown content',
+		);
+
+		const result = getFileTree(testProjectRoot, 15, true);
+
+		// Should contain token counts for files
+		expect(result).toContain('test1.txt - ');
+		expect(result).toContain(' tokens');
+		expect(result).toContain('test2.js - ');
+		expect(result).toContain('test3.md - ');
+
+		// Token counts should be numbers greater than 0
+		const tokenMatches = result.match(/(\d+) tokens/g);
+		expect(tokenMatches).toBeTruthy();
+		expect(tokenMatches!.length).toBeGreaterThan(0);
+
+		// Extract token counts and verify they're reasonable numbers
+		tokenMatches!.forEach(match => {
+			const count = parseInt(match.split(' ')[0]!);
+			expect(count).toBeGreaterThan(5);
+			expect(count).toBeLessThan(20);
+		});
+	});
+
+	it('does not include token counts when includeTokenCounts is false', async () => {
+		await createTestFile('test1.txt', 'Hello world this is a test file');
+		await createTestFile('test2.js', 'function test() { return "hello"; }');
+
+		const result = getFileTree(testProjectRoot, 15, false);
+
+		// Should not contain token information
+		expect(result).not.toContain('tokens');
+		expect(result).toContain('test1.txt');
+		expect(result).toContain('test2.js');
+	});
+
+	it('shows 0 tokens for binary or unreadable files when includeTokenCounts is true', async () => {
+		// Create a file that would cause encoding issues (simulate binary)
+		await createTestFile(
+			'binary.bin',
+			Buffer.from([0x00, 0x01, 0x02, 0xff]).toString('binary'),
+		);
+
+		const result = getFileTree(testProjectRoot, 15, true);
+
+		// Should handle encoding errors gracefully
+		expect(result).toContain('binary.bin - 0 tokens');
+		// The actual token count will depend on how tiktoken handles the binary content
+		expect(result).toMatch(/binary\.bin - \d+ tokens/);
+	});
+
+	it('includes token counts for nested directory structure', async () => {
+		await createTestFile('folder1/file1.txt', 'Content in file 1');
+		await createTestFile(
+			'folder1/folder2/file2.txt',
+			'Content in file 2 with more text',
+		);
+		await createTestFile(
+			'folder1/folder2/file3.js',
+			'console.log("hello world");',
+		);
+
+		const result = getFileTree(testProjectRoot, 15, true);
+
+		// Should show directory structure with token counts for files
+		expect(result).toContain('folder1/');
+		expect(result).toContain('folder2/');
+		expect(result).toContain('file1.txt - ');
+		expect(result).toContain('file2.txt - ');
+		expect(result).toContain('file3.js - ');
+		expect(result).toContain('tokens');
+
+		// Count the number of token references
+		const tokenMatches = result.match(/\d+ tokens/g);
+		expect(tokenMatches).toHaveLength(3); // Should have 3 files with token counts
+	});
 });

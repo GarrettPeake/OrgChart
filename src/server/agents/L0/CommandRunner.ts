@@ -13,7 +13,7 @@ export const CommandRunner: Agent = {
 		'Executes a provided shell command and provides a summary of the results. You must provide the specific command/s you wish to be run surrounded by backticks, i.e. "Build the project" is not valid, you must specify "Run `npm run build` and `npm run test`". If you do not know the specific command, discover it before delegating to this agent',
 	level: 0,
 	temperature: 0.1,
-	tools: getToolset(0, false, false, [bashToolDefinition]),
+	tools: () => getToolset(0, false, false, [bashToolDefinition]),
 	system_prompt: () => `
 You are a command runner, you run the exact bash commands provided to you and report the results. You do not do anything else. You do not make assumptions about the user's intent, if they do not provide the specific commands to run, you do not run them.
 

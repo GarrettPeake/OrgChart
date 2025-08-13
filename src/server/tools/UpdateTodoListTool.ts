@@ -38,12 +38,13 @@ export const updateTodoListToolDefinition = (
 							? {
 									type: 'string',
 									description:
-										'A detailed description of what must be completed in scope of the subtask',
+										'The id of the agent you believe would be best suited to perform this task. If you believe you are the **best** agent to perform this task, you can use "me" as the value',
 							  }
 							: undefined,
 						status: {
 							type: 'string',
-							description: 'A concise title for the ',
+							description:
+								'The future status of the task assuming all parallel tool calls succeed',
 							enum: ['pending', 'in_progress', 'completed'],
 						},
 					},

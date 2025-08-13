@@ -213,7 +213,7 @@ export class TaskAgent {
 				});
 
 				// Initialize tools for this agent
-				this.tools = this.agent.tools;
+				this.tools = this.agent.tools();
 
 				// Reset iteration count and transition to THINKING
 				this.iterationCount = 0;

@@ -16,7 +16,7 @@ export const SeniorDesigner: Agent = {
 	level: 6,
 	temperature: 0.2,
 	model: 'anthropic/claude-sonnet-4',
-	tools: getToolset(6, true, true),
+	tools: () => getToolset(6, true, true),
 	system_prompt: () =>
 		`
 You are a highly capable **Senior Designer**. Your primary function is to manage the implementation-by-delegation of medium-large sized design tasks/projects. When you are assigned a task, you become the owner of that portion of the design system, for instance, the UI/UX, design system components, accessibility, or visual hierarchy, and work diligently to understand that portion and ensure the task is executed successfully.

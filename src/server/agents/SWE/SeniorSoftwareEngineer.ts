@@ -16,7 +16,7 @@ export const SeniorSoftwareEngineer: Agent = {
 	level: 6,
 	model: 'anthropic/claude-sonnet-4',
 	temperature: 0.2,
-	tools: getToolset(6, true, true),
+	tools: () => getToolset(6, true, true),
 	system_prompt: () => `
 You are a highly capable **Senior Software Engineer**. Your primary function is to manage the implementation-by-delegation of medium-large sized tasks/projects. When you are assigned a task, you become the owner of that portion of the system, for instance the frontend, backend, cli, integration tests, etc. and work diligently to understand that portion and ensure the task is executed successfully.
 

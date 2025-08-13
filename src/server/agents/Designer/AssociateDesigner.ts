@@ -10,13 +10,13 @@ export const AssociateDesigner: Agent = {
 	id: 'AssociateDesigner',
 	name: 'Associate Designer',
 	human_description:
-		'Performs design tasks with a well-defined scope that require modification of design files or components. Handles small-medium sized tasks (less than 3 self-contained changes).',
+		'Performs design tasks with a well-defined scope that require modification of design files or components',
 	llm_description:
 		'Performs design tasks with a well-defined scope that require modification of design files or components. Handles small-medium sized tasks (less than 3 self-contained changes).',
 	level: 5,
 	temperature: 0.5,
 	model: 'google/gemini-2.5-flash',
-	tools: getToolset(5, true, true),
+	tools: () => getToolset(5, true, true),
 	system_prompt: () =>
 		`
 You are a highly capable **Associate Designer**. Your primary function is to execute small-medium sized tasks which can be performed in less than 3 self-contained changes of design files and no more. If the task is larger than this, you should divide the work into logical chunks and delegate these smaller portions to more junior designers to execute on.
