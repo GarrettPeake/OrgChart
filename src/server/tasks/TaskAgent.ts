@@ -22,6 +22,8 @@ import {
 } from '../IOTypes.js';
 import {ToolDefinition} from '../tools/index.js';
 import {Conversation, ConversationParticipant} from './Conversation.js';
+import {AgentContext} from './AgentContext.js';
+import {ContinuousContextManager} from '../workflows/ContinuousContext.js';
 
 /**
  * Implements a task state machine with the following transitions
@@ -43,8 +45,8 @@ export class TaskAgent {
 	public contextUsed: number = 0;
 	public agentInstanceId: string = crypto.randomUUID();
 	public todoList: TodoListItem[] = [];
-	// Initialize context with system prompt and user input
-	public context: CompletionInputMessage[];
+	// Smart context management using blocks
+	public agentContext: AgentContext;
 	// Step-based execution state
 	private iterationCount: number = 0;
 	private isLLMCallInProgress = false;
@@ -55,35 +57,38 @@ export class TaskAgent {
 	// Conversation management
 	public parentConversation: Conversation;
 	public childConversations: Map<TaskAgent, Conversation> = new Map();
+	// Context management
+	private continuousContextManager?: ContinuousContextManager;
 
 	constructor(
 		writeEvent: (event: OrgchartEvent) => void,
 		agentId: keyof typeof agents,
 		parentConversation: Conversation,
+		continuousContextManager?: ContinuousContextManager,
 	) {
 		this.writeEvent = writeEvent;
 		this.agent = agents[agentId]!;
 		this.parentConversation = parentConversation;
-		this.context = [
-			{
-				role: 'system',
-				content: this.agent.system_prompt(),
-			},
-		];
-	}
+		this.continuousContextManager = continuousContextManager;
 
-	/**
-	 * Add a specific completion input to context with no extra logic
-	 * @param message The message to add to the context
-	 */
-	addToContext(message: CompletionInputMessage, index?: number) {
-		if (index !== undefined && index !== -1) {
-			Logger.info(`Replacing index ${index} with ${message.content}`);
-			this.context[index] = message;
-		} else {
-			this.context.push(message);
+		// Initialize AgentContext with ContinuousContextManager
+		this.agentContext = new AgentContext(
+			this.agent.system_prompt(),
+			continuousContextManager,
+			this.agentInstanceId,
+		);
+
+		// Seed the context with current project context if available
+		if (continuousContextManager) {
+			const currentContext =
+				continuousContextManager.getCurrentContextContent();
+			if (currentContext) {
+				this.agentContext.addContextBlock(
+					currentContext,
+					'I understand the current project context and will use this information to assist effectively.',
+				);
+			}
 		}
-		ContextLogger.getAgentLogger(this.agentInstanceId)();
 	}
 
 	/**
@@ -110,30 +115,26 @@ export class TaskAgent {
 	}
 
 	/**
+	 * Create a child TaskAgent with the same ContinuousContextManager
+	 */
+	createChildAgent(
+		agentId: keyof typeof agents,
+		parentConversation: Conversation,
+	): TaskAgent {
+		return new TaskAgent(
+			this.writeEvent,
+			agentId,
+			parentConversation,
+			this.continuousContextManager,
+		);
+	}
+
+	/**
 	 * Public API to update the todo list
 	 * @param todoList The new todo list
 	 */
 	updateTodoList(todoList: TodoListItem[]): void {
 		this.todoList = todoList;
-	}
-
-	/**
-	 * Send a message to parent through conversation
-	 */
-	sendMessageToParent(message: string): void {
-		// Since this agent is the child, it sends message as CHILD
-		this.parentConversation.addMessage(ConversationParticipant.CHILD, message);
-	}
-
-	/**
-	 * Send a message to a child through conversation
-	 */
-	sendMessageToChild(child: TaskAgent, message: string): void {
-		const conversation = this.childConversations.get(child);
-		if (conversation) {
-			// Since this agent is the parent, it sends message as PARENT
-			conversation.addMessage(ConversationParticipant.PARENT, message);
-		}
 	}
 
 	/**
@@ -165,6 +166,25 @@ export class TaskAgent {
 	}
 
 	/**
+	 * Send a message to parent through conversation
+	 */
+	private sendMessageToParent(message: string): void {
+		// Since this agent is the child, it sends message as CHILD
+		this.parentConversation.addMessage(ConversationParticipant.CHILD, message);
+	}
+
+	/**
+	 * Send a message to a child through conversation
+	 */
+	private sendMessageToChild(child: TaskAgent, message: string): void {
+		const conversation = this.childConversations.get(child);
+		if (conversation) {
+			// Since this agent is the parent, it sends message as PARENT
+			conversation.addMessage(ConversationParticipant.PARENT, message);
+		}
+	}
+
+	/**
 	 * Check for messages from parent conversation and handle them
 	 */
 	private checkParentConversation(): void {
@@ -177,15 +197,11 @@ export class TaskAgent {
 				if (this.status !== AgentStatus.IDLE) {
 					// If this is occurring mid conversation, we should insert an agent acknowledgement of the previous tool result before injecting a user message
 					// This prevents the conversation from having two messages in a row from the user/tool which causes the model to ignore one
-					this.addToContext({
-						role: 'assistant',
-						content: "Great, I'll continue working now",
-					});
+					this.agentContext.addAssistantBlock(
+						"Great, I'll continue working now",
+					);
 				}
-				this.addToContext({
-					role: 'user',
-					content: cleanText(message.content),
-				});
+				this.agentContext.addParentBlock(cleanText(message.content));
 				this.writeEvent({
 					title: `Starting Task - ${this.agent.name}`,
 					id: crypto.randomUUID(),
@@ -253,6 +269,13 @@ export class TaskAgent {
 	}
 
 	/**
+	 * Get the current context as CompletionInputMessage array for compatibility
+	 */
+	getContext(): CompletionInputMessage[] {
+		return this.agentContext.toCompletionMessages();
+	}
+
+	/**
 	 * Execute one step of the agent's state machine
 	 */
 	step(): void {
@@ -295,21 +318,10 @@ export class TaskAgent {
 			if (conversation.hasMessage(ConversationParticipant.CHILD)) {
 				const message = conversation.takeMessage(ConversationParticipant.CHILD);
 				if (message && conversation.pendingToolCallId) {
-					// Remove the temporary tool response
-					const replaceIndex = this.context.findIndex(
-						e =>
-							e.role === 'tool' &&
-							e.tool_call_id === conversation.pendingToolCallId,
-					);
-
-					// Add the tool result to context
-					this.addToContext(
-						{
-							role: 'tool',
-							content: message.content,
-							tool_call_id: conversation.pendingToolCallId,
-						},
-						replaceIndex,
+					// Update the pending tool result in the context
+					this.agentContext.updateToolBlockResult(
+						conversation.pendingToolCallId,
+						message.content,
 					);
 
 					// Clear the pending tool call
@@ -352,10 +364,10 @@ export class TaskAgent {
 
 		// On the final iteration, tell the agent that it is being forced to complete the task
 		if (this.iterationCount === maxIterations - 1) {
-			this.addToContext({
-				role: 'user',
-				content: `You have run out of time and must provide a response to the requester given the information you already have/work you've already completed. If you were unable to finish the task completely, ensure the requester is made aware and you provide enough context for the requester to continue the task where you left off`,
-			});
+			this.agentContext.addUserBlock(
+				`You have run out of time and must provide a response to the requester given the information you already have/work you've already completed. If you were unable to finish the task completely, ensure the requester is made aware and you provide enough context for the requester to continue the task where you left off`,
+				'Final Iteration Warning',
+			);
 		}
 
 		// Make LLM call
@@ -368,7 +380,7 @@ export class TaskAgent {
 			.llmProvider.chatCompletion(
 				{
 					model: this.agent.model,
-					messages: this.context,
+					messages: this.agentContext.toCompletionMessages(),
 					tool_choice: 'required',
 					temperature: this.agent.temperature,
 					stream: false,
@@ -440,16 +452,15 @@ export class TaskAgent {
 			return;
 		}
 
-		// Add assistant message to context
-		this.addToContext({
-			role: 'assistant',
-			content: '',
-			tool_calls: message.tool_calls,
-		});
-
-		// Handle tool calls
+		// Handle tool calls - create pending tool blocks for each one
 		if (message.tool_calls && message.tool_calls.length > 0) {
 			this.currentToolCalls = message.tool_calls;
+
+			// Create pending tool blocks for each tool call
+			for (const toolCall of message.tool_calls) {
+				this.agentContext.addPendingToolBlock(toolCall);
+			}
+
 			this.currentToolIndex = 0;
 			this.status = AgentStatus.ACTING;
 		} else {
@@ -496,19 +507,22 @@ export class TaskAgent {
 					} and received ${toolResult.slice(0, 50)}`,
 				);
 
-				// Add tool result to context
-				this.addToContext({
-					role: 'tool',
-					content: toolResult,
-					tool_call_id: toolCall.id,
-				});
+				// Update the pending tool block with the actual result
+				this.agentContext.updateToolBlockResult(toolCall.id, toolResult);
 
 				// Check if task is complete
 				if (toolCall.function.name === attemptCompletionToolName) {
+					// Trigger context update when task is completed
+					this.triggerContextUpdate();
 					// Send completion message to parent if we have a parent conversation
 					this.sendMessageToParent(toolResult);
 					this.status = AgentStatus.IDLE;
 					return;
+				}
+
+				// Check if this was a delegate work tool - if so, trigger context update
+				if (toolCall.function.name === 'delegate_work') {
+					this.triggerContextUpdate();
 				}
 
 				// Move to next tool
@@ -528,8 +542,31 @@ export class TaskAgent {
 			child => child.status !== AgentStatus.IDLE,
 		);
 		if (activeChildren.length === 0) {
-			// All children are done, transition back to thinking
+			// All children are done, refresh context and transition back to thinking
+			this.refreshProjectContext();
 			this.status = AgentStatus.THINKING;
+		}
+	}
+
+	/**
+	 * Refresh the project context from the ContinuousContextManager
+	 */
+	private refreshProjectContext(): void {
+		if (this.continuousContextManager) {
+			this.agentContext.refreshContextBlock();
+			Logger.info(`Agent ${this.agent.name} refreshed project context`);
+		}
+	}
+
+	/**
+	 * Trigger a context update when significant work is completed
+	 */
+	private triggerContextUpdate(): void {
+		if (this.continuousContextManager) {
+			this.continuousContextManager.updateContext().catch(error => {
+				Logger.error('Failed to update continuous context:', error);
+			});
+			Logger.info(`Agent ${this.agent.name} triggered context update`);
 		}
 	}
 

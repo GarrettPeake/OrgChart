@@ -1,14 +1,23 @@
 import Logger from '@/Logger.js';
 import {CompletionInputMessage} from '../utils/provider/OpenRouter.js';
-import {getFormattedContext} from '../utils/FileSystemUtils.js';
+import {
+	getFormattedContext,
+	startFileWatching,
+} from '../utils/FileSystemUtils.js';
 import {getConfig} from '../utils/Configuration.js';
+import {GitIgnoreParser} from '../utils/GitIgnoreParser.js';
 import fs from 'fs/promises';
 import path from 'path';
+import {AsyncSubscription} from '@parcel/watcher';
 
-const systemPrompt = `
-You must maintain a single document which accurately, completely, and concisely conveys the entirety of knowledge surrounding a given project.
-You will be provided with the current version of the document by the user as well as a summary of actions made since the last update that need to be incorporated and you must output the entirety of an updated version.
-The goal of the document is to enable anyone to simply read the document and be immediately prepared to contribute to the project.
+const initializePromptPart =
+	'You will be provided with a document containing the content of every file in the project and must output the entirety of the initial version of the document';
+const updatePromptPart =
+	'You will be provided with the current version of the document by the user as well as a summary of actions made since the last update that need to be incorporated and you must output the entirety of an updated version.';
+
+const systemPrompt = (initializing: boolean) => `
+You must maintain a single document which accurately, completely, and concisely conveys the entirety of knowledge surrounding a given project. The goal of the document is to enable anyone to simply read the document and be immediately prepared to contribute to the project.
+${initializing ? initializePromptPart : updatePromptPart}
 
 CRITICAL REQUIREMENT: Base your analysis ONLY on what actually exists in the project files. Do not make assumptions about intent, purpose, or functionality that is not explicitly evident from the code, configuration files, or documentation. If the project appears incomplete or certain functionality is missing, describe what IS there, not what might be intended.
 
@@ -22,7 +31,7 @@ NEVER make assumptions about project intent. For example:
 - GOOD: "The project contains TypeScript files that define agent configurations, a CLI interface using the ink library, and LLM provider abstractions for making API calls to language models"
 - BAD: "This is an AI orchestration platform designed to revolutionize multi-agent workflows"
 
-If the project code currently enables the processing of CSV files through defined processors, state exactly that. Do not extrapolate that this project is "Big data pipeline tooling" or make any assumptions beyond what the code actually does.
+If the project code currently enables the processing of CSV files through defined processors, state exactly that rather tahn extrapolating that this project is "Big data pipeline tooling." Do not make any assumptions beyond what the code actually does.
 
 # Architecture
 
@@ -56,7 +65,7 @@ For each architectural component identified above, describe the actual interface
 1. **Triggers** - How external systems, users, or other components interact with this component
 2. **Effects** - How this component interacts with its dependencies or external systems
 
-You must assign a symbol to each interaction so it can be distinctly referenced later in this document.
+Triggers and effects are distinct and they do not form a 1:1 mapping. Do not use a table to classify them, use the example template below. You must assign a distinct symbol to each trigger and a distinct symbol to each effect so each can be distinctly referenced later in this document.
 
 The entrypoint of the program should always be included in the triggers.
 
@@ -229,40 +238,211 @@ Example style information:
 - **Architecture**: Follows MVC pattern with separate controller, service, and repository layers
 `;
 
-/**
- * Retrieve the current context, this will block if there are updates being made
- */
-export const createInitialContent = async () => {
-	const context: CompletionInputMessage[] = [
-		{
-			role: 'system',
-			content: systemPrompt,
-		},
-		{
-			role: 'user',
-			content: await getFormattedContext(),
-		},
-	];
-	getConfig()
-		.llmProvider.chatCompletion(
+interface FileMutation {
+	oldContent?: string;
+	newContent?: string;
+	type: 'CREATED' | 'UPDATED' | 'DELETED';
+}
+
+export class ContinuousContextManager {
+	private fileMutations: Map<string, FileMutation> = new Map();
+	private contextContent: string = '';
+	private isUpdating: boolean = false;
+	private watchSubscription?: () => void;
+	private gitIgnoreParser?: GitIgnoreParser;
+
+	constructor() {
+		// No automatic initialization - caller must call initialize()
+	}
+
+	async initialize(): Promise<void> {
+		await this.createInitialContext();
+		await this.startFileWatching();
+	}
+
+	private async createInitialContext() {
+		const context: CompletionInputMessage[] = [
 			{
-				model: 'openai/gpt-oss-120b',
-				messages: context,
-				temperature: 0.2,
-				stream: false,
-				provider: {
-					sort: 'price',
-				},
+				role: 'system',
+				content: systemPrompt(true),
 			},
-			[],
-		)
-		.then(async response => {
+			{
+				role: 'user',
+				content: await getFormattedContext(),
+			},
+		];
+
+		await this.executeContextUpdate(context, 'Error creating initial context:');
+	}
+
+	private async startFileWatching() {
+		const config = getConfig();
+
+		// Initialize GitIgnoreParser if not already done
+		if (!this.gitIgnoreParser) {
+			this.gitIgnoreParser = new GitIgnoreParser(config.rootDir);
+			this.gitIgnoreParser.loadGitRepoPatterns();
+			this.gitIgnoreParser.addPatterns(config.ignorePatterns);
+		}
+
+		try {
+			this.watchSubscription = await startFileWatching(
+				config.rootDir,
+				this.handleFileEvent.bind(this),
+				this.gitIgnoreParser,
+			);
+		} catch (error) {
+			Logger.error('Error starting file watcher:', error);
+		}
+	}
+
+	private async handleFileEvent(event: any) {
+		const config = getConfig();
+		const relativePath = path.relative(config.rootDir, event.path);
+
+		try {
+			switch (event.type) {
+				case 'create':
+					const newContent = await fs.readFile(event.path, 'utf8');
+					this.fileMutations.set(relativePath, {
+						newContent,
+						type: 'CREATED',
+					});
+					break;
+
+				case 'update':
+					const currentContent = await fs.readFile(event.path, 'utf8');
+					const existingMutation = this.fileMutations.get(relativePath);
+
+					this.fileMutations.set(relativePath, {
+						oldContent:
+							existingMutation?.oldContent ??
+							existingMutation?.newContent ??
+							'',
+						newContent: currentContent,
+						type: 'UPDATED',
+					});
+					break;
+
+				case 'delete':
+					const existingForDelete = this.fileMutations.get(relativePath);
+					this.fileMutations.set(relativePath, {
+						oldContent:
+							existingForDelete?.oldContent ??
+							existingForDelete?.newContent ??
+							'',
+						type: 'DELETED',
+					});
+					break;
+			}
+		} catch (error) {
+			Logger.error(`Error handling file event for ${relativePath}:`, error);
+		}
+	}
+
+	private generateMutationDocument(): string {
+		if (this.fileMutations.size === 0) {
+			return '# File mutations since last document update\n\nNo file changes detected.';
+		}
+
+		let document = '# File mutations since last document update\n\n';
+
+		for (const [filename, mutation] of this.fileMutations) {
+			document += `## ${filename} - ${mutation.type}\n\n`;
+
+			if (mutation.type === 'CREATED') {
+				document += '```\n';
+				document += mutation.newContent || '';
+				document += '\n```\n\n';
+			} else if (mutation.type === 'DELETED') {
+				document += '```\n';
+				document += mutation.oldContent || '';
+				document += '\n```\n\n';
+			} else if (mutation.type === 'UPDATED') {
+				document += '### Previous content\n';
+				document += '```\n';
+				document += mutation.oldContent || '';
+				document += '\n```\n\n';
+
+				document += '### New content\n';
+				document += '```\n';
+				document += mutation.newContent || '';
+				document += '\n```\n\n';
+			}
+		}
+
+		return document;
+	}
+
+	public getCurrentContextContent(): string {
+		return this.contextContent;
+	}
+
+	public async updateContext(): Promise<void> {
+		if (this.isUpdating) {
+			Logger.info('Context update already in progress, skipping...');
+			return;
+		}
+
+		// Check if there are any mutations to process
+		if (this.fileMutations.size === 0) {
+			Logger.info('No file mutations detected, skipping context update');
+			return;
+		}
+
+		this.isUpdating = true;
+
+		try {
+			const mutationDocument = this.generateMutationDocument();
+			const fullContext = `${this.contextContent}\n\n${mutationDocument}`;
+
+			const context: CompletionInputMessage[] = [
+				{
+					role: 'system',
+					content: systemPrompt(false),
+				},
+				{
+					role: 'user',
+					content: fullContext,
+				},
+			];
+
+			await this.executeContextUpdate(context, 'Error updating context:');
+
+			// Clear mutations after successful update
+			this.fileMutations.clear();
+		} catch (error) {
+			Logger.error('Error updating context:', error);
+		} finally {
+			this.isUpdating = false;
+		}
+	}
+
+	private async executeContextUpdate(
+		context: CompletionInputMessage[],
+		errorMessage: string,
+	): Promise<void> {
+		try {
+			const response = await getConfig().llmProvider.chatCompletion(
+				{
+					model: 'openai/gpt-oss-120b',
+					messages: context,
+					temperature: 0.2,
+					stream: false,
+					provider: {
+						sort: 'throughput',
+					},
+				},
+				[],
+			);
+
 			const choice = response?.choices?.[0];
 			const message = choice?.message;
 			if (message) {
+				this.contextContent = message.content!;
 				await fs.writeFile(
 					getConfig().projectContextFile,
-					message.content!,
+					this.contextContent,
 					'utf8',
 				);
 			} else {
@@ -272,14 +452,20 @@ export const createInitialContent = async () => {
 					)}`,
 				);
 			}
-		});
-	await fs.writeFile(
-		path.join(getConfig().orgChartDir, 'FULL_CONTEXT.md'),
-		await getFormattedContext(),
-		'utf8',
-	);
-};
 
-const updateContext = () => {
-	return '';
-};
+			await fs.writeFile(
+				path.join(getConfig().orgChartDir, 'FULL_CONTEXT.md'),
+				await getFormattedContext(),
+				'utf8',
+			);
+		} catch (error) {
+			Logger.error(errorMessage, error);
+		}
+	}
+
+	public destroy() {
+		if (this.watchSubscription) {
+			this.watchSubscription();
+		}
+	}
+}

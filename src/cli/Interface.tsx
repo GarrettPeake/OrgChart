@@ -40,7 +40,7 @@ export const Interface: React.FC<InterfaceProps> = ({agent, task}) => {
 		}, 250);
 
 		return () => clearInterval(interval);
-	}, [server]);
+	}, [server, events]);
 
 	const handleCommandSubmit = async (command: string) => {
 		server!.sendCommand({type: CommandType.TASK, task: command});

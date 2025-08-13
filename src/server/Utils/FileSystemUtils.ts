@@ -6,6 +6,7 @@ import path from 'path';
 import pdf from 'pdf-parse/lib/pdf-parse.js';
 import mammoth from 'mammoth';
 import Logger from '@/Logger.js';
+import {subscribe} from '@parcel/watcher';
 
 // Get all files as a tree structure that are not part of the gitignore or known
 export const getFileTree = (
@@ -179,5 +180,46 @@ const buildFormattedContextDfs = async (
 		return `${levelPrefix}${path.basename(
 			absolutePath,
 		)} (Failed to read content)`;
+	}
+};
+
+export const startFileWatching = async (
+	watchDir: string,
+	onFileEvent: (event: any) => Promise<void>,
+	gitIgnoreParser?: GitIgnoreParser,
+): Promise<() => void> => {
+	const config = getConfig();
+	const gip =
+		gitIgnoreParser ||
+		(() => {
+			const parser = new GitIgnoreParser(config.rootDir);
+			parser.loadGitRepoPatterns();
+			parser.addPatterns(config.ignorePatterns);
+			return parser;
+		})();
+
+	try {
+		const subscription = await subscribe(watchDir, async (err, events) => {
+			if (err) {
+				Logger.error('File watcher error:', err);
+				return;
+			}
+
+			for (const event of events) {
+				const relativePath = path.relative(watchDir, event.path);
+
+				// Skip ignored files
+				if (gip.isIgnored(event.path)) {
+					continue;
+				}
+
+				await onFileEvent(event);
+			}
+		});
+
+		return () => subscription.unsubscribe();
+	} catch (error) {
+		Logger.error('Error starting file watcher:', error);
+		throw error;
 	}
 };

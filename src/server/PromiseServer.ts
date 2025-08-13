@@ -11,7 +11,7 @@ import {
 } from './IOTypes.js';
 import {TaskAgent} from './tasks/TaskAgent.js';
 import {Conversation, ConversationParticipant} from './tasks/Conversation.js';
-import {createInitialContent} from './tasks/ContinuousContext.js';
+import {ContinuousContextManager} from './workflows/ContinuousContext.js';
 
 /**
  * To separate server and UI, we define a "server" based on a promise
@@ -21,16 +21,27 @@ import {createInitialContent} from './tasks/ContinuousContext.js';
  * If needed, this promise server could be wrapped or replaced with an HTTP, STDIO, or other
  */
 export class PromiseServer {
-	private taskAgent: TaskAgent;
+	private taskAgent?: TaskAgent;
+	private userConversation?: Conversation;
 	private events: OrgchartEvent[] = [];
 	private runId: string = crypto.randomUUID();
 	private stepInterval: NodeJS.Timeout | null = null;
-	private userConversation: Conversation;
+	private contextManager: ContinuousContextManager;
 
 	constructor(agentId: keyof typeof agents, initialTask: string) {
-		createInitialContent();
-		// TODO initialize logger
-		// TODO initialize config
+		this.contextManager = new ContinuousContextManager();
+		this.initialize(agentId, initialTask);
+	}
+
+	private async initialize(agentId: keyof typeof agents, initialTask: string) {
+		try {
+			// Wait for context manager to initialize before creating agents
+			await this.contextManager.initialize();
+			Logger.info('ContinuousContext initialized successfully');
+		} catch (error) {
+			Logger.error('Failed to initialize context manager:', error);
+		}
+
 		Logger.info(
 			`Starting server with agent ${agentId} and task '${initialTask}'`,
 		);
@@ -48,6 +59,7 @@ export class PromiseServer {
 			this.upsertEvent.bind(this),
 			agentId,
 			this.userConversation,
+			this.contextManager, // Pass context manager to TaskAgent
 		);
 
 		// Update the conversation to reference the created task agent
@@ -57,7 +69,7 @@ export class PromiseServer {
 
 		// Start the step interval
 		this.stepInterval = setInterval(() => {
-			this.taskAgent.step();
+			this.taskAgent?.step();
 		}, 250);
 	}
 
@@ -75,6 +87,14 @@ export class PromiseServer {
 
 	// Agent interaction
 	sendCommand(command: OrgchartCommand) {
+		// Guard against calling before initialization completes
+		if (!this.userConversation) {
+			Logger.warn(
+				'Received command before PromiseServer initialization completed, ignoring',
+			);
+			return;
+		}
+
 		// Act on the command based on type
 		switch (command.type) {
 			case CommandType.TASK:
@@ -94,6 +114,19 @@ export class PromiseServer {
 	getCommandOptions() {}
 
 	getAgentGraph(): RunningAgentInfo {
+		if (!this.taskAgent) {
+			// Return a placeholder while initialization is in progress
+			return {
+				id: 'initializing',
+				name: 'Initializing...',
+				description: 'Server is initializing, please wait...',
+				cost: 0,
+				status: AgentStatus.IDLE,
+				contextUsage: 0,
+				maxContext: 0,
+				children: [],
+			};
+		}
 		return this.taskAgent.toRunningAgentInfo();
 	}
 
@@ -102,6 +135,11 @@ export class PromiseServer {
 	}
 
 	pause() {
+		// Guard against calling before initialization completes
+		if (!this.taskAgent) {
+			return;
+		}
+
 		// Find the currently executing taskRunner
 		let node = this.taskAgent;
 		while (node.children.length > 0) {
@@ -130,6 +168,7 @@ export class PromiseServer {
 			clearInterval(this.stepInterval);
 			this.stepInterval = null;
 		}
+		this.contextManager.destroy();
 	}
 }
 

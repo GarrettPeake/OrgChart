@@ -48,10 +48,16 @@ export const initContextLogger = (runId: string, baseAgent: TaskAgent) => {
 				const file_path = path.join(baseDir, ...agentPath, 'context.json');
 				const dir = path.dirname(file_path);
 				await fs.mkdir(dir, {recursive: true});
-				// Write the content to the file
+				// Write the content to the file - use the new AgentContext structure
+				const contextData = {
+					blocks: taskAgent.agentContext.getBlocks(),
+					completionMessages: taskAgent.agentContext.toCompletionMessages(),
+					stats: taskAgent.agentContext.getStats(),
+					debugSummary: taskAgent.agentContext.generateDebugSummary(),
+				};
 				await fs.writeFile(
 					file_path,
-					JSON.stringify(taskAgent.context, null, 4),
+					JSON.stringify(contextData, null, 4),
 					'utf8',
 				);
 			} catch (error) {
