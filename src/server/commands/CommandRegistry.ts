@@ -52,10 +52,20 @@ export class CommandRegistry {
 	public getAvailableCommands(
 		prefix: string,
 	): {name: string; description: string}[] {
-		return Array.from(this.commands.values())
-			.map(cmd => cmd.getAvailableCommands())
-			.flat()
+		const noArgsCommands = Array.from(this.commands.values())
+			.map(c => ({
+				name: c.name,
+				description: c.description,
+			}))
 			.filter(c => c.name.startsWith(prefix.trim().slice(1)));
+		if (noArgsCommands.length === 1) {
+			return Array.from(this.commands.values())
+				.map(cmd => cmd.getAvailableCommands())
+				.flat()
+				.filter(c => c.name.startsWith(prefix.trim().slice(1)));
+		} else {
+			return noArgsCommands;
+		}
 	}
 
 	public isCommand(input: string): boolean {
