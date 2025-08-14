@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import {
 	describe,
 	it,
@@ -23,14 +17,13 @@ import {
 	OrgchartEvent,
 } from '@/server/IOTypes.js';
 import {getConfig} from '@/server/utils/Configuration.js';
-import {cleanText} from '@/shared/utils/TextUtils.js';
 import {
 	CompletionUsageStats,
 	ToolCall,
 } from '@/server/utils/provider/OpenRouter.js';
 import {attemptCompletionToolName} from '@/server/tools/AttemptCompletionTool.js';
 import {ContinuousContextManager} from '@/server/workflows/ContinuousContext.js';
-import Logger, {ContextLogger} from '@/Logger.js';
+import Logger from '@/Logger.js';
 
 // Mock all dependencies
 vi.mock('@/Logger.js', () => ({
@@ -91,7 +84,7 @@ vi.mock('@/server/tools/DelegateWorkTool.js', () => ({
 	}),
 }));
 
-vi.mock('@/server/agents/ModelInfo.js', () => ({
+vi.mock('@/server/utils/provider/ModelInfo.js', () => ({
 	ModelInformation: {
 		'test-model': {
 			context: 8192,

@@ -27,7 +27,7 @@ You want to focus on:
 export class AIIgnoreCommand extends BaseCommand {
 	name = 'aiignore';
 	description =
-		'Generate AI-focused ignore patterns using GPT analysis of the file tree';
+		'Generate a .aiignore file using an LLM analysis of the file tree and token counts';
 
 	getAvailableCommands(): {name: string; description: string}[] {
 		return [

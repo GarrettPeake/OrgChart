@@ -5,7 +5,7 @@ import {
 	attemptCompletionToolName,
 } from '../tools/AttemptCompletionTool.js';
 import {TodoListItem} from '../tools/UpdateTodoListTool.js';
-import {ModelInformation} from '../agents/ModelInfo.js';
+import {ModelInformation} from '../utils/provider/ModelInfo.js';
 import {getConfig} from '../utils/Configuration.js';
 import {cleanText} from '@/shared/utils/TextUtils.js';
 import {

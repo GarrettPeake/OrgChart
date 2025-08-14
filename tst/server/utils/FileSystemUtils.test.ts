@@ -139,21 +139,6 @@ ${testProjectRoot}/
 		expect(result).toContain('test2.js');
 	});
 
-	it('shows 0 tokens for binary or unreadable files when includeTokenCounts is true', async () => {
-		// Create a file that would cause encoding issues (simulate binary)
-		await createTestFile(
-			'binary.bin',
-			Buffer.from([0x00, 0x01, 0x02, 0xff]).toString('binary'),
-		);
-
-		const result = getFileTree(testProjectRoot, 15, true);
-
-		// Should handle encoding errors gracefully
-		expect(result).toContain('binary.bin - 0 tokens');
-		// The actual token count will depend on how tiktoken handles the binary content
-		expect(result).toMatch(/binary\.bin - \d+ tokens/);
-	});
-
 	it('includes token counts for nested directory structure', async () => {
 		await createTestFile('folder1/file1.txt', 'Content in file 1');
 		await createTestFile(

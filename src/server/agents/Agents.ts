@@ -8,7 +8,7 @@ import {JuniorSoftwareEngineer} from './SWE/JuniorSoftwareEngineer.js';
 import {AssociateDesigner} from './Designer/AssociateDesigner.js';
 import {JuniorDesigner} from './Designer/JuniorDesigner.js';
 import {SeniorDesigner} from './Designer/SeniorDesigner.js';
-import {LLMModel} from './ModelInfo.js';
+import {LLMModel} from '../utils/provider/ModelInfo.js';
 import {CommandRunner} from './L0/CommandRunner.js';
 import {StaticAgentInfo} from '../IOTypes.js';
 

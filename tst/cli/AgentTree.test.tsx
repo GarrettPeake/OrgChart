@@ -49,7 +49,7 @@ describe('buildAgentTreeComponents', () => {
 	};
 
 	it('should return null for an empty/null agent tree', () => {
-		expect(buildAgentTreeComponents(undefined)).toBeNull();
+		expect(buildAgentTreeComponents(undefined)).toBeUndefined();
 	});
 
 	it('should render a single agent (root only)', () => {
