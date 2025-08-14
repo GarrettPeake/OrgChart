@@ -3,6 +3,7 @@ import {getFileTree} from '../utils/FileSystemUtils.js';
 import {getConfig} from '../utils/Configuration.js';
 import Logger from '@/Logger.js';
 import fs from 'fs/promises';
+import {PromiseServer} from '../PromiseServer.js';
 
 const SYSTEM_PROMPT = `
 You are an expert in software development and project structure analysis.
@@ -28,7 +29,16 @@ export class AIIgnoreCommand extends BaseCommand {
 	description =
 		'Generate AI-focused ignore patterns using GPT analysis of the file tree';
 
-	async execute(args: string[]): Promise<CommandResult> {
+	getAvailableCommands(): {name: string; description: string}[] {
+		return [
+			{
+				name: this.name,
+				description: this.description,
+			},
+		];
+	}
+
+	async execute(args: string[], server: PromiseServer): Promise<CommandResult> {
 		try {
 			Logger.info('Starting AI ignore analysis...');
 

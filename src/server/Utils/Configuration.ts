@@ -1,11 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import {LLMProvider} from './provider/LLMProvider.js';
+import {agents} from '../agents/Agents.js';
 
 export type OrgChartConfig = {
 	rootDir: string;
 	orgChartDir: string;
 	projectContextFile: string;
+	defaultAgent: keyof typeof agents;
 	aiIgnoreFile: string;
 	ignorePatterns: string[];
 	maxAgentIterations: number;
@@ -26,6 +28,7 @@ const initializeConfig = (): OrgChartConfig => {
 			projectContextFile: path.join(orgChartDir, 'PROJECT.md'),
 			aiIgnoreFile: path.join(orgChartDir, '.aiignore'),
 			ignorePatterns: ['node_modules'],
+			defaultAgent: 'TechnicalProductManager',
 			maxAgentIterations: 30,
 			get llmProvider() {
 				if (!llmProvider) {

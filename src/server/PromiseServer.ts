@@ -13,7 +13,6 @@ import {TaskAgent} from './tasks/TaskAgent.js';
 import {Conversation, ConversationParticipant} from './tasks/Conversation.js';
 import {ContinuousContextManager} from './workflows/ContinuousContext.js';
 import {CommandRegistry} from './commands/CommandRegistry.js';
-import {TechnicalProductManager} from './agents/Management/TechnicalProductManager.js';
 import {getConfig} from './utils/Configuration.js';
 
 /**
@@ -34,6 +33,7 @@ export class PromiseServer {
 	private isAgentStarted: boolean = false;
 	private isInitialized: boolean = false;
 	private commandQueue: OrgchartCommand[] = [];
+	private agentOverride?: keyof typeof agents;
 
 	constructor() {
 		this.contextManager = new ContinuousContextManager();
@@ -115,7 +115,7 @@ export class PromiseServer {
 			});
 			// Execute command and emit result as event
 			this.commandRegistry
-				.executeCommand(command)
+				.executeCommand(command, this)
 				.then(result => {
 					this.upsertEvent({
 						id: commandId,
@@ -146,7 +146,7 @@ export class PromiseServer {
 			// If agent hasn't started yet, start it with the first command
 			if (!this.isAgentStarted) {
 				Logger.info(`Starting agent with first command: ${command}`);
-				this.startAgent(TechnicalProductManager.id);
+				this.startAgent(this.agentOverride || getConfig().defaultAgent);
 			}
 			// Send message through the user conversation
 			this.userConversation!.addMessage(
@@ -158,9 +158,7 @@ export class PromiseServer {
 
 	getCommandOptions(prefix: string) {
 		if (this.commandRegistry.isCommand(prefix)) {
-			return this.commandRegistry
-				.listCommands()
-				.filter(c => c.name.startsWith(prefix.trim().slice(1)));
+			return this.commandRegistry.getAvailableCommands(prefix);
 		}
 		return [];
 	}
@@ -208,6 +206,10 @@ export class PromiseServer {
 			this.stepInterval = null;
 		}
 		this.contextManager.destroy();
+	}
+
+	setAgentOverride(agentId: keyof typeof agents) {
+		this.agentOverride = agentId;
 	}
 }
 

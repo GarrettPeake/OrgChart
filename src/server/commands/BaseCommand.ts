@@ -1,3 +1,5 @@
+import {PromiseServer} from '../PromiseServer.js';
+
 export interface CommandResult {
 	success: boolean;
 	message: string;
@@ -8,7 +10,12 @@ export abstract class BaseCommand {
 	abstract name: string;
 	abstract description: string;
 
-	abstract execute(args: string[]): Promise<CommandResult>;
+	abstract execute(
+		args: string[],
+		server: PromiseServer,
+	): Promise<CommandResult>;
+
+	abstract getAvailableCommands(): {name: string; description: string}[];
 
 	protected parseArgs(input: string): string[] {
 		return input

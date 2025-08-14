@@ -3,7 +3,6 @@ import {Box, Text, useInput} from 'ink';
 import TextInput from 'ink-text-input';
 import {colors} from '@cli/Util.js';
 import {PromiseServer} from '@/server/PromiseServer.js';
-import Logger from '@/Logger.js';
 
 export type CommandPanelStatus = 'text' | 'options';
 

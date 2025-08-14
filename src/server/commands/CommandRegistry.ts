@@ -1,18 +1,24 @@
 import {BaseCommand, CommandResult} from './BaseCommand.js';
 import {AIIgnoreCommand} from './AIIgnoreCommand.js';
+import {ChangeAgentCommand} from './ChangeAgentCommand.js';
+import {PromiseServer} from '../PromiseServer.js';
 
 export class CommandRegistry {
 	private commands: Map<string, BaseCommand> = new Map();
 
 	constructor() {
 		this.registerCommand(new AIIgnoreCommand());
+		this.registerCommand(new ChangeAgentCommand());
 	}
 
 	private registerCommand(command: BaseCommand): void {
 		this.commands.set(command.name.toLowerCase(), command);
 	}
 
-	public async executeCommand(input: string): Promise<CommandResult> {
+	public async executeCommand(
+		input: string,
+		server: PromiseServer,
+	): Promise<CommandResult> {
 		const trimmed = input.trim();
 		if (!trimmed.startsWith('/')) {
 			return {success: false, message: 'Commands must start with /'};
@@ -32,7 +38,7 @@ export class CommandRegistry {
 		}
 
 		try {
-			return await command.execute(args);
+			return await command.execute(args, server);
 		} catch (error) {
 			return {
 				success: false,
@@ -43,11 +49,13 @@ export class CommandRegistry {
 		}
 	}
 
-	public listCommands(): {name: string; description: string}[] {
-		return Array.from(this.commands.values()).map(cmd => ({
-			name: cmd.name,
-			description: cmd.description,
-		}));
+	public getAvailableCommands(
+		prefix: string,
+	): {name: string; description: string}[] {
+		return Array.from(this.commands.values())
+			.map(cmd => cmd.getAvailableCommands())
+			.flat()
+			.filter(c => c.name.startsWith(prefix.trim().slice(1)));
 	}
 
 	public isCommand(input: string): boolean {

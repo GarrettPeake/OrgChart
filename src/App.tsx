@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import React from 'react';
-import {withFullScreen} from 'fullscreen-ink';
 import meow from 'meow';
 import Logger from './Logger.js';
 import {Interface} from './cli/Interface.js';

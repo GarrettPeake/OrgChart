@@ -49,7 +49,6 @@ export const Interface = () => {
 		}
 	});
 
-	const footerHeight = 6; // 4 lines of text plus border
 	const bottomMargin = 0;
 
 	return (
@@ -107,7 +106,6 @@ export const Interface = () => {
 				borderDimColor
 				borderColor={colors.subtextColor}
 				marginBottom={bottomMargin}
-				height={footerHeight}
 			>
 				<CommandPanel onCommandSubmit={handleCommandSubmit} server={server} />
 			</Box>
