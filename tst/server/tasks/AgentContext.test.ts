@@ -1,17 +1,7 @@
-import {
-	describe,
-	it,
-	expect,
-	beforeEach,
-	vi,
-	type MockedFunction,
-} from 'vitest';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {AgentContext, type BlockType} from '@/server/tasks/AgentContext.js';
 import {ContinuousContextManager} from '@/server/workflows/ContinuousContext.js';
-import {
-	CompletionInputMessage,
-	ToolCall,
-} from '@/server/utils/provider/OpenRouter.js';
+import {ToolCall} from '@/server/utils/provider/OpenRouter.js';
 import Logger from '@/Logger.js';
 
 // Mock Logger

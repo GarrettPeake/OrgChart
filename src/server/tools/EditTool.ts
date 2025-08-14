@@ -87,12 +87,12 @@ export const editToolDefinition: ToolDefinition = {
 						from: {
 							type: 'string',
 							description:
-								'The starting search string (1-2 full lines for unique matching)',
+								'The starting search string which is unique across the entire file (use 1-2 full lines for unique matching)',
 						},
 						to: {
 							type: 'string',
 							description:
-								'The ending search string (1-2 full lines for unique matching)',
+								'The ending search string which is unique across the entire file (use 1-2 full lines for unique matching)',
 						},
 						new_content: {
 							type: 'string',
@@ -150,16 +150,13 @@ export const editToolDefinition: ToolDefinition = {
 					return;
 				}
 
-				const toIndex = modifiedContent.indexOf(
-					edit.to,
-					fromIndex + edit.from.length,
-				);
+				const toIndex = modifiedContent.indexOf(edit.to);
 
-				if (toIndex === -1) {
+				if (toIndex === -1 || toIndex < fromIndex) {
 					failures.push(
 						`Edit ${i + 1}: Could not find 'to' string: "${
 							edit.to
-						}" after 'from' string`,
+						}" at or after 'from' string: "${edit.from}"`,
 					);
 					return;
 				}
@@ -169,10 +166,21 @@ export const editToolDefinition: ToolDefinition = {
 					edit.from,
 					fromIndex + 1,
 				);
-				if (secondFromIndex !== -1 && secondFromIndex <= toIndex) {
+				if (secondFromIndex !== -1) {
 					failures.push(
 						`Edit ${i + 1}: 'from' string "${
 							edit.from
+						}" is not unique - found multiple matches`,
+					);
+					return;
+				}
+
+				// Check if there are multiple matches for the from string
+				const secondToIndex = modifiedContent.indexOf(edit.to, toIndex + 1);
+				if (secondToIndex !== -1) {
+					failures.push(
+						`Edit ${i + 1}: 'to' string "${
+							edit.to
 						}" is not unique - found multiple matches`,
 					);
 					return;
@@ -195,10 +203,7 @@ export const editToolDefinition: ToolDefinition = {
 
 			for (const edit of sortedEdits) {
 				const fromIndex = modifiedContent.indexOf(edit.from);
-				const toIndex = modifiedContent.indexOf(
-					edit.to,
-					fromIndex + edit.from.length,
-				);
+				const toIndex = modifiedContent.indexOf(edit.to);
 				const endIndex = toIndex + edit.to.length;
 
 				modifiedContent =
