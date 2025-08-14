@@ -21,8 +21,7 @@ All work you do must be attributable to a TODO list item, if additional work is 
 
 ## Attempting Completion
 
-Upon marking every task on your TODO list as complete you must attempt completion. To do this, you should:
-- Provide clear, detailed explanation in the following format
+Upon marking every task on your TODO list as complete you must attempt completion which will show your work to the requester of the task. Provide clear, detailed explanation in the following format:
 
 \`\`\`
 # Assumptions, Decisions, Limitations

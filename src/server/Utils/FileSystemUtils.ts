@@ -200,9 +200,9 @@ const buildFormattedContextDfs = async (
 			return res;
 		}
 		// For files we can just return the item with content
-		return `${levelPrefix}${path.basename(absolutePath)}\n\n\`\`\`\n${(
+		return `${levelPrefix}${path.basename(absolutePath)}\n\n\`\`\`\`\n${(
 			await readFile(absolutePath)
-		).trim()}\n\`\`\`\n`;
+		).trim()}\n\`\`\`\`\n`;
 	} catch (e: any) {
 		return `${levelPrefix}${path.basename(
 			absolutePath,

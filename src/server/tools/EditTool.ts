@@ -1,36 +1,108 @@
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {ToolDefinition} from './index.js';
 import {TaskAgent} from '../tasks/TaskAgent.js';
+import fs from 'fs/promises';
+
+const descriptionForAgent = `Request to make multiple edits to a file at the specified path. This tool modifies existing content rather than overwriting the entire file. You can make multiple edits in a single operation for efficiency.
+
+Usage:
+- The file_path parameter must be a relative path to the current working directory
+- Each edit specifies a 'from' and 'to' search string that defines the range of content to replace (inclusive)
+- The content between 'from' and 'to' will be replaced with 'new_content'
+- Use 1-2 full lines of text for 'from' and 'to' to ensure unique matches
+- Make multiple edits at once when possible for better performance
+- Make multiple small edits if smaller modifications are required many lines apart
+- Make a single or a few larger edits if rewrites of entire functions or blocks of code are necessary
+
+Examples:
+1. To change a function name and its return statement in a TypeScript file:
+{
+  "file_path": "src/utils.ts",
+  "edits": [
+    {
+      "from": "function calculatePrice(items: Item[]): number {",
+      "to": "function calculatePrice(items: Item[]): number {",
+      "new_content": "function calculateTotalPrice(items: Item[]): number {"
+    },
+    {
+      "from": "  return total;",
+      "to": "}",
+      "new_content": "  return total;\n}"
+    }
+  ]
+}
+  
+2. To rewrite a full function in a TypeScript file:
+{
+  "file_path": "src/bank.ts",
+  "edits": [
+    {
+      "from": "function getAccounts(customerId: string): CustomerAccount[] {",
+      "to": "  const savingsAccounts = client.getSavings(customerId);\n  return accounts[];",
+      "new_content": "function getAccounts(customer: Customer): CustomerAccounts {\n  return client.getAccounts(customer.id) as CustomerAccounts;"
+    }
+  ]
+}
+  
+3. To remove the content from a line and delete a line from a Python file:
+{
+  "file_path": "src/utils/math.ts",
+  "edits": [
+    {
+      "from": "t_max = np.where(t > 10)",
+      "to": "t_max = np.where(t > 10)",
+      "new_content": ""
+    },
+    {
+      "from": "quaternion_ball = np.ndarray(a, z, y, p)\n",
+      "to": "quaternion_ball = np.ndarray(a, z, y, p)\n",
+      "new_content": ""
+    }
+  ]
+}`;
+
+interface Edit {
+	from: string;
+	to: string;
+	new_content: string;
+}
 
 export const editToolDefinition: ToolDefinition = {
-	name: 'MultiEdit',
-	descriptionForAgent:
-		'Makes multiple changes to a single file in one operation. Use this tool to edit files by providing the exact text to replace and the new text.',
+	name: 'Edit',
+	descriptionForAgent: descriptionForAgent,
 	inputSchema: {
 		type: 'object',
 		properties: {
 			file_path: {
 				type: 'string',
-				description: 'Absolute path to the file to modify',
+				description:
+					'The path of the file to edit (relative to the current working directory)',
 			},
 			edits: {
 				type: 'array',
-				description:
-					'Array of edit operations, each containing old_string and new_string',
+				description: 'Array of edits to apply to the file',
 				items: {
 					type: 'object',
 					properties: {
-						old_string: {
+						from: {
 							type: 'string',
-							description: 'Exact text to replace',
+							description:
+								'The starting search string (1-2 full lines for unique matching)',
 						},
-						new_string: {
+						to: {
 							type: 'string',
-							description: 'The replacement text',
+							description:
+								'The ending search string (1-2 full lines for unique matching)',
+						},
+						new_content: {
+							type: 'string',
+							description:
+								'The new content to replace the section between from and to (inclusive)',
 						},
 					},
-					required: ['old_string', 'new_string'],
+					required: ['from', 'to', 'new_content'],
 				},
+				minItems: 1,
 			},
 		},
 		required: ['file_path', 'edits'],
@@ -38,28 +110,112 @@ export const editToolDefinition: ToolDefinition = {
 	enact: async (
 		args: {
 			file_path: string;
-			edits: {old_string: string; new_string: string}[];
+			edits: Edit[];
 		},
 		invoker: TaskAgent,
 		writeEvent: (event: OrgchartEvent) => void,
 	): Promise<string> => {
 		writeEvent({
-			title: `Edit File(${args.file_path})`,
+			title: `Edit(${args.file_path})`,
 			id: crypto.randomUUID(),
 			content: [
 				{
 					type: DisplayContentType.TEXT,
-					content: args.edits
-						.map(
-							(edit, index) =>
-								`Edit ${index + 1}:\nSEARCH: ${edit.old_string}\nREPLACE: ${
-									edit.new_string
-								}`,
-						)
-						.join('\n\n'),
+					content: `Applying ${args.edits.length} edit(s) to ${args.file_path}`,
 				},
 			],
 		});
-		return 'NOT IMPLEMENTED';
+
+		try {
+			// Check if file exists
+			try {
+				await fs.access(args.file_path);
+			} catch {
+				throw new Error(`File ${args.file_path} does not exist`);
+			}
+
+			// Read the current file content
+			const originalContent = await fs.readFile(args.file_path, 'utf8');
+			let modifiedContent = originalContent;
+			const failures: string[] = [];
+
+			// Validate all edits before applying any
+			args.edits.forEach((edit, i) => {
+				const fromIndex = modifiedContent.indexOf(edit.from);
+
+				if (fromIndex === -1) {
+					failures.push(
+						`Edit ${i + 1}: Could not find 'from' string: "${edit.from}"`,
+					);
+					return;
+				}
+
+				const toIndex = modifiedContent.indexOf(
+					edit.to,
+					fromIndex + edit.from.length,
+				);
+
+				if (toIndex === -1) {
+					failures.push(
+						`Edit ${i + 1}: Could not find 'to' string: "${
+							edit.to
+						}" after 'from' string`,
+					);
+					return;
+				}
+
+				// Check if there are multiple matches for the from string
+				const secondFromIndex = modifiedContent.indexOf(
+					edit.from,
+					fromIndex + 1,
+				);
+				if (secondFromIndex !== -1 && secondFromIndex <= toIndex) {
+					failures.push(
+						`Edit ${i + 1}: 'from' string "${
+							edit.from
+						}" is not unique - found multiple matches`,
+					);
+					return;
+				}
+			});
+
+			// If there are any failures, return error without making changes
+			if (failures.length > 0) {
+				throw new Error(`Failed to apply edits:\n${failures.join('\n')}`);
+			}
+
+			// Apply all edits (in reverse order to maintain correct indices)
+			const sortedEdits = args.edits
+				.map((edit, index) => ({...edit, originalIndex: index}))
+				.sort((a, b) => {
+					const aFromIndex = modifiedContent.indexOf(a.from);
+					const bFromIndex = modifiedContent.indexOf(b.from);
+					return bFromIndex - aFromIndex; // Reverse order
+				});
+
+			for (const edit of sortedEdits) {
+				const fromIndex = modifiedContent.indexOf(edit.from);
+				const toIndex = modifiedContent.indexOf(
+					edit.to,
+					fromIndex + edit.from.length,
+				);
+				const endIndex = toIndex + edit.to.length;
+
+				modifiedContent =
+					modifiedContent.substring(0, fromIndex) +
+					edit.new_content +
+					modifiedContent.substring(endIndex);
+			}
+
+			// Write the modified content back to the file
+			await fs.writeFile(args.file_path, modifiedContent, 'utf8');
+
+			const charactersChanged = Math.abs(
+				modifiedContent.length - originalContent.length,
+			);
+			return `Successfully applied ${args.edits.length} edit(s) to ${args.file_path}. Content changed by ${charactersChanged} characters.`;
+		} catch (error) {
+			throw new Error(`Failed to edit file ${args.file_path}: ${error}`);
+		}
 	},
 };

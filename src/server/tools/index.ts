@@ -8,6 +8,7 @@ import {fileTreeToolDefinition} from './FileTreeTool.js';
 import {OrgchartEvent} from '../IOTypes.js';
 import {TaskAgent} from '../tasks/TaskAgent.js';
 import {delegateWorkTool} from './DelegateWorkTool.js';
+import {editToolDefinition} from './EditTool.js';
 
 export interface ToolDefinition {
 	name: string;
@@ -37,7 +38,7 @@ export const readTools = [
 	fileTreeToolDefinition,
 ];
 
-export const writeTools = [writeToolDefinition];
+export const writeTools = [writeToolDefinition, editToolDefinition];
 
 export const getToolset = (
 	level: number,
