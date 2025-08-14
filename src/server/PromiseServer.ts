@@ -14,6 +14,7 @@ import {Conversation, ConversationParticipant} from './tasks/Conversation.js';
 import {ContinuousContextManager} from './workflows/ContinuousContext.js';
 import {CommandRegistry} from './commands/CommandRegistry.js';
 import {TechnicalProductManager} from './agents/Management/TechnicalProductManager.js';
+import {getConfig} from './utils/Configuration.js';
 
 /**
  * To separate server and UI, we define a "server" based on a promise
@@ -26,7 +27,7 @@ export class PromiseServer {
 	private taskAgent?: TaskAgent;
 	private userConversation?: Conversation;
 	private events: OrgchartEvent[] = [];
-	private runId: string = crypto.randomUUID();
+	private runId: string = crypto.randomUUID().substring(0, 6);
 	private stepInterval: NodeJS.Timeout | null = null;
 	private contextManager: ContinuousContextManager;
 	private commandRegistry: CommandRegistry;
@@ -44,7 +45,7 @@ export class PromiseServer {
 		Logger.info(`Starting server'`);
 		try {
 			// Wait for context manager to initialize before creating agents
-			await this.contextManager.initialize();
+			// await this.contextManager.initialize();
 			Logger.info('ContinuousContext initialized successfully');
 		} catch (error) {
 			Logger.error('Failed to initialize context manager:', error);
@@ -80,6 +81,10 @@ export class PromiseServer {
 
 	getRunId() {
 		return this.runId;
+	}
+
+	getTotalSpend() {
+		return getConfig().llmProvider.totalSpend;
 	}
 
 	// Capabilities used by agent code
@@ -151,25 +156,17 @@ export class PromiseServer {
 		}
 	}
 
-	getCommandOptions() {
-		return this.commandRegistry.listCommands();
+	getCommandOptions(prefix: string) {
+		if (this.commandRegistry.isCommand(prefix)) {
+			return this.commandRegistry
+				.listCommands()
+				.filter(c => c.name.startsWith(prefix.trim().slice(1)));
+		}
+		return [];
 	}
 
-	getAgentGraph(): RunningAgentInfo {
-		if (!this.taskAgent) {
-			// Return a placeholder while initialization is in progress
-			return {
-				id: 'initializing',
-				name: 'Initializing...',
-				description: 'Server is initializing, please wait...',
-				cost: 0,
-				status: AgentStatus.IDLE,
-				contextUsage: 0,
-				maxContext: 0,
-				children: [],
-			};
-		}
-		return this.taskAgent.toRunningAgentInfo();
+	getAgentGraph(): RunningAgentInfo | undefined {
+		return this.taskAgent?.toRunningAgentInfo();
 	}
 
 	getApprovals(): Approval[] {

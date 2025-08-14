@@ -25,15 +25,13 @@ Upon marking every task on your TODO list as complete you must attempt completio
 - Provide clear, detailed explanation in the following format
 
 \`\`\`
-# Steps taken
-
-## Assumptions, Decision, Limitations
+# Assumptions, Decisions, Limitations
 
 You may have been required to make assumptions about the intent of the task. Detail those assumptions, if any, here
 You may have made decisions which could affect future work such as adding dependencies, changing code signatures, or removing files. Detail those decisions, if any, here
 You may have have encountered unforeseen issues which required you to reasonably expand the scope of your assigned task in order to resolve them. Detail those expansions, if any, here
 
-## Mutations
+# Mutations
 
 Describe all mutating operations performed in order to complete your task.
 Note that you must report any mutations made by other agents 

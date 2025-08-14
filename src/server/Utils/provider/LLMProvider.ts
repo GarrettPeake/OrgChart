@@ -23,6 +23,7 @@ const convertTools = (toolDefinitions: ToolDefinition[]): CompletionTool[] =>
 export class LLMProvider {
 	private apiKey: string;
 	private completionUrl: string;
+	public totalSpend: number = 0;
 
 	constructor(
 		apiKey?: string,
@@ -70,6 +71,9 @@ export class LLMProvider {
 							id: tc.id + '-' + crypto.randomUUID().substring(0, 6),
 						}));
 				}
+				// Update our total cost
+				// Update our context usage and cost usage
+				this.totalSpend = response.usage?.cost || 0;
 				return response;
 			} catch (e: any) {
 				finalError = e;

@@ -80,13 +80,6 @@ describe('AgentContext', () => {
 			});
 			expect(blocks[0]!.metadata?.timestamp).toBeTypeOf('number');
 		});
-
-		it('should initialize without continuous context manager', () => {
-			const contextWithoutManager = new AgentContext(testSystemPrompt);
-			const blocks = contextWithoutManager.getBlocks();
-			expect(blocks).toHaveLength(1);
-			expect(blocks[0]!.type).toBe('SYSTEM');
-		});
 	});
 
 	describe('basic block operations', () => {
@@ -462,13 +455,6 @@ describe('AgentContext', () => {
 			// No context blocks should be added for empty content
 			expect(agentContext.getBlocksByType('CONTEXT')).toHaveLength(0);
 		});
-
-		it('should work without continuous context manager', () => {
-			const contextWithoutManager = new AgentContext(testSystemPrompt);
-
-			expect(() => contextWithoutManager.refreshContextBlock()).not.toThrow();
-			expect(contextWithoutManager.getBlocksByType('CONTEXT')).toHaveLength(0);
-		});
 	});
 
 	describe('statistics and debugging', () => {
@@ -525,7 +511,10 @@ describe('AgentContext', () => {
 		});
 
 		it('should handle empty context in debug summary', () => {
-			const emptyContext = new AgentContext('Test');
+			const emptyContext = new AgentContext(
+				'Test',
+				mockContinuousContextManager,
+			);
 			const summary = emptyContext.generateDebugSummary();
 
 			expect(summary).toContain('Total Blocks: 1'); // Just system
@@ -536,7 +525,10 @@ describe('AgentContext', () => {
 
 	describe('edge cases and error handling', () => {
 		it('should handle empty system prompt', () => {
-			const contextWithEmptyPrompt = new AgentContext('');
+			const contextWithEmptyPrompt = new AgentContext(
+				'',
+				mockContinuousContextManager,
+			);
 			const blocks = contextWithEmptyPrompt.getBlocks();
 
 			expect(blocks).toHaveLength(1);

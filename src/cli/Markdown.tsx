@@ -18,7 +18,7 @@ setOptions({
 		paragraph: chalk.reset,
 		strong: chalk.bold,
 		em: chalk.italic,
-		codespan: chalk.hex(colors.accentColor),
+		codespan: chalk.hex(colors.highlightColor),
 		del: chalk.dim.hex(colors.subtextColor).strikethrough,
 		link: chalk.blue,
 		href: chalk.blue.underline,
@@ -27,7 +27,7 @@ setOptions({
 		width: 80,
 		showSectionPrefix: true,
 		reflowText: false,
-		tab: 4,
+		tab: 2,
 		tableOptions: {},
 	}) as any,
 });

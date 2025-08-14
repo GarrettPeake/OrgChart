@@ -6,6 +6,7 @@ import {CommandPanel} from '@cli/CommandPanel.js';
 import {colors, useStdOutDim} from '@cli/Util.js';
 import {PromiseServer} from '@server/PromiseServer.js';
 import {OrgchartEvent} from '@server/IOTypes.js';
+import BigText from 'ink-big-text';
 
 export const Interface = () => {
 	const [server, setServer] = useState<PromiseServer>();
@@ -28,10 +29,14 @@ export const Interface = () => {
 			if (newEventsJson !== JSON.stringify(events)) {
 				setEvents(JSON.parse(newEventsJson));
 			}
+			const newTotalSpend = server.getTotalSpend();
+			if (newTotalSpend !== totalCost) {
+				setTotalCost(newTotalSpend);
+			}
 		}, 250);
 
 		return () => clearInterval(interval);
-	}, [server, events]);
+	}, [server, events, totalCost]);
 
 	const handleCommandSubmit = async (command: string) => {
 		server!.sendCommand(command);
@@ -44,79 +49,56 @@ export const Interface = () => {
 		}
 	});
 
-	const headerHeight = 5; // 3 lines of text plus border
-	const topMargin = 0;
 	const footerHeight = 6; // 4 lines of text plus border
 	const bottomMargin = 0;
-	const bodyHeight = Math.max(
-		screenDimensions[1] -
-			headerHeight -
-			footerHeight -
-			topMargin -
-			bottomMargin,
-		0,
-	);
 
 	return (
-		<Box
-			flexDirection="column"
-			flexGrow={1}
-			height={screenDimensions[1]}
-			width={screenDimensions[0]}
-			overflow="hidden"
-		>
-			{/* Header */}
-			<Box
-				borderStyle="round"
-				borderDimColor
-				flexShrink={0}
-				height={headerHeight}
-				marginTop={topMargin}
-				paddingX={1}
-			>
-				<Box flexDirection="column" width={screenDimensions[0] - 2}>
-					<Text bold color={colors.accentColor}>
-						OrgChart
-					</Text>
-					<Text color={colors.subtextColor}>
-						Working Directory: {currentDir}
-					</Text>
-					<Text color={colors.subtextColor}>
-						{`RunId: ${server?.getRunId()}, Total Cost: ${totalCost.toFixed(
-							2,
-						)}`}
-					</Text>
+		<Box flexDirection="column" flexGrow={1} width={screenDimensions[0]}>
+			{server?.getAgentGraph() ? null : (
+				<Box
+					flexDirection="column"
+					borderStyle="round"
+					borderDimColor
+					borderColor={colors.highlightColor}
+					flexShrink={1}
+				>
+					<Box marginBottom={-1} marginLeft={3}>
+						<Text color={colors.accentColor}>Welcome to the</Text>
+					</Box>
+					<BigText
+						colors={[colors.highlightColor, colors.subtextColor]}
+						text="ORGCHART"
+					/>
 				</Box>
-			</Box>
+			)}
+			<EventStream events={events} />
 
-			{/* Main content - two columns */}
-			<Box flexGrow={1} gap={0.5} overflow="hidden">
-				{/* Left column - Agent Tree */}
+			{server?.getAgentGraph() ? (
 				<Box
 					borderStyle="round"
 					flexShrink={1}
 					borderDimColor
-					width={75}
+					width={screenDimensions[0]}
+					paddingLeft={1}
 					borderColor={colors.subtextColor}
 					flexDirection="column"
-					height={bodyHeight}
 				>
+					<Box flexDirection={'row'} gap={2}>
+						<Text bold color={colors.accentColor}>
+							OrgChart
+						</Text>
+						<Text color={colors.subtextColor}>
+							Working Directory: {currentDir}
+						</Text>
+						<Text color={colors.subtextColor}>
+							{`RunId: ${server?.getRunId()}, Total Cost: ${totalCost.toFixed(
+								2,
+							)}`}
+						</Text>
+					</Box>
 					<AgentTree rootTaskRunner={server?.getAgentGraph()} />
 				</Box>
-
-				{/* Right column - Event Stream */}
-				<Box
-					flexGrow={1}
-					borderStyle="round"
-					borderDimColor
-					borderColor={colors.subtextColor}
-					flexDirection="column"
-					height={bodyHeight}
-					overflow="hidden"
-				>
-					<EventStream events={events} height={bodyHeight - 2} />
-				</Box>
-			</Box>
+			) : null}
 
 			{/* Footer - Command Panel */}
 			<Box
@@ -127,7 +109,7 @@ export const Interface = () => {
 				marginBottom={bottomMargin}
 				height={footerHeight}
 			>
-				<CommandPanel onCommandSubmit={handleCommandSubmit} />
+				<CommandPanel onCommandSubmit={handleCommandSubmit} server={server} />
 			</Box>
 		</Box>
 	);

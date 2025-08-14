@@ -70,7 +70,6 @@ const buildFileTreeDfs = (
 				const children = readdirSync(absolutePath, {
 					withFileTypes: true,
 				}).filter(child => !gip.isIgnored(path.join(absolutePath, child.name)));
-				console.log(children.map(it => it.name));
 				// For each child add the recursive result
 				for (const [index, child] of children.entries()) {
 					res +=
@@ -184,7 +183,6 @@ const buildFormattedContextDfs = async (
 				const children = readdirSync(absolutePath, {
 					withFileTypes: true,
 				}).filter(child => !gip.isIgnored(path.join(absolutePath, child.name)));
-				console.log(children.map(it => it.name));
 				// For each child add the recursive result
 				for (const [index, child] of children.entries()) {
 					res +=

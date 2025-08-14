@@ -1,6 +1,7 @@
 import {ToolDefinition} from './index.js';
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {TaskAgent} from '../tasks/TaskAgent.js';
+import {agents} from '../agents/Agents.js';
 
 const descriptionForAgent = `Update your TODO list`;
 export const updateTodoListToolName = 'UpdateTodoList';
@@ -69,13 +70,17 @@ export const updateTodoListToolDefinition = (
 					content: args.todo_items
 						.map(
 							i =>
-								` * [${
+								`${
 									i.status === 'pending'
-										? ' '
+										? '☐'
 										: i.status === 'in_progress'
-										? '+'
-										: '✓'
-								}] \"${i.title}\"`,
+										? '⚀'
+										: '☑'
+								} ${
+									i.best_agent_for_task
+										? `${agents[i.best_agent_for_task]?.name} - `
+										: ''
+								}${i.title}`,
 						)
 						.join('\n'),
 				},

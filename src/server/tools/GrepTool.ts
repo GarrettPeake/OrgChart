@@ -3,6 +3,7 @@ import {ToolDefinition} from './index.js';
 import {readFileSync} from 'fs';
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {TaskAgent} from '../tasks/TaskAgent.js';
+import Logger from '@/Logger.js';
 export const grepToolDefinition: ToolDefinition = {
 	name: 'Grep',
 	descriptionForAgent: `- Fast content search tool that works with any codebase size
@@ -80,7 +81,7 @@ function grep(pattern: string, path: string, include?: string): string[] {
 				}
 			});
 		} catch (err) {
-			console.error(`Error reading ${file}:`, err);
+			Logger.error(`Error reading ${file}:`, err);
 		}
 	}
 	return results;

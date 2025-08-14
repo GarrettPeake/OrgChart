@@ -4,7 +4,8 @@ import React from 'react';
 import {withFullScreen} from 'fullscreen-ink';
 import meow from 'meow';
 import Logger from './Logger.js';
-import { Interface } from './cli/Interface.js';
+import {Interface} from './cli/Interface.js';
+import {render} from 'ink';
 
 export const cli = meow(
 	`
@@ -26,4 +27,4 @@ Logger.info(
 	'======================= STARTING NEW RUN ===============================',
 );
 
-withFullScreen(<Interface/>, {exitOnCtrlC: true}).start();
+render(<Interface />);

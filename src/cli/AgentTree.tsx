@@ -19,7 +19,7 @@ export const buildAgentTreeComponents = (
 	rootTaskRunner: RunningAgentInfo | undefined,
 ): React.ReactNode => {
 	if (!rootTaskRunner) {
-		return null;
+		return undefined;
 	}
 
 	const buildTreeDfs = (
