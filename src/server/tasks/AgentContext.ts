@@ -32,12 +32,12 @@ export interface ContextBlock {
  */
 export class AgentContext {
 	private blocks: ContextBlock[] = [];
-	private continuousContextManager: ContinuousContextManager;
+	private continuousContextManager?: ContinuousContextManager;
 	private agentInstanceId?: string;
 
 	constructor(
 		systemPrompt: string,
-		continuousContextManager: ContinuousContextManager,
+		continuousContextManager?: ContinuousContextManager,
 		agentInstanceId?: string,
 	) {
 		// Initialize with system block
@@ -151,20 +151,25 @@ export class AgentContext {
 	/**
 	 * Add a context block from ContinuousContext with optional simulated model response
 	 */
-	addContextBlock(contextContent: string, simulatedResponse?: string): void {
+	addContextBlock(contextContent: string): void {
 		const messages: CompletionInputMessage[] = [
 			{
 				role: 'user',
 				content: contextContent,
 			},
-		];
-
-		if (simulatedResponse) {
-			messages.push({
+			{
 				role: 'assistant',
-				content: simulatedResponse,
-			});
-		}
+				content: [
+					{
+						type: 'text',
+						text: 'I understand the current project context and will use this information to assist effectively.',
+						cache_control: {
+							type: 'ephemeral', // Add an anthropic cache control block after the context
+						},
+					},
+				],
+			},
+		];
 
 		this.blocks.push({
 			type: 'CONTEXT',
@@ -333,11 +338,7 @@ export class AgentContext {
 			if (contextContent) {
 				// Remove existing context blocks and add fresh one
 				this.removeBlocksByType('CONTEXT');
-				this.addContextBlock(
-					contextContent,
-					'I understand the current project context and will use this information to assist effectively.',
-				);
-				// Note: logging happens in addContextBlock, no need to log here
+				this.addContextBlock(contextContent);
 			}
 		}
 	}

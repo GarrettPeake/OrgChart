@@ -45,7 +45,7 @@ export class PromiseServer {
 		Logger.info(`Starting server'`);
 		try {
 			// Wait for context manager to initialize before creating agents
-			// await this.contextManager.initialize();
+			await this.contextManager.initialize();
 			Logger.info('ContinuousContext initialized successfully');
 		} catch (error) {
 			Logger.error('Failed to initialize context manager:', error);
@@ -149,7 +149,7 @@ export class PromiseServer {
 				this.startAgent(this.agentOverride || getConfig().defaultAgent);
 			}
 			// Send message through the user conversation
-			this.userConversation!.addMessage(
+			this.getActiveAgent()?.parentConversation.addMessage(
 				ConversationParticipant.PARENT,
 				command,
 			);
@@ -172,20 +172,33 @@ export class PromiseServer {
 	}
 
 	pause() {
-		// Guard against calling before initialization completes
-		if (!this.taskAgent) {
-			return;
+		// Find the currently executing taskRunner
+		const activeAgent = this.getActiveAgent();
+		if (activeAgent) {
+			Logger.info(`Pausing: ${activeAgent.agent.name}`);
 		}
+		activeAgent?.pause();
+	}
 
+	getActiveAgent() {
+		if (!this.taskAgent) {
+			return undefined;
+		}
 		// Find the currently executing taskRunner
 		let node = this.taskAgent;
 		while (node.children.length > 0) {
 			let nextNode = node.children[node.children.length - 1];
-			if (nextNode && nextNode?.status !== AgentStatus.IDLE) {
+			if (
+				nextNode &&
+				nextNode?.status !== AgentStatus.IDLE &&
+				nextNode?.status !== AgentStatus.WAITING
+			) {
 				node = nextNode;
+			} else {
+				break;
 			}
 		}
-		node?.pause();
+		return node;
 	}
 
 	/**

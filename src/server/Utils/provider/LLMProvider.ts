@@ -73,7 +73,7 @@ export class LLMProvider {
 				}
 				// Update our total cost
 				// Update our context usage and cost usage
-				this.totalSpend = response.usage?.cost || 0;
+				this.totalSpend += response.usage?.cost || 0;
 				return response;
 			} catch (e: any) {
 				finalError = e;

@@ -153,28 +153,12 @@ describe('AgentContext', () => {
 	});
 
 	describe('context block operations', () => {
-		it('should add context blocks with content only', () => {
-			const contextContent = '# Project Overview\n\nThis is a test project.';
-			agentContext.addContextBlock(contextContent);
-
-			const contextBlock = agentContext.getLatestBlockByType('CONTEXT');
-			expect(contextBlock).toMatchObject({
-				type: 'CONTEXT',
-				label: 'Project Context',
-				messages: [
-					{
-						role: 'user',
-						content: contextContent,
-					},
-				],
-			});
-		});
-
 		it('should add context blocks with simulated response', () => {
 			const contextContent = '# Project Overview';
-			const simulatedResponse = 'I understand the project context.';
+			const simulatedResponse =
+				'I understand the current project context and will use this information to assist effectively.';
 
-			agentContext.addContextBlock(contextContent, simulatedResponse);
+			agentContext.addContextBlock(contextContent);
 
 			const contextBlock = agentContext.getLatestBlockByType('CONTEXT');
 			expect(contextBlock?.messages).toHaveLength(2);

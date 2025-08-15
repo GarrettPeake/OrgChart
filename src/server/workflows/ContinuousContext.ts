@@ -8,7 +8,6 @@ import {getConfig} from '../utils/Configuration.js';
 import {GitIgnoreParser} from '../utils/GitIgnoreParser.js';
 import fs from 'fs/promises';
 import path from 'path';
-import {AsyncSubscription} from '@parcel/watcher';
 
 const initializePromptPart =
 	'You will be provided with a document containing the content of every file in the project and must output the entirety of the initial version of the document';
@@ -429,6 +428,9 @@ export class ContinuousContextManager {
 					messages: context,
 					temperature: 0.2,
 					stream: false,
+					reasoning: {
+						effort: 'medium',
+					},
 					provider: {
 						sort: 'throughput',
 					},

@@ -5,6 +5,9 @@
 export type CompletionTextContentPart = {
 	type: 'text';
 	text: string;
+	cache_control: {
+		type: 'ephemeral';
+	};
 };
 
 export type CompletionImageContentPart = {

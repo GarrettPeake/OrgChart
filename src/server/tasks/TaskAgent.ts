@@ -67,6 +67,7 @@ export class TaskAgent {
 	) {
 		this.writeEvent = writeEvent;
 		this.agent = agents[agentId]!;
+		this.tools = this.agent.tools();
 		this.parentConversation = parentConversation;
 		this.continuousContextManager = continuousContextManager;
 
@@ -82,10 +83,7 @@ export class TaskAgent {
 			const currentContext =
 				continuousContextManager.getCurrentContextContent();
 			if (currentContext) {
-				this.agentContext.addContextBlock(
-					currentContext,
-					'I understand the current project context and will use this information to assist effectively.',
-				);
+				this.agentContext.addContextBlock(currentContext);
 			}
 		}
 	}
@@ -192,15 +190,18 @@ export class TaskAgent {
 				ConversationParticipant.PARENT,
 			);
 			if (message) {
-				// Append the new message to the context
-				if (this.status !== AgentStatus.IDLE) {
-					// If this is occurring mid conversation, we should insert an agent acknowledgement of the previous tool result before injecting a user message
-					// This prevents the conversation from having two messages in a row from the user/tool which causes the model to ignore one
+				// Prevent the conversation from having two messages in a row from the user/tool which can cause the model to ignore one
+				const currentBlocks = this.agentContext.getBlocks();
+				const lastBlock = currentBlocks[currentBlocks.length - 1]!;
+				const lastMessage = lastBlock.messages[lastBlock.messages.length - 1]!;
+				if (lastMessage.role === 'tool' || lastMessage.role === 'user') {
 					this.agentContext.addAssistantBlock(
-						"Great, I'll continue working now",
+						'Do you have any further input before I continue?',
 					);
 				}
-				this.agentContext.addParentBlock(cleanText(message.content));
+
+				// Append the new message to the context
+				this.agentContext.addParentBlock(message.content);
 				this.writeEvent({
 					title: `Starting Task - ${this.agent.name}`,
 					id: crypto.randomUUID(),
@@ -211,9 +212,6 @@ export class TaskAgent {
 						},
 					],
 				});
-
-				// Initialize tools for this agent
-				this.tools = this.agent.tools();
 
 				// Reset iteration count and transition to THINKING
 				this.iterationCount = 0;
@@ -286,11 +284,11 @@ export class TaskAgent {
 				break;
 
 			case AgentStatus.PAUSED:
+				// Check for parent messages in paused state
+				this.checkParentConversation();
 				return;
 
 			case AgentStatus.THINKING:
-				// Check for parent messages in THINKING state
-				this.checkParentConversation();
 				this.stepThinking();
 				break;
 
@@ -539,7 +537,7 @@ export class TaskAgent {
 		);
 		if (activeChildren.length === 0) {
 			// All children are done, refresh context and transition back to thinking
-			this.refreshProjectContext();
+			// this.refreshProjectContext();
 			this.status = AgentStatus.THINKING;
 		}
 	}

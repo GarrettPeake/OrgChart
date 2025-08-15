@@ -78,7 +78,11 @@ export const updateTodoListToolDefinition = (
 										: '☑'
 								} ${
 									i.best_agent_for_task
-										? `${agents[i.best_agent_for_task]?.name} - `
+										? `${
+												i.best_agent_for_task in agents
+													? agents[i.best_agent_for_task]?.name
+													: 'No delegation'
+										  } - `
 										: ''
 								}${i.title}`,
 						)

@@ -25,18 +25,7 @@
 - Enable MCP servers with MCP SDK so we can use Context7
 - Define a browser user agent that has access to Playwright MCP
 
-- Make everything was a TODO list? We make the event stream full width and the agent tree full width and allow tab to toggle between them. Agent tree would then look like:
-  Technical Product Manager - <Main task>
-
-* Subtask 1 [x]
-* Senior Engineer - Subtask 2 [ ]
-  - Subtask 1 [x]
-  - Junior Engineer - Subtask 2 [ ]
-* Subtask 3 [ ]
-* Subtask 4 [ ]
-
 - Make every tool have a user facing message to explain what it’s doing
-- Handle LLM not using tools, API errors, etc gracefully
 - Enable resuming sessions from context logs
 - Multi read tool?
 - Give delegation a context preloading parameter that allowed a list of globs that would be preloaded in that agents context
@@ -46,6 +35,52 @@
 - Give the command runner agent a shell session, undefined to begin with, that they can interact with across turns
 - Consider using a change applier such as https://openrouter.ai/meta-llama/llama-3.2-3b-instruct to perfrom https://docs.morphllm.com/quickstart the why on this is here https://web.archive.org/web/20240823050616/https://www.cursor.com/blog/instant-apply
 
+## MVP Checklist
+
+ [ ] Interactivity
+    [ ] Security system
+        [ ] Command approval with display
+        [ ] When agent reaches max turns, ask for approval to continue (renews turns)
+        [ ] Configurable auto-allows (project and system level)
+    [ ] Help command
+    [ ] Config command (opens config editor)
+        [ ] Openrouter key setting, stored in system file
+        [ ] Allowed tools
+        [ ] Standard model set
+        [ ] Enable/disable continous context and continuous task context
+    [ ] Kill current agent command, force does not allow it to summarize with completion tool first
+    [ ] Macros for file selection
+    [ ] Enhanced text input
+    [ ] Event stream improvements
+        [ ] Fenced code blocks
+        [ ] Diff view
+    [ ] Collapsing agent tree with key binding to show full
+    [ ] All tools use updatable events
+    [ ] Add CLI params
+ [ ] System
+    [ ] Enable setting openrouter params at agent level
+    [ ] Configuration from defaults + system file + project file
+    [ ] Singletons file rather than coupling to config
+    [ ] Serialize and deserialize state, load sessions
+    [ ] Perfected error handling
+    [ ] OpenRouter stream cancellation on pause
+    [ ] Enable prompt caching (put continuous context in the system prompt and don't update it)
+    [ ] Ensure no provider storage by default
+    [ ] Static event stream for older events
+    [ ] Tests for everything
+    [ ] Define a standard model set and use them everywhere
+    [ ] Pausing and resuming works
+ [ ] Prompts
+    [ ] Simplified agent definitions into classes with composable prompts
+    [ ] Improved context passing through better environment understanding
+    [ ] Improved tool use through system prompt tool instruction composition
+ [ ] Tools
+    [ ] Functional edit tool
+    [ ] Bash tool interactive (Summarize flag rather than a full agent)
+    [ ] Remove file tree tool?
+    [ ] Remove project researcher
+    [ ] Add context blobs to delegation tool
+
 ## Experiment Results
 
 Attempted to make flappy bird, Senior engineer relied on itself too much and ended up spending ~$2 rather than delegating everything. Flappy bird never worked, some crashes likely hurt the prospects. The agents persistently tried to figure out how to test it launching a bunch of researchers
@@ -54,6 +89,18 @@ TODO list made the researchers behave significantly better, no infinite loops
 Researcher tends to add TODO list tasks but not perform any tool uses, then complete them and keep adding tasks
 
 Sometimes agents expect that one agent can see what was said to or by another agent
+
+Agents will write a file and then immediately read it
+
+Agents for some reason think there's a quote at the end of files?
+
+Pausing agents takes a while, unpausing with a task doesn't work
+
+WHen agents plan, they often write a file and include all of the necessary code in that file for delegation, this is dumb!
+
+Dont' shuffle in cont context update between use and tool results. Don't update at all if no updates
+
+Everything is so slow due to knowledge passing. Each subagent has to generate a response for the parent and that generation takes ages.
 
 ## Notes
 

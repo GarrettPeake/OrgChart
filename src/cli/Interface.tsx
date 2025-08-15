@@ -45,7 +45,7 @@ export const Interface = () => {
 	// Handle tab key navigation
 	useInput((_, key) => {
 		if (key.escape) {
-			server?.pause(); // TODO: When do we stop an agent?
+			server?.pause();
 		}
 	});
 
