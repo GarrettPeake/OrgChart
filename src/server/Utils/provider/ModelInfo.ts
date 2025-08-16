@@ -5,7 +5,7 @@ type GeminiModel =
 	| 'google/gemini-2.5-flash'
 	| 'google/gemini-2.5-pro';
 
-type OpenAiModel = 'openai/gpt-4o-mini';
+type OpenAiModel = 'openai/gpt-4o-mini' | 'openai/gpt-oss-120b';
 
 type OtherModel =
 	| 'moonshotai/kimi-k2'
@@ -54,6 +54,11 @@ export const ModelInformation: Record<LLMModel, ModelInfo> = {
 		context: 128_000,
 		input_token_cost_per_m: 0.15,
 		output_token_cost_per_m: 0.6,
+	},
+	'openai/gpt-oss-120b': {
+		context: 131_072,
+		input_token_cost_per_m: 0.25,
+		output_token_cost_per_m: 0.69,
 	},
 	// Other Models
 	'moonshotai/kimi-k2': {

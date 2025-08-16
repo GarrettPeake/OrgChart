@@ -2,6 +2,8 @@
 //                                                      Request Types
 // ========================================================================================================================
 
+import {LLMModel} from './ModelInfo.js';
+
 export type CompletionTextContentPart = {
 	type: 'text';
 	text: string;
@@ -94,7 +96,7 @@ export interface ChatCompletionRequest {
 	};
 
 	// If "model" is unspecified, uses the user's default
-	model?: string; // See "Supported Models" section
+	model?: LLMModel; // See "Supported Models" section
 
 	// Allows to force the model to produce specific output format.
 	// See models page and note on this docs page for which models support it.
