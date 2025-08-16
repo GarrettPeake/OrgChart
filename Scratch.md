@@ -51,6 +51,7 @@
     [ ] Kill current agent command, force does not allow it to summarize with completion tool first
     [ ] Macros for file selection
     [ ] Enhanced text input
+    [ ] Thinking/processing indicators
     [ ] Event stream improvements
         [ ] Fenced code blocks
         [ ] Diff view
@@ -70,6 +71,8 @@
     [ ] Tests for everything
     [ ] Define a standard model set and use them everywhere
     [ ] Pausing and resuming works
+    [ ] cntrl+c to exit works, does not hang, no crazy background usage
+    [ ] Pass a Zod model to the LLMProvider and ensure the result is of that model, if not retry 3 times, finally fail, but how do we fail at that level and not have a million layer of bubbling up?
  [ ] Prompts
     [ ] Simplified agent definitions into classes with composable prompts
     [ ] Improved context passing through better environment understanding
@@ -101,6 +104,8 @@ WHen agents plan, they often write a file and include all of the necessary code 
 Dont' shuffle in cont context update between use and tool results. Don't update at all if no updates
 
 Everything is so slow due to knowledge passing. Each subagent has to generate a response for the parent and that generation takes ages.
+
+Provide designers a "virtual" design file that is stored in the .orgchart folder /designs. Have a copy of the read, write, and edit tools called ...Design 
 
 ## Notes
 
