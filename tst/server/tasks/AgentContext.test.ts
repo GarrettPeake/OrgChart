@@ -42,10 +42,8 @@ describe('AgentContext', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockContinuousContextManager = new ContinuousContextManager();
-		agentContext = new AgentContext(
-			testSystemPrompt,
-			mockContinuousContextManager,
-		);
+		agentContext = new AgentContext([], mockContinuousContextManager);
+		agentContext.addSystemBlock(testSystemPrompt);
 	});
 
 	describe('constructor and initialization', () => {
@@ -168,7 +166,15 @@ describe('AgentContext', () => {
 			});
 			expect(contextBlock?.messages[1]).toMatchObject({
 				role: 'assistant',
-				content: simulatedResponse,
+				content: [
+					{
+						text: simulatedResponse,
+						type: 'text',
+						cache_control: {
+							type: 'ephemeral',
+						},
+					},
+				],
 			});
 		});
 	});
@@ -479,24 +485,22 @@ describe('AgentContext', () => {
 		});
 
 		it('should handle empty context in debug summary', () => {
-			const emptyContext = new AgentContext(
-				'Test',
-				mockContinuousContextManager,
-			);
+			const emptyContext = new AgentContext([], mockContinuousContextManager);
 			const summary = emptyContext.generateDebugSummary();
 
-			expect(summary).toContain('Total Blocks: 1'); // Just system
-			expect(summary).toContain('Total Messages: 1');
-			expect(summary).toContain('[SYSTEM] System Prompt (1 messages)');
+			expect(summary).toContain('Total Blocks: 0');
+			expect(summary).toContain('Total Messages: 0');
+			expect(summary).toContain('[SYSTEM] System Prompt (0 messages)');
 		});
 	});
 
 	describe('edge cases and error handling', () => {
 		it('should handle empty system prompt', () => {
 			const contextWithEmptyPrompt = new AgentContext(
-				'',
+				[],
 				mockContinuousContextManager,
 			);
+			contextWithEmptyPrompt.addSystemBlock('');
 			const blocks = contextWithEmptyPrompt.getBlocks();
 
 			expect(blocks).toHaveLength(1);
