@@ -2,7 +2,6 @@ import React from 'react';
 import {Box, Text} from 'ink';
 import {colors} from '@cli/Util.js';
 import Markdown from '@cli/Markdown.js';
-import {cleanText} from '@/shared/utils/TextUtils.js';
 import {OrgchartEvent} from '@server/IOTypes.js';
 
 interface EventStreamProps {
@@ -91,6 +90,14 @@ interface EventStreamProps {
 // 		</Box>
 // 	);
 // }
+
+const cleanText = (text: string): string => {
+	return text
+		.split('\n')
+		.map(e => e.trimEnd())
+		.map(e => e.replaceAll('\t', '  '))
+		.join('\n');
+};
 
 export const EventStream = ({events = []}: EventStreamProps) => (
 	<Box flexDirection="column" paddingX={1}>

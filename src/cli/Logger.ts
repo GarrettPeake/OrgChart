@@ -10,10 +10,10 @@ const fileTransport = pino.transport({
 const CliLogger = pino(
 	{
 		formatters: {
-			level: label => {
+			level: _ => {
 				return {};
 			},
-			bindings: bindings => {
+			bindings: _ => {
 				return {};
 			},
 		},

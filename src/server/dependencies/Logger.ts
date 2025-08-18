@@ -14,10 +14,10 @@ const fileTransport = pino.transport({
 const ServerLogger = pino(
 	{
 		formatters: {
-			level: label => {
+			level: _ => {
 				return {};
 			},
-			bindings: bindings => {
+			bindings: _ => {
 				return {};
 			},
 		},
