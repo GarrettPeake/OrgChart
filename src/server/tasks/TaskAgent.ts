@@ -7,7 +7,6 @@ import {
 import {TodoListItem} from '../tools/UpdateTodoListTool.js';
 import {ModelInformation} from '../utils/provider/ModelInfo.js';
 import {getConfig} from '../utils/Configuration.js';
-import {cleanText} from '@/shared/utils/TextUtils.js';
 import {
 	CompletionInputMessage,
 	CompletionUsageStats,
@@ -73,10 +72,11 @@ export class TaskAgent {
 
 		// Initialize AgentContext with ContinuousContextManager
 		this.agentContext = new AgentContext(
-			this.agent.system_prompt(),
+			[],
 			continuousContextManager,
 			this.agentInstanceId,
 		);
+		this.agentContext.addSystemBlock(this.agent.system_prompt());
 
 		// Seed the context with current project context if available
 		if (continuousContextManager) {
@@ -416,6 +416,7 @@ export class TaskAgent {
 
 		// Handle the LLM not producing a response
 		if (!choice || !message) {
+			Logger.info(response);
 			this.writeEvent({
 				title: 'LLM API Error',
 				id: crypto.randomUUID(),

@@ -31,19 +31,27 @@ export interface ContextBlock {
  * and future operations without overloading the TaskAgent class.
  */
 export class AgentContext {
-	private blocks: ContextBlock[] = [];
+	private blocks: ContextBlock[];
 	private continuousContextManager?: ContinuousContextManager;
 	private agentInstanceId?: string;
 
 	constructor(
-		systemPrompt: string,
+		blocks: ContextBlock[],
 		continuousContextManager?: ContinuousContextManager,
 		agentInstanceId?: string,
 	) {
 		// Initialize with system block
-		this.addSystemBlock(systemPrompt);
+		this.blocks = blocks;
 		this.continuousContextManager = continuousContextManager;
 		this.agentInstanceId = agentInstanceId;
+	}
+
+	deepCopy(includeAgentId: boolean = false) {
+		return new AgentContext(
+			JSON.parse(JSON.stringify(this.blocks)),
+			this.continuousContextManager,
+			includeAgentId ? this.agentInstanceId : undefined,
+		);
 	}
 
 	/**
@@ -325,6 +333,20 @@ export class AgentContext {
 	 */
 	removeBlocksByType(type: BlockType): void {
 		this.blocks = this.blocks.filter(block => block.type !== type);
+		this.logContext();
+	}
+
+	/**
+	 * Remove the most recent block with a given label if any
+	 */
+	removeMostRecentLabelledBlock(label: string): void {
+		const removalIndex =
+			this.blocks.length -
+			this.blocks.reverse().findIndex(block => block.label === label) -
+			1;
+		if (removalIndex !== this.blocks.length) {
+			this.blocks.splice(removalIndex, 1);
+		}
 		this.logContext();
 	}
 
