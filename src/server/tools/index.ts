@@ -48,7 +48,7 @@ export const getToolset = (
 ): ToolDefinition[] => [
 	attemptCompletionToolDefinition,
 	updateTodoListToolDefinition(level > 0),
-	delegateWorkTool(level),
+	...(level > 0 ? [delegateWorkTool(level)] : []),
 	...(canRead ? readTools : []),
 	...(canWrite ? writeTools : []),
 	...additionalTools,

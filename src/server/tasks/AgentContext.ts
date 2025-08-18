@@ -65,7 +65,7 @@ export class AgentContext {
 	 * Call the ContextLogger if available and agent instance ID is set
 	 */
 	private logContext(): void {
-		if (this.agentInstanceId && ContextLogger) {
+		if (this.agentInstanceId) {
 			ContextLogger.getAgentLogger(this.agentInstanceId)().catch(error => {
 				Logger.warn(
 					`Failed to log context for ${this.agentInstanceId}:`,
