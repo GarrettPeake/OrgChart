@@ -15,15 +15,15 @@ export const readToolDefinition: ToolDefinition = {
 				type: 'string',
 				description: `The path of the file to read (relative to the current working directory)`,
 			},
-			justification: {
+			reasoning: {
 				type: 'string',
-				description: `A short justification describing why you are reading this file`,
+				description: `A brief explanation (1-2 sentences) of why you need to read this file and how it will help accomplish the task.`,
 			},
 		},
-		required: ['file_path', 'justification'],
+		required: ['file_path', 'reasoning'],
 	},
 	enact: async (
-		args: {file_path: string},
+		args: {file_path: string; reasoning: string},
 		invoker: TaskAgent,
 		writeEvent: (event: OrgchartEvent) => void,
 	): Promise<string> => {
@@ -33,7 +33,11 @@ export const readToolDefinition: ToolDefinition = {
 			content: [
 				{
 					type: DisplayContentType.TEXT,
-					content: `Reading file: ${args.file_path}`,
+					content: args.reasoning,
+				},
+				{
+					type: DisplayContentType.TEXT,
+					content: `File: ${args.file_path}`,
 				},
 			],
 		});

@@ -27,6 +27,11 @@ export const delegateWorkTool = (level: number): ToolDefinition => {
 		inputSchema: {
 			type: 'object',
 			properties: {
+				reasoning: {
+					type: 'string',
+					description:
+						'A brief explanation (1-2 sentences) of why you are delegating this task and how it fits into the overall work.',
+				},
 				task: {
 					type: 'string',
 					description:
@@ -40,10 +45,10 @@ export const delegateWorkTool = (level: number): ToolDefinition => {
 						.filter(s => s !== undefined),
 				},
 			},
-			required: ['task', 'agentId'],
+			required: ['reasoning', 'task', 'agentId'],
 		},
 		enact: async (
-			args: {agentId: string; task: string},
+			args: {reasoning: string; agentId: string; task: string},
 			invoker: TaskAgent,
 			writeEvent: (event: OrgchartEvent) => void,
 			toolCallId?: string,
@@ -53,6 +58,10 @@ export const delegateWorkTool = (level: number): ToolDefinition => {
 				title: `DelegateWork(${agents[args.agentId]?.name})`,
 				id: eventId,
 				content: [
+					{
+						type: DisplayContentType.TEXT,
+						content: args.reasoning,
+					},
 					{
 						type: DisplayContentType.TEXT,
 						content: args.task,
@@ -65,6 +74,14 @@ export const delegateWorkTool = (level: number): ToolDefinition => {
 					title: `DelegateWork - Failed`,
 					id: eventId,
 					content: [
+						{
+							type: DisplayContentType.TEXT,
+							content: args.reasoning,
+						},
+						{
+							type: DisplayContentType.TEXT,
+							content: `Failed: Cannot delegate to agent '${args.agentId}' as it does not exist`,
+						},
 						{
 							type: DisplayContentType.TEXT,
 							content: args.task,

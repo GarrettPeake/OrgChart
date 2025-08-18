@@ -14,16 +14,21 @@ export const attemptCompletionToolDefinition: ToolDefinition = {
 	inputSchema: {
 		type: 'object',
 		properties: {
+			reasoning: {
+				type: 'string',
+				description:
+					'A brief explanation (1-2 sentences) of why you believe the task is complete and what was accomplished.',
+			},
 			result: {
 				type: 'string',
 				description:
 					"The result of the task. Formulate this result in a way that is final and does not require further input from the user. Don't end your result with questions or offers for further assistance.",
 			},
 		},
-		required: ['result'],
+		required: ['reasoning', 'result'],
 	},
 	enact: async (
-		args: {result: string},
+		args: {reasoning: string; result: string},
 		invoker: TaskAgent,
 		writeEvent: (event: OrgchartEvent) => void,
 	): Promise<string> => {
@@ -31,6 +36,10 @@ export const attemptCompletionToolDefinition: ToolDefinition = {
 			title: 'Task Complete',
 			id: crypto.randomUUID(),
 			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.reasoning,
+				},
 				{
 					type: DisplayContentType.TEXT,
 					content: args.result,

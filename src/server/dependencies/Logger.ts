@@ -1,15 +1,17 @@
 import {pino} from 'pino';
 import path from 'path';
 import fs from 'fs/promises';
-import {TaskAgent} from './server/tasks/TaskAgent.js';
-import {getConfig} from './server/utils/Configuration.js';
+import {TaskAgent} from '@server/tasks/TaskAgent.js';
+import {OrgchartConfig} from '@server/dependencies/Configuration.js';
 
 const fileTransport = pino.transport({
 	target: 'pino/file',
-	options: {destination: path.join(getConfig().orgChartDir, 'app.log')},
+	options: {
+		destination: path.join(OrgchartConfig.orgchartDir, 'server.log'),
+	},
 });
 
-const Logger = pino(
+const ServerLogger = pino(
 	{
 		formatters: {
 			level: label => {
@@ -22,7 +24,7 @@ const Logger = pino(
 	},
 	fileTransport,
 );
-export default Logger;
+export default ServerLogger;
 
 /**
  * Simple logger to enable creating a directory structure of context json files
@@ -30,8 +32,12 @@ export default Logger;
 export let ContextLogger: {
 	getAgentLogger: (agentInstanceId: string) => () => Promise<void>;
 };
-export const initContextLogger = (runId: string, baseAgent: TaskAgent) => {
-	const baseDir = path.join(getConfig().orgChartDir, 'ContextLogs', runId);
+export const initContextLogger = (baseAgent: TaskAgent) => {
+	const baseDir = path.join(
+		OrgchartConfig.orgchartDir,
+		'ContextLogs',
+		OrgchartConfig.runId,
+	);
 	ContextLogger = {
 		getAgentLogger: (agentInstanceId: string) => async () => {
 			try {
@@ -41,7 +47,9 @@ export const initContextLogger = (runId: string, baseAgent: TaskAgent) => {
 					[],
 				];
 				if (taskAgent === undefined) {
-					Logger.info(`Could not locate ${agentInstanceId} in agent tree`);
+					ServerLogger.info(
+						`Could not locate ${agentInstanceId} in agent tree`,
+					);
 					return;
 				}
 				// Ensure the directory exists

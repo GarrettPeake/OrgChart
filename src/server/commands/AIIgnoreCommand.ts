@@ -1,9 +1,10 @@
 import {BaseCommand, CommandResult} from './BaseCommand.js';
 import {getFileTree} from '../utils/FileSystemUtils.js';
-import {getConfig} from '../utils/Configuration.js';
-import Logger from '@/Logger.js';
+import {OrgchartConfig} from '@server/dependencies/Configuration.js';
+import ServerLogger from '@server/dependencies/Logger.js';
 import fs from 'fs/promises';
 import {PromiseServer} from '../PromiseServer.js';
+import {LLMProvider} from '../dependencies/provider/index.js';
 
 const SYSTEM_PROMPT = `
 You are an expert in software development and project structure analysis.
@@ -40,14 +41,13 @@ export class AIIgnoreCommand extends BaseCommand {
 
 	async execute(args: string[], server: PromiseServer): Promise<CommandResult> {
 		try {
-			Logger.info('Starting AI ignore analysis...');
+			ServerLogger.info('Starting AI ignore analysis...');
 
 			// Get the current file tree with token counts
 			const fileTree = getFileTree(undefined, 15, true);
-			const config = getConfig();
 
 			// Use the gpt-oss model to analyze the file tree
-			const response = await config.llmProvider.chatCompletion(
+			const response = await LLMProvider.chatCompletion(
 				{
 					model: 'openai/gpt-oss-120b',
 					messages: [
@@ -108,7 +108,7 @@ export class AIIgnoreCommand extends BaseCommand {
 			try {
 				result = JSON.parse(message);
 			} catch (parseError) {
-				Logger.error('Failed to parse AI response:', parseError);
+				ServerLogger.error('Failed to parse AI response:', parseError);
 				return this.error('Failed to parse AI response as JSON');
 			}
 
@@ -126,20 +126,22 @@ export class AIIgnoreCommand extends BaseCommand {
 				...result.patterns,
 			].join('\n');
 
-			await fs.writeFile(config.aiIgnoreFile, content, 'utf8');
+			await fs.writeFile(OrgchartConfig.aiIgnoreFile, content, 'utf8');
 
-			Logger.info(`Generated ${result.patterns.length} AI ignore patterns`);
+			ServerLogger.info(
+				`Generated ${result.patterns.length} AI ignore patterns`,
+			);
 
 			return this.success(
 				`Generated ${result.patterns.length} AI ignore patterns and saved to .aiignore`,
 				{
 					patterns: result.patterns,
 					reasoning: result.reasoning,
-					filePath: config.aiIgnoreFile,
+					filePath: OrgchartConfig.aiIgnoreFile,
 				},
 			);
 		} catch (error) {
-			Logger.error('Error in AI ignore analysis:', error);
+			ServerLogger.error('Error in AI ignore analysis:', error);
 			return this.error(
 				`Failed to analyze file tree: ${
 					error instanceof Error ? error.message : String(error)

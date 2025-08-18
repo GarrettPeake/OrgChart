@@ -17,11 +17,16 @@ export const askQuestionToolDefinition: ToolDefinition = {
 				description:
 					'The question to ask the user. This should be a clear, specific question that addresses the information you need.',
 			},
+			reasoning: {
+				type: 'string',
+				description:
+					'A brief explanation (1-2 sentences) of why you need to ask this question and how it will help accomplish the task.',
+			},
 		},
-		required: ['question'],
+		required: ['question', 'reasoning'],
 	},
 	enact: async (
-		args: {question: string},
+		args: {question: string; reasoning: string},
 		invoker: TaskAgent,
 		writeEvent: (event: OrgchartEvent) => void,
 	): Promise<string> => {
@@ -29,6 +34,10 @@ export const askQuestionToolDefinition: ToolDefinition = {
 			title: `Question from Agent`,
 			id: crypto.randomUUID(),
 			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.reasoning,
+				},
 				{
 					type: DisplayContentType.TEXT,
 					content: args.question,

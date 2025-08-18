@@ -1,9 +1,9 @@
 import {
 	CompletionInputMessage,
 	ToolCall,
-} from '../utils/provider/OpenRouter.js';
+} from '@server/dependencies/provider/OpenRouter.js';
 import {ContinuousContextManager} from '../workflows/ContinuousContext.js';
-import Logger, {ContextLogger} from '@/Logger.js';
+import ServerLogger, {ContextLogger} from '@server/dependencies/Logger.js';
 
 export type BlockType =
 	| 'TOOL'
@@ -65,9 +65,9 @@ export class AgentContext {
 	 * Call the ContextLogger if available and agent instance ID is set
 	 */
 	private logContext(): void {
-		if (this.agentInstanceId) {
+		if (this.agentInstanceId && ContextLogger) {
 			ContextLogger.getAgentLogger(this.agentInstanceId)().catch(error => {
-				Logger.warn(
+				ServerLogger.warn(
 					`Failed to log context for ${this.agentInstanceId}:`,
 					error,
 				);
@@ -201,7 +201,7 @@ export class AgentContext {
 			if (toolResult !== undefined) {
 				this.addSingleToolBlock(toolCall, toolResult);
 			} else {
-				Logger.warn(`Missing tool result for tool call ${toolCall.id}`);
+				ServerLogger.warn(`Missing tool result for tool call ${toolCall.id}`);
 			}
 		}
 	}

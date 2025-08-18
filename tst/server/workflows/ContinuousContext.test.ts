@@ -9,23 +9,23 @@ import {
 } from 'vitest';
 import {ContinuousContextManager} from '@/server/workflows/ContinuousContext.js';
 import {GitIgnoreParser} from '@/server/utils/GitIgnoreParser.js';
-import {getConfig} from '@/server/utils/Configuration.js';
+import {OrgchartConfig} from '@server/dependencies/Configuration.js';
 import {startFileWatching} from '@/server/utils/FileSystemUtils.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import Logger from '@/Logger.js';
+import ServerLogger from '@server/dependencies/Logger.js';
 
 // Mock dependencies
-vi.mock('@/Logger.js', () => ({
+vi.mock('@server/dependencies/Logger.js', () => ({
 	default: {
 		info: vi.fn(),
 		error: vi.fn(),
 	},
 }));
 
-vi.mock('@/server/utils/Configuration.js', () => ({
-	getConfig: vi.fn(),
+vi.mock('@server/dependencies/Configuration.js', () => ({
+	OrgchartConfig: vi.fn(),
 }));
 
 vi.mock('@/server/utils/FileSystemUtils.js', async importOriginal => {
@@ -78,7 +78,9 @@ describe('ContinuousContextManager', () => {
 			llmProvider: mockLLMProvider,
 		};
 
-		(getConfig as MockedFunction<typeof getConfig>).mockReturnValue(mockConfig);
+		(OrgchartConfig as MockedFunction<typeof OrgchartConfig>).mockReturnValue(
+			mockConfig,
+		);
 		(
 			startFileWatching as MockedFunction<typeof startFileWatching>
 		).mockResolvedValue(mockUnsubscribe);
@@ -170,7 +172,7 @@ describe('ContinuousContextManager', () => {
 
 			await manager.initialize();
 
-			expect(Logger.error).toHaveBeenCalledWith(
+			expect(ServerLogger.error).toHaveBeenCalledWith(
 				'Error creating initial context:',
 				expect.any(Error),
 			);
@@ -183,7 +185,7 @@ describe('ContinuousContextManager', () => {
 
 			await manager.initialize();
 
-			expect(Logger.info).toHaveBeenCalledWith(
+			expect(ServerLogger.info).toHaveBeenCalledWith(
 				expect.stringContaining(
 					'No message received from LLM for continuous context',
 				),
@@ -277,7 +279,7 @@ describe('ContinuousContextManager', () => {
 				path: path.join(testDir, 'non-existent.txt'),
 			});
 
-			expect(Logger.error).toHaveBeenCalledWith(
+			expect(ServerLogger.error).toHaveBeenCalledWith(
 				expect.stringContaining(
 					'Error handling file event for non-existent.txt:',
 				),
@@ -379,7 +381,7 @@ describe('ContinuousContextManager', () => {
 			await Promise.all([updatePromise1, updatePromise2]);
 
 			// Should have logged that update was skipped
-			expect(Logger.info).toHaveBeenCalledWith(
+			expect(ServerLogger.info).toHaveBeenCalledWith(
 				'Context update already in progress, skipping...',
 			);
 
@@ -401,7 +403,7 @@ describe('ContinuousContextManager', () => {
 
 			await manager.updateContext();
 
-			expect(Logger.error).toHaveBeenCalledWith(
+			expect(ServerLogger.error).toHaveBeenCalledWith(
 				'Error updating context:',
 				expect.any(Error),
 			);
@@ -421,7 +423,7 @@ describe('ContinuousContextManager', () => {
 
 			await manager.updateContext();
 
-			expect(Logger.info).toHaveBeenCalledWith(
+			expect(ServerLogger.info).toHaveBeenCalledWith(
 				expect.stringContaining(
 					'No message received from LLM for continuous context',
 				),
@@ -433,7 +435,7 @@ describe('ContinuousContextManager', () => {
 			await manager.updateContext();
 
 			// Should log that no mutations were detected
-			expect(Logger.info).toHaveBeenCalledWith(
+			expect(ServerLogger.info).toHaveBeenCalledWith(
 				'No file mutations detected, skipping context update',
 			);
 
@@ -505,7 +507,7 @@ describe('ContinuousContextManager', () => {
 
 			await manager.initialize();
 
-			expect(Logger.error).toHaveBeenCalledWith(
+			expect(ServerLogger.error).toHaveBeenCalledWith(
 				'Error starting file watcher:',
 				expect.any(Error),
 			);

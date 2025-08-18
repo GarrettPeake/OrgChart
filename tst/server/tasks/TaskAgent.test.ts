@@ -16,17 +16,17 @@ import {
 	DisplayContentType,
 	OrgchartEvent,
 } from '@/server/IOTypes.js';
-import {getConfig} from '@/server/utils/Configuration.js';
+import {OrgchartConfig} from '@server/dependencies/Configuration.js';
 import {
 	CompletionUsageStats,
 	ToolCall,
-} from '@/server/utils/provider/OpenRouter.js';
+} from '@server/dependencies/provider/OpenRouter.js';
 import {attemptCompletionToolName} from '@/server/tools/AttemptCompletionTool.js';
 import {ContinuousContextManager} from '@/server/workflows/ContinuousContext.js';
-import Logger from '@/Logger.js';
+import ServerLogger from '@server/dependencies/Logger.js';
 
 // Mock all dependencies
-vi.mock('@/Logger.js', () => ({
+vi.mock('@server/dependencies/Logger.js', () => ({
 	default: {
 		info: vi.fn(),
 		warn: vi.fn(),
@@ -39,8 +39,8 @@ vi.mock('@/Logger.js', () => ({
 	},
 }));
 
-vi.mock('@/server/utils/Configuration.js', () => ({
-	getConfig: vi.fn(),
+vi.mock('@server/dependencies/Configuration.js', () => ({
+	OrgchartConfig: vi.fn(),
 }));
 
 vi.mock('@/shared/utils/TextUtils.js', () => ({
@@ -84,7 +84,7 @@ vi.mock('@/server/tools/DelegateWorkTool.js', () => ({
 	}),
 }));
 
-vi.mock('@/server/utils/provider/ModelInfo.js', () => ({
+vi.mock('@server/dependencies/provider/ModelInfo.js', () => ({
 	ModelInformation: {
 		'test-model': {
 			context: 8192,
@@ -167,7 +167,9 @@ describe('TaskAgent', () => {
 			llmProvider: mockLLMProvider,
 		};
 
-		(getConfig as MockedFunction<typeof getConfig>).mockReturnValue(mockConfig);
+		(OrgchartConfig as MockedFunction<typeof OrgchartConfig>).mockReturnValue(
+			mockConfig,
+		);
 
 		// Setup mock event writer
 		mockWriteEvent = vi.fn();
@@ -202,7 +204,7 @@ describe('TaskAgent', () => {
 
 		it('should initialize AgentContext with system prompt and context block', () => {
 			const context = taskAgent.getContext();
-			expect(context).toHaveLength(3); // System + Context user message + Context assistant response
+			expect(context).toHaveLength(2); // System + Context user message
 			expect(context[0]).toEqual({
 				role: 'system',
 				content: 'You are a test agent.',
@@ -675,7 +677,7 @@ describe('TaskAgent', () => {
 			taskAgent.step();
 
 			await vi.waitFor(() => {
-				expect(Logger.error).toHaveBeenCalledWith(
+				expect(ServerLogger.error).toHaveBeenCalledWith(
 					expect.any(Error),
 					'Error parsing tool arguments for mock_tool',
 				);
@@ -931,7 +933,7 @@ describe('TaskAgent', () => {
 			);
 
 			const context = agent.getContext();
-			expect(context).toHaveLength(3); // System + Context user + Context assistant
+			expect(context).toHaveLength(2); // System + Context user
 			expect(context[1]).toEqual({
 				role: 'user',
 				content: 'Test context content',
@@ -1091,7 +1093,7 @@ describe('TaskAgent', () => {
 
 			// Agent should continue working normally despite context update error
 			expect(agent.status).toBe(AgentStatus.IDLE);
-			expect(Logger.error).toHaveBeenCalledWith(
+			expect(ServerLogger.error).toHaveBeenCalledWith(
 				'Failed to update continuous context:',
 				expect.any(Error),
 			);

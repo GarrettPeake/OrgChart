@@ -10,15 +10,20 @@ export const fileTreeToolDefinition: ToolDefinition = {
 	inputSchema: {
 		type: 'object',
 		properties: {
+			reasoning: {
+				type: 'string',
+				description:
+					'A brief explanation (1-2 sentences) of why you need to view the file tree and what you are looking for.',
+			},
 			path: {
 				type: 'string',
 				description: 'The path of the directory to create the tree from',
 			},
 		},
-		required: ['path'],
+		required: ['reasoning', 'path'],
 	},
 	enact: async (
-		args: {path: string},
+		args: {reasoning: string; path: string},
 		invoker: TaskAgent,
 		writeEvent: (event: OrgchartEvent) => void,
 	): Promise<string> => {
@@ -28,7 +33,11 @@ export const fileTreeToolDefinition: ToolDefinition = {
 			content: [
 				{
 					type: DisplayContentType.TEXT,
-					content: 'File tree provided to agent',
+					content: args.reasoning,
+				},
+				{
+					type: DisplayContentType.TEXT,
+					content: `Path: ${args.path}`,
 				},
 			],
 		});

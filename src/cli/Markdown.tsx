@@ -37,5 +37,5 @@ export type Props = TerminalRendererOptions & {
 };
 
 export default function Markdown({children}: Props) {
-	return <Text>{parse(children)}</Text>;
+	return <Text>{parse(children).trim()}</Text>;
 }

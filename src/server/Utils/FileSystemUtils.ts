@@ -1,11 +1,11 @@
 import {GitIgnoreParser} from './GitIgnoreParser.js';
-import {getConfig} from './Configuration.js';
+import {OrgchartConfig} from '@server/dependencies/Configuration.js';
 import {lstatSync, readdirSync, readFileSync} from 'fs';
 import path from 'path';
 // @ts-ignore
 import pdf from 'pdf-parse/lib/pdf-parse.js';
 import mammoth from 'mammoth';
-import Logger from '@/Logger.js';
+import ServerLogger from '@server/dependencies/Logger.js';
 import {subscribe} from '@parcel/watcher';
 import {encodingForModel} from 'js-tiktoken';
 
@@ -28,12 +28,12 @@ export const getFileTree = (
 	maxDepth: number = 15,
 	includeTokenCounts: boolean = false,
 ) => {
-	const config = getConfig();
-	const gip = new GitIgnoreParser(rootDir || config.rootDir);
+	const config = OrgchartConfig;
+	const gip = new GitIgnoreParser(rootDir || config.workingDir);
 	gip.loadGitRepoPatterns();
 	gip.addPatterns(config.ignorePatterns);
 	return buildFileTreeDfs(
-		rootDir || config.rootDir,
+		rootDir || config.workingDir,
 		gip,
 		maxDepth,
 		0,
@@ -133,12 +133,12 @@ export const readFile = async (file_path: string): Promise<string> => {
 			return content;
 		}
 	} catch (error) {
-		Logger.error(error, `Failed to read file: ${file_path}`);
+		ServerLogger.error(error, `Failed to read file: ${file_path}`);
 		if (
 			error instanceof Error &&
 			error.message.includes('no such file or directory')
 		) {
-			Logger.error(error, 'Failed to read file');
+			ServerLogger.error(error, 'Failed to read file');
 			return `No such file or directory: ${file_path}`;
 		}
 		throw new Error(
@@ -153,8 +153,8 @@ export const getFormattedContext = async (
 	relativeBasePath: string = './',
 	maxDepth: number = 10,
 ): Promise<string> => {
-	const config = getConfig();
-	const gip = new GitIgnoreParser(config.rootDir);
+	const config = OrgchartConfig;
+	const gip = new GitIgnoreParser(config.workingDir);
 	gip.loadGitRepoPatterns();
 	gip.addPatterns([...config.ignorePatterns, 'package-lock.json']); // TODO: Standardize a list of files to be ignored, or even create an AI powered ".aiignore"
 	const absoluteBasePath = path.join(process.cwd(), relativeBasePath);
@@ -215,11 +215,11 @@ export const startFileWatching = async (
 	onFileEvent: (event: any) => Promise<void>,
 	gitIgnoreParser?: GitIgnoreParser,
 ): Promise<() => void> => {
-	const config = getConfig();
+	const config = OrgchartConfig;
 	const gip =
 		gitIgnoreParser ||
 		(() => {
-			const parser = new GitIgnoreParser(config.rootDir);
+			const parser = new GitIgnoreParser(config.workingDir);
 			parser.loadGitRepoPatterns();
 			parser.addPatterns(config.ignorePatterns);
 			return parser;
@@ -228,7 +228,7 @@ export const startFileWatching = async (
 	try {
 		const subscription = await subscribe(watchDir, async (err, events) => {
 			if (err) {
-				Logger.error('File watcher error:', err);
+				ServerLogger.error('File watcher error:', err);
 				return;
 			}
 
@@ -246,7 +246,7 @@ export const startFileWatching = async (
 
 		return () => subscription.unsubscribe();
 	} catch (error) {
-		Logger.error('Error starting file watcher:', error);
+		ServerLogger.error('Error starting file watcher:', error);
 		throw error;
 	}
 };

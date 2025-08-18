@@ -1,17 +1,17 @@
 import {Agent, agents, toStaticAgentInfo} from '../agents/Agents.js';
-import Logger from '../../Logger.js';
+import ServerLogger from '@server/dependencies/Logger.js';
 import {
 	attemptCompletionToolDefinition,
 	attemptCompletionToolName,
 } from '../tools/AttemptCompletionTool.js';
 import {TodoListItem} from '../tools/UpdateTodoListTool.js';
-import {ModelInformation} from '../utils/provider/ModelInfo.js';
-import {getConfig} from '../utils/Configuration.js';
+import {ModelInformation} from '@server/dependencies/provider/ModelInfo.js';
+import {OrgchartConfig} from '@server/dependencies/Configuration.js';
 import {
 	CompletionInputMessage,
 	CompletionUsageStats,
 	ToolCall,
-} from '../utils/provider/OpenRouter.js';
+} from '@server/dependencies/provider/OpenRouter.js';
 import {
 	AgentStatus,
 	DisplayContentType,
@@ -22,6 +22,7 @@ import {ToolDefinition} from '../tools/index.js';
 import {Conversation, ConversationParticipant} from './Conversation.js';
 import {AgentContext} from './AgentContext.js';
 import {ContinuousContextManager} from '../workflows/ContinuousContext.js';
+import {LLMProvider} from '../dependencies/provider/index.js';
 
 /**
  * Implements a task state machine with the following transitions
@@ -227,7 +228,7 @@ export class TaskAgent {
 		try {
 			args = JSON.parse(toolCall.function.arguments);
 		} catch (e) {
-			Logger.error(e, `Error parsing tool arguments for ${toolName}`);
+			ServerLogger.error(e, `Error parsing tool arguments for ${toolName}`);
 			return `Invalid tool use, unable to parse tool arguments: ${e}`;
 		}
 
@@ -249,7 +250,7 @@ export class TaskAgent {
 					},
 				],
 			});
-			return `Failed to enact tool ${toolName}, received error: ${e.message}`;
+			return `Error: ${e.message}`;
 		}
 	}
 
@@ -257,7 +258,7 @@ export class TaskAgent {
 		// Update our context usage and cost usage
 		this.contextUsed = usage.prompt_tokens;
 		this.cost += usage.cost;
-		Logger.info(
+		ServerLogger.info(
 			`Request ${this.agent.name} ${usage.prompt_tokens}(${usage.prompt_tokens_details.reasoning_tokens}cache) -> ${usage.completion_tokens}`,
 		);
 	}
@@ -331,7 +332,7 @@ export class TaskAgent {
 
 	private stepThinking(): void {
 		// Check if we've hit the iteration limit
-		const maxIterations = getConfig().maxAgentIterations;
+		const maxIterations = OrgchartConfig.maxAgentIterations;
 		if (this.iterationCount >= maxIterations) {
 			this.writeEvent({
 				title: `Agent Max Cycles Exceeded (${maxIterations})`,
@@ -343,7 +344,9 @@ export class TaskAgent {
 					},
 				],
 			});
-			Logger.info('Loop detected, the user will need to manually continue');
+			ServerLogger.info(
+				'Loop detected, the user will need to manually continue',
+			);
 			this.status = AgentStatus.IDLE;
 			return;
 		}
@@ -370,17 +373,16 @@ export class TaskAgent {
 				? this.tools
 				: [attemptCompletionToolDefinition];
 
-		getConfig()
-			.llmProvider.chatCompletion(
-				{
-					model: this.agent.model,
-					messages: this.agentContext.toCompletionMessages(),
-					tool_choice: 'required',
-					temperature: this.agent.temperature,
-					stream: false,
-				},
-				toolsToUse,
-			)
+		LLMProvider.chatCompletion(
+			{
+				model: this.agent.model,
+				messages: this.agentContext.toCompletionMessages(),
+				tool_choice: 'required',
+				temperature: this.agent.temperature,
+				stream: false,
+			},
+			toolsToUse,
+		)
 			.then(response => {
 				this.isLLMCallInProgress = false;
 
@@ -416,7 +418,7 @@ export class TaskAgent {
 
 		// Handle the LLM not producing a response
 		if (!choice || !message) {
-			Logger.info(response);
+			ServerLogger.info(response);
 			this.writeEvent({
 				title: 'LLM API Error',
 				id: crypto.randomUUID(),
@@ -460,7 +462,7 @@ export class TaskAgent {
 			this.status = AgentStatus.ACTING;
 		} else {
 			// No tool calls, task might be complete or need clarification
-			Logger.warn('LLM provided no tool calls');
+			ServerLogger.warn('LLM provided no tool calls');
 			this.handleError('No Tool Calls');
 		}
 	}
@@ -496,7 +498,7 @@ export class TaskAgent {
 					return;
 				}
 
-				Logger.info(
+				ServerLogger.info(
 					`Agent: ${this.agent.name} used ${
 						toolCall.function.name
 					} and received ${toolResult.slice(0, 50)}`,
@@ -549,7 +551,7 @@ export class TaskAgent {
 	private refreshProjectContext(): void {
 		if (this.continuousContextManager) {
 			this.agentContext.refreshContextBlock();
-			Logger.info(`Agent ${this.agent.name} refreshed project context`);
+			ServerLogger.info(`Agent ${this.agent.name} refreshed project context`);
 		}
 	}
 
@@ -559,15 +561,15 @@ export class TaskAgent {
 	private triggerContextUpdate(): void {
 		if (this.continuousContextManager) {
 			this.continuousContextManager.updateContext().catch(error => {
-				Logger.error('Failed to update continuous context:', error);
+				ServerLogger.error('Failed to update continuous context:', error);
 			});
-			Logger.info(`Agent ${this.agent.name} triggered context update`);
+			ServerLogger.info(`Agent ${this.agent.name} triggered context update`);
 		}
 	}
 
 	private handleError(error: any): void {
 		this.status = AgentStatus.PAUSED;
-		Logger.error(error, 'Task execution failed');
+		ServerLogger.error(error, 'Task execution failed');
 		const errorMessage = error instanceof Error ? error.message : String(error);
 		this.writeEvent({
 			title: 'Task Error',

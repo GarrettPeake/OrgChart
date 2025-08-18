@@ -38,7 +38,11 @@ export const readTools = [
 	fileTreeToolDefinition,
 ];
 
-export const writeTools = [writeToolDefinition, editToolDefinition];
+export const writeTools = [
+	writeToolDefinition,
+	editToolDefinition,
+	bashToolDefinition,
+];
 
 export const getToolset = (
 	level: number,

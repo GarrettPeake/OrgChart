@@ -1,4 +1,4 @@
-import Logger, {initContextLogger} from '@/Logger.js';
+import ServerLogger, {initContextLogger} from '@server/dependencies/Logger.js';
 import {agents, toStaticAgentInfo} from './agents/Agents.js';
 import {
 	AgentStatus,
@@ -13,7 +13,8 @@ import {TaskAgent} from './tasks/TaskAgent.js';
 import {Conversation, ConversationParticipant} from './tasks/Conversation.js';
 import {ContinuousContextManager} from './workflows/ContinuousContext.js';
 import {CommandRegistry} from './commands/CommandRegistry.js';
-import {getConfig} from './utils/Configuration.js';
+import {OrgchartConfig} from '@server/dependencies/Configuration.js';
+import {LLMProvider} from './dependencies/provider/index.js';
 
 /**
  * To separate server and UI, we define a "server" based on a promise
@@ -26,7 +27,6 @@ export class PromiseServer {
 	private taskAgent?: TaskAgent;
 	private userConversation?: Conversation;
 	private events: OrgchartEvent[] = [];
-	private runId: string = crypto.randomUUID().substring(0, 6);
 	private stepInterval: NodeJS.Timeout | null = null;
 	private contextManager: ContinuousContextManager;
 	private commandRegistry: CommandRegistry;
@@ -42,13 +42,13 @@ export class PromiseServer {
 	}
 
 	private async initialize() {
-		Logger.info(`Starting server'`);
+		ServerLogger.info(`Starting server'`);
 		try {
 			// Wait for context manager to initialize before creating agents
 			// await this.contextManager.initialize();
-			Logger.info('ContinuousContext initialized successfully');
+			ServerLogger.info('ContinuousContext initialized successfully');
 		} catch (error) {
-			Logger.error('Failed to initialize context manager:', error);
+			ServerLogger.error('Failed to initialize context manager:', error);
 		}
 		this.isInitialized = true;
 		this.commandQueue.forEach(command => this.sendCommand(command));
@@ -69,7 +69,7 @@ export class PromiseServer {
 			this.contextManager, // Pass context manager to TaskAgent
 		);
 
-		initContextLogger(this.runId, this.taskAgent);
+		initContextLogger(this.taskAgent);
 
 		// Start the step interval
 		this.stepInterval = setInterval(() => {
@@ -80,16 +80,16 @@ export class PromiseServer {
 	}
 
 	getRunId() {
-		return this.runId;
+		return OrgchartConfig.runId;
 	}
 
 	getTotalSpend() {
-		return getConfig().llmProvider.totalSpend;
+		return LLMProvider.totalSpend;
 	}
 
 	// Capabilities used by agent code
 	upsertEvent(event: OrgchartEvent) {
-		Logger.info(JSON.stringify(event));
+		ServerLogger.info(JSON.stringify(event));
 		const replacementIndex = this.events.findIndex(e => e.id === event.id);
 		if (replacementIndex !== -1) {
 			this.events[replacementIndex] = event;
@@ -145,8 +145,8 @@ export class PromiseServer {
 		} else {
 			// If agent hasn't started yet, start it with the first command
 			if (!this.isAgentStarted) {
-				Logger.info(`Starting agent with first command: ${command}`);
-				this.startAgent(this.agentOverride || getConfig().defaultAgent);
+				ServerLogger.info(`Starting agent with first command: ${command}`);
+				this.startAgent(this.agentOverride || OrgchartConfig.defaultAgent);
 			}
 			// Send message through the user conversation
 			this.getActiveAgent()?.parentConversation.addMessage(
@@ -175,7 +175,7 @@ export class PromiseServer {
 		// Find the currently executing taskRunner
 		const activeAgent = this.getActiveAgent();
 		if (activeAgent) {
-			Logger.info(`Pausing: ${activeAgent.agent.name}`);
+			ServerLogger.info(`Pausing: ${activeAgent.agent.name}`);
 		}
 		activeAgent?.pause();
 	}

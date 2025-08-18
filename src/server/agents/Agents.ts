@@ -8,8 +8,7 @@ import {JuniorSoftwareEngineer} from './SWE/JuniorSoftwareEngineer.js';
 import {AssociateDesigner} from './Designer/AssociateDesigner.js';
 import {JuniorDesigner} from './Designer/JuniorDesigner.js';
 import {SeniorDesigner} from './Designer/SeniorDesigner.js';
-import {LLMModel} from '../utils/provider/ModelInfo.js';
-import {CommandRunner} from './L0/CommandRunner.js';
+import {LLMModel} from '@server/dependencies/provider/ModelInfo.js';
 import {StaticAgentInfo} from '../IOTypes.js';
 
 export interface Agent {
@@ -40,7 +39,6 @@ export const agents: Record<string, Agent> = {
 	// L0 Agents
 	[CodeReviewer.id]: CodeReviewer,
 	[ProjectResearcher.id]: ProjectResearcher,
-	[CommandRunner.id]: CommandRunner,
 };
 
 export const toStaticAgentInfo = (agent: Agent): StaticAgentInfo => ({

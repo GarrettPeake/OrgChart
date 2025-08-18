@@ -1,13 +1,14 @@
-import Logger from '@/Logger.js';
-import {CompletionInputMessage} from '../utils/provider/OpenRouter.js';
+import ServerLogger from '@server/dependencies/Logger.js';
 import {
 	getFormattedContext,
 	startFileWatching,
 } from '../utils/FileSystemUtils.js';
-import {getConfig} from '../utils/Configuration.js';
+import {OrgchartConfig} from '@server/dependencies/Configuration.js';
 import {GitIgnoreParser} from '../utils/GitIgnoreParser.js';
+import {AgentContext} from '../tasks/AgentContext.js';
 import fs from 'fs/promises';
 import path from 'path';
+import {LLMProvider} from '../dependencies/provider/index.js';
 
 const initializePromptPart =
 	'You will be provided with a document containing the content of every file in the project and must output the entirety of the initial version of the document';
@@ -260,44 +261,40 @@ export class ContinuousContextManager {
 	}
 
 	private async createInitialContext() {
-		const context: CompletionInputMessage[] = [
-			{
-				role: 'system',
-				content: systemPrompt(true),
-			},
-			{
-				role: 'user',
-				content: await getFormattedContext(),
-			},
-		];
+		const agentContext = new AgentContext([]);
+		agentContext.addSystemBlock(systemPrompt(true));
+		agentContext.addUserBlock(await getFormattedContext());
 
-		await this.executeContextUpdate(context, 'Error creating initial context:');
+		await this.executeContextUpdate(
+			agentContext,
+			'Error creating initial context:',
+		);
 	}
 
 	private async startFileWatching() {
-		const config = getConfig();
+		const config = OrgchartConfig;
 
 		// Initialize GitIgnoreParser if not already done
 		if (!this.gitIgnoreParser) {
-			this.gitIgnoreParser = new GitIgnoreParser(config.rootDir);
+			this.gitIgnoreParser = new GitIgnoreParser(config.workingDir);
 			this.gitIgnoreParser.loadGitRepoPatterns();
 			this.gitIgnoreParser.addPatterns(config.ignorePatterns);
 		}
 
 		try {
 			this.watchSubscription = await startFileWatching(
-				config.rootDir,
+				config.workingDir,
 				this.handleFileEvent.bind(this),
 				this.gitIgnoreParser,
 			);
 		} catch (error) {
-			Logger.error('Error starting file watcher:', error);
+			ServerLogger.error('Error starting file watcher:', error);
 		}
 	}
 
 	private async handleFileEvent(event: any) {
-		const config = getConfig();
-		const relativePath = path.relative(config.rootDir, event.path);
+		const config = OrgchartConfig;
+		const relativePath = path.relative(config.workingDir, event.path);
 
 		try {
 			switch (event.type) {
@@ -335,7 +332,10 @@ export class ContinuousContextManager {
 					break;
 			}
 		} catch (error) {
-			Logger.error(`Error handling file event for ${relativePath}:`, error);
+			ServerLogger.error(
+				`Error handling file event for ${relativePath}:`,
+				error,
+			);
 		}
 	}
 
@@ -379,13 +379,13 @@ export class ContinuousContextManager {
 
 	public async updateContext(): Promise<void> {
 		if (this.isUpdating) {
-			Logger.info('Context update already in progress, skipping...');
+			ServerLogger.info('Context update already in progress, skipping...');
 			return;
 		}
 
 		// Check if there are any mutations to process
 		if (this.fileMutations.size === 0) {
-			Logger.info('No file mutations detected, skipping context update');
+			ServerLogger.info('No file mutations detected, skipping context update');
 			return;
 		}
 
@@ -395,73 +395,45 @@ export class ContinuousContextManager {
 			const mutationDocument = this.generateMutationDocument();
 			const fullContext = `${this.contextContent}\n\n${mutationDocument}`;
 
-			const context: CompletionInputMessage[] = [
-				{
-					role: 'system',
-					content: systemPrompt(false),
-				},
-				{
-					role: 'user',
-					content: fullContext,
-				},
-			];
+			const agentContext = new AgentContext([]);
+			agentContext.addSystemBlock(systemPrompt(false));
+			agentContext.addUserBlock(fullContext);
 
-			await this.executeContextUpdate(context, 'Error updating context:');
+			await this.executeContextUpdate(agentContext, 'Error updating context:');
 
 			// Clear mutations after successful update
 			this.fileMutations.clear();
 		} catch (error) {
-			Logger.error('Error updating context:', error);
+			ServerLogger.error('Error updating context:', error);
 		} finally {
 			this.isUpdating = false;
 		}
 	}
 
 	private async executeContextUpdate(
-		context: CompletionInputMessage[],
+		agentContext: AgentContext,
 		errorMessage: string,
 	): Promise<void> {
 		try {
-			const response = await getConfig().llmProvider.chatCompletion(
-				{
-					model: 'openai/gpt-oss-120b',
-					messages: context,
-					temperature: 0.2,
-					stream: false,
-					reasoning: {
-						effort: 'medium',
-					},
-					provider: {
-						sort: 'throughput',
-					},
-				},
-				[],
+			const contextContent = await LLMProvider.getNonToolResponse(
+				agentContext,
+				'openai/gpt-oss-120b',
 			);
 
-			const choice = response?.choices?.[0];
-			const message = choice?.message;
-			if (message) {
-				this.contextContent = message.content!;
-				await fs.writeFile(
-					getConfig().projectContextFile,
-					this.contextContent,
-					'utf8',
-				);
-			} else {
-				Logger.info(
-					`No message received from LLM for continuous context: ${JSON.stringify(
-						response,
-					)}`,
-				);
-			}
+			this.contextContent = contextContent;
+			await fs.writeFile(
+				path.join(OrgchartConfig.orgchartDir, 'PROJECT.md'),
+				this.contextContent,
+				'utf8',
+			);
 
 			await fs.writeFile(
-				path.join(getConfig().orgChartDir, 'FULL_CONTEXT.md'),
+				path.join(OrgchartConfig.orgchartDir, 'FULL_CONTEXT.md'),
 				await getFormattedContext(),
 				'utf8',
 			);
 		} catch (error) {
-			Logger.error(errorMessage, error);
+			ServerLogger.error(errorMessage, error);
 		}
 	}
 

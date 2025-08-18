@@ -19,6 +19,10 @@ export const writeToolDefinition: ToolDefinition = {
 	inputSchema: {
 		type: 'object',
 		properties: {
+			reasoning: {
+				type: 'string',
+				description: `A brief explanation (1-2 sentences) of why you need to write this file and what it will accomplish.`,
+			},
 			file_path: {
 				type: 'string',
 				description: `The path of the file to write to (relative to the current working directory`,
@@ -29,10 +33,11 @@ export const writeToolDefinition: ToolDefinition = {
 					"The content to write to the file. ALWAYS provide the COMPLETE intended content of the file, without any truncation or omissions. You MUST include ALL parts of the file, even if they haven't been modified.",
 			},
 		},
-		required: ['file_path', 'content'],
+		required: ['reasoning', 'file_path', 'content'],
 	},
 	enact: async (
 		args: {
+			reasoning: string;
 			file_path: string;
 			content: string;
 		},
@@ -43,6 +48,10 @@ export const writeToolDefinition: ToolDefinition = {
 			title: `Write(${args.file_path})`,
 			id: crypto.randomUUID(),
 			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.reasoning,
+				},
 				{
 					type: DisplayContentType.TEXT,
 					content: args.content.split('\n').slice(0, 8).join('\n'),

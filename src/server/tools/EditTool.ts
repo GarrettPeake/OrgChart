@@ -73,6 +73,11 @@ export const editToolDefinition: ToolDefinition = {
 	inputSchema: {
 		type: 'object',
 		properties: {
+			reasoning: {
+				type: 'string',
+				description:
+					'A brief explanation (1-2 sentences) of why you need to edit this file and what changes you are making.',
+			},
 			file_path: {
 				type: 'string',
 				description:
@@ -105,10 +110,11 @@ export const editToolDefinition: ToolDefinition = {
 				minItems: 1,
 			},
 		},
-		required: ['file_path', 'edits'],
+		required: ['reasoning', 'file_path', 'edits'],
 	},
 	enact: async (
 		args: {
+			reasoning: string;
 			file_path: string;
 			edits: Edit[];
 		},
@@ -119,6 +125,10 @@ export const editToolDefinition: ToolDefinition = {
 			title: `Edit(${args.file_path})`,
 			id: crypto.randomUUID(),
 			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.reasoning,
+				},
 				{
 					type: DisplayContentType.TEXT,
 					content: `Applying ${args.edits.length} edit(s) to ${args.file_path}`,
@@ -145,7 +155,7 @@ export const editToolDefinition: ToolDefinition = {
 
 				if (fromIndex === -1) {
 					failures.push(
-						`Edit ${i + 1}: Could not find 'from' string: "${edit.from}"`,
+						`Edit ${i}: Could not find 'from' string: "${edit.from}"`,
 					);
 					return;
 				}
@@ -154,9 +164,7 @@ export const editToolDefinition: ToolDefinition = {
 
 				if (toIndex === -1 || toIndex < fromIndex) {
 					failures.push(
-						`Edit ${i + 1}: Could not find 'to' string: "${
-							edit.to
-						}" at or after 'from' string: "${edit.from}"`,
+						`Edit ${i}: Could not find 'to' string: "${edit.to}" at or after 'from' string: "${edit.from}"`,
 					);
 					return;
 				}
@@ -168,9 +176,7 @@ export const editToolDefinition: ToolDefinition = {
 				);
 				if (secondFromIndex !== -1) {
 					failures.push(
-						`Edit ${i + 1}: 'from' string "${
-							edit.from
-						}" is not unique - found multiple matches`,
+						`Edit ${i}: 'from' string "${edit.from}" is not unique - found multiple matches`,
 					);
 					return;
 				}
@@ -189,7 +195,11 @@ export const editToolDefinition: ToolDefinition = {
 
 			// If there are any failures, return error without making changes
 			if (failures.length > 0) {
-				throw new Error(`Failed to apply edits:\n${failures.join('\n')}`);
+				throw new Error(
+					`Failed to apply edits, you should re-read the file to ensure your 'to' and 'from' strings are accurate and unique:\n${failures.join(
+						'\n',
+					)}`,
+				);
 			}
 
 			// Apply all edits (in reverse order to maintain correct indices)
@@ -202,8 +212,13 @@ export const editToolDefinition: ToolDefinition = {
 				});
 
 			for (const edit of sortedEdits) {
-				const fromIndex = modifiedContent.indexOf(edit.from);
-				const toIndex = modifiedContent.indexOf(edit.to);
+				// Use N-1 characters to identify the index of the change, the Nth character is often wrong if at the end of a file
+				const fromIndex = modifiedContent.indexOf(
+					edit.from.slice(0, edit.from.length - 1),
+				);
+				const toIndex = modifiedContent.indexOf(
+					edit.to.slice(0, edit.to.length - 1),
+				);
 				const endIndex = toIndex + edit.to.length;
 
 				modifiedContent =

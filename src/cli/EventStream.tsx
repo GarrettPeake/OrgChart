@@ -95,19 +95,17 @@ interface EventStreamProps {
 export const EventStream = ({events = []}: EventStreamProps) => (
 	<Box flexDirection="column" paddingX={1}>
 		{events.map((event, index) => (
-			<Box key={`event-${index}`} flexDirection="column">
+			<Box key={`event-${index}`} flexDirection="column" marginBottom={1}>
 				<Text bold color={colors.accentColor}>
 					• {event.title}
 				</Text>
-				{event.content.map((contentChunk, chunkIndex) => (
-					<Box
-						key={`content-${index}-${chunkIndex}`}
-						marginLeft={2}
-						flexDirection="column"
-					>
-						<Markdown>{cleanText(contentChunk.content)}</Markdown>
-					</Box>
-				))}
+				<Box marginLeft={2} flexDirection="column">
+					{event.content.map((contentChunk, chunkIndex) => (
+						<Markdown key={`content-${index}-${chunkIndex}`}>
+							{cleanText(contentChunk.content)}
+						</Markdown>
+					))}
+				</Box>
 			</Box>
 		))}
 	</Box>

@@ -1,11 +1,18 @@
-import {describe, it, expect, beforeEach, vi} from 'vitest';
+import {
+	describe,
+	it,
+	expect,
+	beforeEach,
+	vi,
+	type MockedFunction,
+} from 'vitest';
 import {AgentContext, type BlockType} from '@/server/tasks/AgentContext.js';
 import {ContinuousContextManager} from '@/server/workflows/ContinuousContext.js';
-import {ToolCall} from '@/server/utils/provider/OpenRouter.js';
-import Logger from '@/Logger.js';
+import {ToolCall} from '@server/dependencies/provider/OpenRouter.js';
+import ServerLogger from '@server/dependencies/Logger.js';
 
 // Mock Logger
-vi.mock('@/Logger.js', () => ({
+vi.mock('@server/dependencies/Logger.js', () => ({
 	default: {
 		info: vi.fn(),
 		warn: vi.fn(),
@@ -14,11 +21,17 @@ vi.mock('@/Logger.js', () => ({
 }));
 
 // Mock ContinuousContextManager
-vi.mock('@/server/workflows/ContinuousContext.js', () => ({
-	ContinuousContextManager: vi.fn(() => ({
-		getCurrentContextContent: vi.fn().mockReturnValue('Mock context content'),
-	})),
-}));
+vi.mock('@/server/workflows/ContinuousContext.js', async importOriginal => {
+	const original = await importOriginal<
+		typeof import('@/server/workflows/ContinuousContext.js')
+	>();
+	return {
+		...original,
+		ContinuousContextManager: vi.fn(() => ({
+			getCurrentContextContent: vi.fn().mockReturnValue('Mock context content'),
+		})),
+	};
+});
 
 // Helper function to create mock tool calls
 const createMockToolCall = (
@@ -301,7 +314,7 @@ describe('AgentContext', () => {
 				const toolBlocks = agentContext.getBlocksByType('TOOL');
 				expect(toolBlocks).toHaveLength(1); // Only tool-1 should be added
 
-				expect(Logger.warn).toHaveBeenCalledWith(
+				expect(ServerLogger.warn).toHaveBeenCalledWith(
 					'Missing tool result for tool call tool-2',
 				);
 			});
@@ -390,7 +403,9 @@ describe('AgentContext', () => {
 			const mockContent = '# Updated Project Context\n\nNew information here.';
 			// Correctly mock the method on the instance
 			vi.mocked(
-				mockContinuousContextManager.getCurrentContextContent,
+				mockContinuousContextManager.getCurrentContextContent as MockedFunction<
+					typeof mockContinuousContextManager.getCurrentContextContent
+				>,
 			).mockReturnValue(mockContent);
 
 			agentContext.refreshContextBlock();
@@ -421,7 +436,9 @@ describe('AgentContext', () => {
 		it('should handle empty context content gracefully', () => {
 			// Correctly mock the method on the instance
 			vi.mocked(
-				mockContinuousContextManager.getCurrentContextContent,
+				mockContinuousContextManager.getCurrentContextContent as MockedFunction<
+					typeof mockContinuousContextManager.getCurrentContextContent
+				>,
 			).mockReturnValue('');
 
 			agentContext.refreshContextBlock();

@@ -4,6 +4,9 @@ import {
 	ChatCompletionResponse,
 	CompletionTool,
 } from './OpenRouter.js';
+import {AgentContext} from '../../tasks/AgentContext.js';
+import {LLMModel} from './ModelInfo.js';
+import {OrgchartConfig} from '../Configuration.js';
 
 /**
  * Note, appending `:online` to the model slug will append web search results from exa!
@@ -20,23 +23,21 @@ const convertTools = (toolDefinitions: ToolDefinition[]): CompletionTool[] =>
 		},
 	}));
 
-export class LLMProvider {
+export class OpenrouterProvider {
 	private apiKey: string;
 	private completionUrl: string;
 	public totalSpend: number = 0;
 
-	constructor(
-		apiKey?: string,
-		baseUrl: string = 'https://openrouter.ai/api/v1',
-	) {
+	constructor(baseUrl: string = 'https://openrouter.ai/api/v1') {
 		this.completionUrl = baseUrl + '/chat/completions';
-		this.apiKey = apiKey || process.env['OPENROUTER_API_KEY'] || '';
 
-		if (!this.apiKey) {
+		if (!OrgchartConfig.openrouterApiKey) {
 			const error = new Error(
 				'OpenRouter API key is required. Set OPENROUTER_API_KEY environment variable.',
 			);
 			throw error;
+		} else {
+			this.apiKey = OrgchartConfig.openrouterApiKey;
 		}
 	}
 
@@ -44,7 +45,7 @@ export class LLMProvider {
 		request: ChatCompletionRequest,
 		tools: ToolDefinition[],
 	): Promise<ChatCompletionResponse> {
-		const Logger = (await import('@/Logger.js')).default; // Solves the config -> llmProvider -> logger -> config circular import
+		const Logger = (await import('@server/dependencies/Logger.js')).default; // Solves the config -> llmProvider -> logger -> config circular import
 		let retries = 0;
 		let finalError: Error | null = null;
 		while (retries < 3) {
@@ -99,5 +100,41 @@ export class LLMProvider {
 				},
 			],
 		};
+	}
+
+	async getNonToolResponse(
+		agentContext: AgentContext,
+		model: LLMModel = 'openai/gpt-oss-120b',
+	): Promise<string> {
+		const Logger = (await import('@server/dependencies/Logger.js')).default;
+
+		try {
+			const request: ChatCompletionRequest = {
+				model,
+				messages: agentContext.toCompletionMessages(),
+				temperature: 0.2,
+				stream: false,
+				reasoning: {
+					effort: 'low',
+				},
+				provider: {
+					sort: 'throughput',
+				},
+			};
+
+			const response = await this.chatCompletion(request, []);
+			const choice = response?.choices?.[0];
+			const message = choice?.message;
+
+			if (message?.content) {
+				return message.content;
+			} else {
+				Logger.warn('No message received from LLM for non-tool response');
+				return 'Unable to generate response.';
+			}
+		} catch (error) {
+			Logger.error('Error getting non-tool response:', error);
+			return 'Error generating response.';
+		}
 	}
 }

@@ -3,7 +3,7 @@ import {ToolDefinition} from './index.js';
 import {readFileSync} from 'fs';
 import {DisplayContentType, OrgchartEvent} from '../IOTypes.js';
 import {TaskAgent} from '../tasks/TaskAgent.js';
-import Logger from '@/Logger.js';
+import ServerLogger from '@server/dependencies/Logger.js';
 export const grepToolDefinition: ToolDefinition = {
 	name: 'Grep',
 	descriptionForAgent: `- Fast content search tool that works with any codebase size
@@ -16,6 +16,11 @@ export const grepToolDefinition: ToolDefinition = {
 	inputSchema: {
 		type: 'object',
 		properties: {
+			reasoning: {
+				type: 'string',
+				description:
+					'A brief explanation (1-2 sentences) of why you need to search for this pattern and what you expect to find.',
+			},
 			pattern: {
 				type: 'string',
 				description:
@@ -31,10 +36,11 @@ export const grepToolDefinition: ToolDefinition = {
 					"File pattern to filter which files to search (e.g., '*.js' for JavaScript files)",
 			},
 		},
-		required: ['pattern', 'path'],
+		required: ['reasoning', 'pattern', 'path'],
 	},
 	enact: async (
 		args: {
+			reasoning: string;
 			pattern: string;
 			path: string;
 			include: string;
@@ -47,6 +53,10 @@ export const grepToolDefinition: ToolDefinition = {
 			title: `Grep(${args.pattern} in ${args.include} under ${args.path})`,
 			id: crypto.randomUUID(),
 			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.reasoning,
+				},
 				{
 					type: DisplayContentType.TEXT,
 					content: results.join('\n'),
@@ -81,7 +91,7 @@ function grep(pattern: string, path: string, include?: string): string[] {
 				}
 			});
 		} catch (err) {
-			Logger.error(`Error reading ${file}:`, err);
+			ServerLogger.error(`Error reading ${file}:`, err);
 		}
 	}
 	return results;

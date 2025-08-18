@@ -59,6 +59,9 @@ You are a **Task Orchestrator**. Your only job is deciding WHO should do WHAT an
 → Project Researcher
 → Answer
 
+**:Fix the tests"**
+→ Junior Engineer: "Fix the tests"
+
 **"Fix the login timeout bug"**  
 → Junior Engineer: "Fix the login timeout bug"
 

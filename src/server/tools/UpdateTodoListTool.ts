@@ -21,6 +21,11 @@ export const updateTodoListToolDefinition = (
 	inputSchema: {
 		type: 'object',
 		properties: {
+			reasoning: {
+				type: 'string',
+				description:
+					'A brief explanation (1-2 sentences) of why you are updating the todo list and how it helps organize the work.',
+			},
 			todo_items: {
 				type: 'array',
 				items: {
@@ -54,10 +59,10 @@ export const updateTodoListToolDefinition = (
 					'Comprehensive list of subtasks required to complete your current task',
 			},
 		},
-		required: ['todo_items'],
+		required: ['reasoning', 'todo_items'],
 	},
 	enact: async (
-		args: {todo_items: TodoListItem[]},
+		args: {reasoning: string; todo_items: TodoListItem[]},
 		invoker: TaskAgent,
 		writeEvent: (event: OrgchartEvent) => void,
 	): Promise<string> => {
@@ -65,6 +70,10 @@ export const updateTodoListToolDefinition = (
 			title: `UpdateTodoList`,
 			id: crypto.randomUUID(),
 			content: [
+				{
+					type: DisplayContentType.TEXT,
+					content: args.reasoning,
+				},
 				{
 					type: DisplayContentType.TEXT,
 					content: args.todo_items

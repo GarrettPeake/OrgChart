@@ -37,52 +37,52 @@
 
 ## MVP Checklist
 
- [ ] Interactivity
-    [ ] Security system
-        [ ] Command approval with display
-        [ ] When agent reaches max turns, ask for approval to continue (renews turns)
-        [ ] Configurable auto-allows (project and system level)
-    [ ] Help command
-    [ ] Config command (opens config editor)
-        [ ] Openrouter key setting, stored in system file
-        [ ] Allowed tools
-        [ ] Standard model set
-        [ ] Enable/disable continous context and continuous task context
-    [ ] Kill current agent command, force does not allow it to summarize with completion tool first
-    [ ] Macros for file selection
-    [ ] Enhanced text input
-    [ ] Thinking/processing indicators
-    [ ] Event stream improvements
-        [ ] Fenced code blocks
-        [ ] Diff view
-    [ ] Collapsing agent tree with key binding to show full
-    [ ] All tools use updatable events
-    [ ] Add CLI params
- [ ] System
-    [ ] Enable setting openrouter params at agent level
-    [ ] Configuration from defaults + system file + project file
-    [ ] Singletons file rather than coupling to config
-    [ ] Serialize and deserialize state, load sessions
-    [ ] Perfected error handling
-    [ ] OpenRouter stream cancellation on pause
-    [ ] Enable prompt caching (put continuous context in the system prompt and don't update it)
-    [ ] Ensure no provider storage by default
-    [ ] Static event stream for older events
-    [ ] Tests for everything
-    [ ] Define a standard model set and use them everywhere
-    [ ] Pausing and resuming works
-    [ ] cntrl+c to exit works, does not hang, no crazy background usage
-    [ ] Pass a Zod model to the LLMProvider and ensure the result is of that model, if not retry 3 times, finally fail, but how do we fail at that level and not have a million layer of bubbling up?
- [ ] Prompts
-    [ ] Simplified agent definitions into classes with composable prompts
-    [ ] Improved context passing through better environment understanding
-    [ ] Improved tool use through system prompt tool instruction composition
- [ ] Tools
-    [ ] Functional edit tool
-    [ ] Bash tool interactive (Summarize flag rather than a full agent)
-    [ ] Remove file tree tool?
-    [ ] Remove project researcher
-    [ ] Add context blobs to delegation tool
+[ ] Interactivity
+[ ] Security system
+[ ] Command approval with display
+[ ] When agent reaches max turns, ask for approval to continue (renews turns)
+[ ] Configurable auto-allows (project and system level)
+[ ] Help command
+[ ] Config command (opens config editor)
+[ ] Openrouter key setting, stored in system file
+[ ] Allowed tools
+[ ] Standard model set
+[ ] Enable/disable continous context and continuous task context
+[ ] Kill current agent command, force does not allow it to summarize with completion tool first
+[ ] Macros for file selection
+[ ] Enhanced text input
+[ ] Thinking/processing indicators
+[ ] Event stream improvements
+[ ] Fenced code blocks
+[ ] Diff view
+[ ] Collapsing agent tree with key binding to show full
+[ ] All tools use updatable events
+[ ] Add CLI params
+[ ] System
+[ ] Enable setting openrouter params at agent level
+[ ] Configuration from defaults + system file + project file
+[ ] Singletons file rather than coupling to config
+[ ] Serialize and deserialize state, load sessions
+[ ] Perfected error handling
+[ ] OpenRouter stream cancellation on pause
+[ ] Enable prompt caching (put continuous context in the system prompt and don't update it)
+[ ] Ensure no provider storage by default
+[ ] Static event stream for older events
+[ ] Tests for everything
+[ ] Define a standard model set and use them everywhere
+[ ] Pausing and resuming works
+[ ] cntrl+c to exit works, does not hang, no crazy background usage
+[ ] Pass a Zod model to the LLMProvider and ensure the result is of that model, if not retry 3 times, finally fail, but how do we fail at that level and not have a million layer of bubbling up?
+[ ] Prompts
+[ ] Simplified agent definitions into classes with composable prompts
+[ ] Improved context passing through better environment understanding
+[ ] Improved tool use through system prompt tool instruction composition
+[ ] Tools
+[ ] Functional edit tool
+[ ] Bash tool interactive (Summarize flag rather than a full agent)
+[ ] Remove file tree tool?
+[ ] Remove project researcher
+[ ] Add context blobs to delegation tool
 
 ## Experiment Results
 
@@ -105,7 +105,7 @@ Dont' shuffle in cont context update between use and tool results. Don't update 
 
 Everything is so slow due to knowledge passing. Each subagent has to generate a response for the parent and that generation takes ages.
 
-Provide designers a "virtual" design file that is stored in the .orgchart folder /designs. Have a copy of the read, write, and edit tools called ...Design 
+Provide designers a "virtual" design file that is stored in the .orgchart folder /designs. Have a copy of the read, write, and edit tools called ...Design
 
 ## Notes
 
