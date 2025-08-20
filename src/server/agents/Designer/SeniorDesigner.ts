@@ -4,7 +4,7 @@ import {
 	SystemPromptSharedAgentBehavior,
 } from '../Prompts.js';
 import {getFileTree} from '../../utils/FileSystemUtils.js';
-import {getToolset} from '@/server/tools/index.js';
+import {getToolset} from '@server/tools/index.js';
 
 export const SeniorDesigner: Agent = {
 	id: 'SeniorDesigner',

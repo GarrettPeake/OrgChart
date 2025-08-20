@@ -5,7 +5,7 @@
  */
 
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
-import {GitIgnoreParser} from '@/server/utils/GitIgnoreParser.js';
+import {GitIgnoreParser} from '@server/utils/GitIgnoreParser.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';

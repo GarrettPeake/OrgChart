@@ -2,7 +2,7 @@ import {getFileTree} from '../../utils/FileSystemUtils.js';
 import {readToolDefinition} from '../../tools/ReadFileTool.js';
 import {Agent} from '../Agents.js';
 import {SystemPromptSharedAgentBehavior} from '../Prompts.js';
-import {getToolset} from '@/server/tools/index.js';
+import {getToolset} from '@server/tools/index.js';
 
 export const JuniorDesigner: Agent = {
 	model: 'google/gemini-2.5-flash',

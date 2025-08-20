@@ -6,13 +6,13 @@ import {
 	vi,
 	type MockedFunction,
 } from 'vitest';
-import {readToolDefinition} from '@/server/tools/ReadFileTool.js';
-import {readFile} from '@/server/utils/FileSystemUtils.js';
-import {DisplayContentType, OrgchartEvent} from '@/server/IOTypes.js';
-import {TaskAgent} from '@/server/tasks/TaskAgent.js';
+import {readToolDefinition} from '@server/tools/ReadFileTool.js';
+import {readFile} from '@server/utils/FileSystemUtils.js';
+import {DisplayContentType, OrgchartEvent} from '@server/IOTypes.js';
+import {TaskAgent} from '@server/tasks/TaskAgent.js';
 
 // Mock dependencies
-vi.mock('@/server/utils/FileSystemUtils.js', () => ({
+vi.mock('@server/utils/FileSystemUtils.js', () => ({
 	readFile: vi.fn(),
 }));
 
@@ -283,7 +283,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'test.txt',
-					justification: 'Testing event emission',
+					reasoning: 'Testing event emission',
 				};
 
 				await readToolDefinition.enact(args, mockTaskAgent, mockWriteEvent);
@@ -295,7 +295,11 @@ describe('ReadFileTool', () => {
 					content: [
 						{
 							type: DisplayContentType.TEXT,
-							content: 'Reading file: test.txt',
+							content: args.justification,
+						},
+						{
+							type: DisplayContentType.TEXT,
+							content: `File: ${args.file_path}`,
 						},
 					],
 				});
@@ -307,18 +311,22 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'src/components/Button.tsx',
-					justification: 'Reading nested component file',
+					reasoning: 'Reading nested component file',
 				};
 
 				await readToolDefinition.enact(args, mockTaskAgent, mockWriteEvent);
 
 				expect(mockWriteEvent).toHaveBeenCalledWith({
-					title: 'Read(src/components/Button.tsx)',
+					title: `Read(${args.file_path})`,
 					id: 'test-uuid-123',
 					content: [
 						{
 							type: DisplayContentType.TEXT,
-							content: 'Reading file: src/components/Button.tsx',
+							content: args.justification,
+						},
+						{
+							type: DisplayContentType.TEXT,
+							content: `File: ${args.file_path}`,
 						},
 					],
 				});
@@ -330,18 +338,22 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'files/test-file_v2.1.txt',
-					justification: 'Reading file with special characters in name',
+					reasoning: 'Reading file with special characters in name',
 				};
 
 				await readToolDefinition.enact(args, mockTaskAgent, mockWriteEvent);
 
 				expect(mockWriteEvent).toHaveBeenCalledWith({
-					title: 'Read(files/test-file_v2.1.txt)',
+					title: `Read(${args.file_path})`,
 					id: 'test-uuid-123',
 					content: [
 						{
 							type: DisplayContentType.TEXT,
-							content: 'Reading file: files/test-file_v2.1.txt',
+							content: args.justification,
+						},
+						{
+							type: DisplayContentType.TEXT,
+							content: `File: ${args.file_path}`,
 						},
 					],
 				});
@@ -353,7 +365,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'missing.txt',
-					justification: 'Testing error event emission',
+					reasoning: 'Testing error event emission',
 				};
 
 				await expect(
@@ -362,12 +374,16 @@ describe('ReadFileTool', () => {
 
 				// Event should still be emitted before the error is thrown
 				expect(mockWriteEvent).toHaveBeenCalledWith({
-					title: 'Read(missing.txt)',
+					title: `Read(${args.file_path})`,
 					id: 'test-uuid-123',
 					content: [
 						{
 							type: DisplayContentType.TEXT,
-							content: 'Reading file: missing.txt',
+							content: args.justification,
+						},
+						{
+							type: DisplayContentType.TEXT,
+							content: `File: ${args.file_path}`,
 						},
 					],
 				});
@@ -382,7 +398,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'test.txt',
-					justification: 'Testing unique IDs',
+					reasoning: 'Testing unique IDs',
 				};
 
 				// Make three calls

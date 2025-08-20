@@ -331,23 +331,24 @@ export class TaskAgent {
 	}
 
 	private stepThinking(): void {
-		// Check if we've hit the iteration limit
+		// Check if we've hit the iteration limit and pause the agent
 		const maxIterations = OrgchartConfig.maxAgentIterations;
 		if (this.iterationCount >= maxIterations) {
+			this.status = AgentStatus.PAUSED;
 			this.writeEvent({
-				title: `Agent Max Cycles Exceeded (${maxIterations})`,
+				title: `Agent exceeded max loops (${maxIterations})`,
 				id: crypto.randomUUID(),
 				content: [
 					{
 						type: DisplayContentType.TEXT,
-						content: 'Please instruct the agent to continue or correct it',
+						content: 'Agent paused, send input to resume',
 					},
 				],
 			});
 			ServerLogger.info(
 				'Loop detected, the user will need to manually continue',
 			);
-			this.status = AgentStatus.IDLE;
+			this.status = AgentStatus.PAUSED;
 			return;
 		}
 
@@ -359,20 +360,6 @@ export class TaskAgent {
 		this.isLLMCallInProgress = true;
 		this.iterationCount++;
 
-		// On the final iteration, tell the agent that it is being forced to complete the task
-		if (this.iterationCount === maxIterations - 1) {
-			this.agentContext.addUserBlock(
-				`You have run out of time and must provide a response to the requester given the information you already have/work you've already completed. If you were unable to finish the task completely, ensure the requester is made aware and you provide enough context for the requester to continue the task where you left off`,
-				'Final Iteration Warning',
-			);
-		}
-
-		// Make LLM call
-		const toolsToUse =
-			this.iterationCount < maxIterations - 1
-				? this.tools
-				: [attemptCompletionToolDefinition];
-
 		LLMProvider.chatCompletion(
 			{
 				model: this.agent.model,
@@ -381,7 +368,7 @@ export class TaskAgent {
 				temperature: this.agent.temperature,
 				stream: false,
 			},
-			toolsToUse,
+			this.tools,
 		)
 			.then(response => {
 				this.isLLMCallInProgress = false;

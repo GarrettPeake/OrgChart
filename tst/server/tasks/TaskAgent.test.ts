@@ -6,23 +6,23 @@ import {
 	vi,
 	type MockedFunction,
 } from 'vitest';
-import {TaskAgent} from '@/server/tasks/TaskAgent.js';
+import {TaskAgent} from '@server/tasks/TaskAgent.js';
 import {
 	Conversation,
 	ConversationParticipant,
-} from '@/server/tasks/Conversation.js';
+} from '@server/tasks/Conversation.js';
 import {
 	AgentStatus,
 	DisplayContentType,
 	OrgchartEvent,
-} from '@/server/IOTypes.js';
-import {OrgchartConfig} from '@server/dependencies/Configuration.js';
+} from '@server/IOTypes.js';
+import {OrgChartConfig, OrgchartConfig} from '@server/dependencies/Configuration.js';
 import {
 	CompletionUsageStats,
 	ToolCall,
 } from '@server/dependencies/provider/OpenRouter.js';
-import {attemptCompletionToolName} from '@/server/tools/AttemptCompletionTool.js';
-import {ContinuousContextManager} from '@/server/workflows/ContinuousContext.js';
+import {attemptCompletionToolName} from '@server/tools/AttemptCompletionTool.js';
+import {ContinuousContextManager} from '@server/workflows/ContinuousContext.js';
 import ServerLogger from '@server/dependencies/Logger.js';
 
 // Mock all dependencies
@@ -47,7 +47,7 @@ vi.mock('@/shared/utils/TextUtils.js', () => ({
 	cleanText: vi.fn().mockImplementation((text: string) => text.trim()),
 }));
 
-vi.mock('@/server/agents/Agents.js', () => ({
+vi.mock('@server/agents/Agents.js', () => ({
 	agents: {
 		'test-agent': {
 			id: 'test-agent',
@@ -77,7 +77,7 @@ vi.mock('@/server/agents/Agents.js', () => ({
 	})),
 }));
 
-vi.mock('@/server/tools/DelegateWorkTool.js', () => ({
+vi.mock('@server/tools/DelegateWorkTool.js', () => ({
 	delegateWorkTool: vi.fn().mockReturnValue({
 		name: 'delegate_work',
 		enact: vi.fn(),
@@ -92,7 +92,7 @@ vi.mock('@server/dependencies/provider/ModelInfo.js', () => ({
 	},
 }));
 
-vi.mock('@/server/workflows/ContinuousContext.js', () => ({
+vi.mock('@server/workflows/ContinuousContext.js', () => ({
 	ContinuousContextManager: vi.fn().mockImplementation(() => ({
 		getCurrentContextContent: vi.fn().mockReturnValue('Mock project context'),
 		updateContext: vi.fn().mockResolvedValue(undefined),
@@ -167,7 +167,7 @@ describe('TaskAgent', () => {
 			llmProvider: mockLLMProvider,
 		};
 
-		(OrgchartConfig as MockedFunction<typeof OrgchartConfig>).mockReturnValue(
+		(OrgchartConfig as MockedFunction<typeof OrgChartConfig>).mockReturnValue(
 			mockConfig,
 		);
 

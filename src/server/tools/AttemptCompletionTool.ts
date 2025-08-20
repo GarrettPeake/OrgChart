@@ -4,7 +4,7 @@ import {TaskAgent} from '../tasks/TaskAgent.js';
 
 export const attemptCompletionToolName = 'AttemptCompletion';
 
-const descriptionForAgent = `This tool is used to let the requester know that the work has been completed. You should present a concise and poignant summary of the results of your work through the "result" parameter. This summary should give a high level overview of everything you managed to accomplish relating to the task as well as anything you did not manage to accomplish.
+const descriptionForAgent = `This tool is used to let the requester know that the work has been completed. You should provide a concise message for the requester through the "short_completion_message" parameter and detailed information through the "completion_details" parameter.
 You should attempt to accomplish all components of the requested task before using this tool.
 IMPORTANT NOTE: This tool CANNOT be used until you've used at least one other tool prior. Failure to do so will result in code corruption and system failure.`;
 
@@ -14,21 +14,21 @@ export const attemptCompletionToolDefinition: ToolDefinition = {
 	inputSchema: {
 		type: 'object',
 		properties: {
-			reasoning: {
+			completion_message: {
 				type: 'string',
 				description:
-					'A brief explanation (1-2 sentences) of why you believe the task is complete and what was accomplished.',
+					"The results of your work shown to the requester -- should be concise and user-friendly without leaving out any of the information requested. Note that from your requester's perspective, they only see the task you give them, and this message -- none of the other work you performed is shown.",
 			},
-			result: {
+			completion_details: {
 				type: 'string',
 				description:
-					"The result of the task. Formulate this result in a way that is final and does not require further input from the user. Don't end your result with questions or offers for further assistance.",
+					'Detailed internal information that the requester will NOT see. Include: 1) Assumptions - any assumptions made about the intent of the task, 2) Decisions - decisions which could affect future work such as adding dependencies, changing code signatures, or removing files, 3) Limitations - unforeseen issues which required you to reasonably expand the scope of your assigned task, 4) Mutations - describe all mutating operations performed to complete your task (including mutations made by other agents), 5) Results - detailed description of what was accomplished, state mutations made to the project, code signatures of new functions, etc. Do not include actual code content but outline modifications through descriptive wording.',
 			},
 		},
-		required: ['reasoning', 'result'],
+		required: ['completion_message', 'completion_details'],
 	},
 	enact: async (
-		args: {reasoning: string; result: string},
+		args: {completion_message: string; completion_details: string},
 		invoker: TaskAgent,
 		writeEvent: (event: OrgchartEvent) => void,
 	): Promise<string> => {
@@ -38,14 +38,10 @@ export const attemptCompletionToolDefinition: ToolDefinition = {
 			content: [
 				{
 					type: DisplayContentType.TEXT,
-					content: args.reasoning,
-				},
-				{
-					type: DisplayContentType.TEXT,
-					content: args.result,
+					content: args.completion_message,
 				},
 			],
 		});
-		return args.result;
+		return `${args.completion_message}\n\n${args.completion_details}`;
 	},
 };

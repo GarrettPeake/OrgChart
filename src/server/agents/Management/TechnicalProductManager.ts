@@ -1,4 +1,4 @@
-import {getToolset} from '@/server/tools/index.js';
+import {getToolset} from '@server/tools/index.js';
 import {Agent} from '../Agents.js';
 import {
 	SystemPromptDelegationInstructions,

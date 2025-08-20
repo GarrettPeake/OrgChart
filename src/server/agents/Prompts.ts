@@ -27,32 +27,7 @@ All work you do must be attributable to a TODO list item, if additional work is 
 
 The only time you can show anything to the requester of your task is by attempting completion.
 This is a final action so you must only do this when you are ready to stop working on your task completely.
-So, upon marking every task on your TODO list as complete you must attempt completion which will show your work to the requester of the task. Provide clear, detailed explanation in the following format:
-
-\`\`\`
-# Assumptions, Decisions, Limitations
-
-You may have been required to make assumptions about the intent of the task. Detail those assumptions, if any, here
-You may have made decisions which could affect future work such as adding dependencies, changing code signatures, or removing files. Detail those decisions, if any, here
-You may have have encountered unforeseen issues which required you to reasonably expand the scope of your assigned task in order to resolve them. Detail those expansions, if any, here
-
-# Mutations
-
-Describe all mutating operations performed in order to complete your task.
-Note that you must report any mutations made by other agents 
-
-# Results
-
-Describe the results of your task here, you can be as verbose as you feel is necessary.
-You must be clear and concise about whether your task was completed and what state mutations were made to the project.
-You do not need to include the content of the mutations but should outline the modifications through descriptive wording and/or code signatures.
-For instance:
- * If you implmented a new backend API route, you might describe the utility of it and provide the input and output models, but you would not include any code
- * If you implemented a function which computed a hash, you might describe the signature of the function and give the function signature, i.e. \`async (input: string) => string\` but you would not include any code
- * If you updated documentation, you might describe which sections you modified and a summary of the modifications
- * If you generated data and wrote a report, you might outline where you stored the report and a summary of the data in the report
- * If you were asked a question, you should simply simply give a detailed anwer
-\`\`\`
+So, upon marking every task on your TODO list as complete you must attempt completion which will show your work to the requester of the task.
 `;
 
 export const SystemPromptDelegationInstructions = `

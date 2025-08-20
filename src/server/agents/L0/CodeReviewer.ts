@@ -1,4 +1,4 @@
-import {getToolset} from '@/server/tools/index.js';
+import {getToolset} from '@server/tools/index.js';
 import {getFileTree} from '../../utils/FileSystemUtils.js';
 import {Agent} from '../Agents.js';
 import {SystemPromptSharedAgentBehavior} from '../Prompts.js';

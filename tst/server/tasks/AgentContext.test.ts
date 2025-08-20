@@ -6,8 +6,8 @@ import {
 	vi,
 	type MockedFunction,
 } from 'vitest';
-import {AgentContext, type BlockType} from '@/server/tasks/AgentContext.js';
-import {ContinuousContextManager} from '@/server/workflows/ContinuousContext.js';
+import {AgentContext, type BlockType} from '@server/tasks/AgentContext.js';
+import {ContinuousContextManager} from '@server/workflows/ContinuousContext.js';
 import {ToolCall} from '@server/dependencies/provider/OpenRouter.js';
 import ServerLogger from '@server/dependencies/Logger.js';
 
@@ -21,9 +21,9 @@ vi.mock('@server/dependencies/Logger.js', () => ({
 }));
 
 // Mock ContinuousContextManager
-vi.mock('@/server/workflows/ContinuousContext.js', async importOriginal => {
+vi.mock('@server/workflows/ContinuousContext.js', async importOriginal => {
 	const original = await importOriginal<
-		typeof import('@/server/workflows/ContinuousContext.js')
+		typeof import('@server/workflows/ContinuousContext.js')
 	>();
 	return {
 		...original,

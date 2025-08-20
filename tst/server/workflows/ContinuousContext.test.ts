@@ -7,10 +7,10 @@ import {
 	vi,
 	type MockedFunction,
 } from 'vitest';
-import {ContinuousContextManager} from '@/server/workflows/ContinuousContext.js';
-import {GitIgnoreParser} from '@/server/utils/GitIgnoreParser.js';
+import {ContinuousContextManager} from '@server/workflows/ContinuousContext.js';
+import {GitIgnoreParser} from '@server/utils/GitIgnoreParser.js';
 import {OrgchartConfig} from '@server/dependencies/Configuration.js';
-import {startFileWatching} from '@/server/utils/FileSystemUtils.js';
+import {startFileWatching} from '@server/utils/FileSystemUtils.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
@@ -28,9 +28,9 @@ vi.mock('@server/dependencies/Configuration.js', () => ({
 	OrgchartConfig: vi.fn(),
 }));
 
-vi.mock('@/server/utils/FileSystemUtils.js', async importOriginal => {
+vi.mock('@server/utils/FileSystemUtils.js', async importOriginal => {
 	const original = await importOriginal<
-		typeof import('@/server/utils/FileSystemUtils.js')
+		typeof import('@server/utils/FileSystemUtils.js')
 	>();
 	return {
 		...original,
