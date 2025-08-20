@@ -14,6 +14,7 @@ export const Interface = () => {
 	const screenDimensions = useStdOutDim();
 	const [totalCost, setTotalCost] = useState<number>(0);
 	const [events, setEvents] = useState<OrgchartEvent[]>([]);
+	const [rootAgent, setRootAgent] = useState(server?.getAgentGraph());
 
 	// Initialize the server
 	useEffect(() => {
@@ -33,6 +34,7 @@ export const Interface = () => {
 			if (newTotalSpend !== totalCost) {
 				setTotalCost(newTotalSpend);
 			}
+			setRootAgent(server.getAgentGraph());
 		}, 250);
 
 		return () => clearInterval(interval);
@@ -95,7 +97,7 @@ export const Interface = () => {
 							)}`}
 						</Text>
 					</Box>
-					<AgentTree rootTaskRunner={server?.getAgentGraph()} />
+					<AgentTree rootTaskRunner={rootAgent} />
 				</Box>
 			) : null}
 

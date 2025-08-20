@@ -405,7 +405,7 @@ export class TaskAgent {
 
 		// Handle the LLM not producing a response
 		if (!choice || !message) {
-			ServerLogger.info(response);
+			ServerLogger.info(JSON.stringify(response));
 			this.writeEvent({
 				title: 'LLM API Error',
 				id: crypto.randomUUID(),
@@ -449,7 +449,7 @@ export class TaskAgent {
 			this.status = AgentStatus.ACTING;
 		} else {
 			// No tool calls, task might be complete or need clarification
-			ServerLogger.warn('LLM provided no tool calls');
+			ServerLogger.warn(`LLM provided no tool calls: ${JSON.stringify(response)}`);
 			this.handleError('No Tool Calls');
 		}
 	}

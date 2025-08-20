@@ -5,7 +5,6 @@ import {
 	beforeEach,
 	afterEach,
 	vi,
-	type MockedFunction,
 } from 'vitest';
 import {ContinuousContextManager} from '@server/workflows/ContinuousContext.js';
 import {GitIgnoreParser} from '@server/utils/GitIgnoreParser.js';
@@ -25,7 +24,14 @@ vi.mock('@server/dependencies/Logger.js', () => ({
 }));
 
 vi.mock('@server/dependencies/Configuration.js', () => ({
-	OrgchartConfig: vi.fn(),
+	OrgchartConfig: {
+		openrouterApiKey: 'test-api-key',
+		workingDir: '',
+		orgchartDir: '',
+		projectContextFile: '',
+		ignorePatterns: [],
+		llmProvider: undefined, // Will be set in beforeEach
+	},
 }));
 
 vi.mock('@server/utils/FileSystemUtils.js', async importOriginal => {
@@ -71,22 +77,20 @@ describe('ContinuousContextManager', () => {
 
 		// Setup mock config
 		mockConfig = {
-			rootDir: testDir,
-			orgChartDir: path.join(testDir, '.orgchart'),
+			openrouterApiKey: 'test-api-key',
+			workingDir: testDir,
+			orgchartDir: path.join(testDir, '.orgchart'),
 			projectContextFile: path.join(testDir, '.orgchart', 'PROJECT.md'),
 			ignorePatterns: ['node_modules'],
 			llmProvider: mockLLMProvider,
 		};
 
-		(OrgchartConfig as MockedFunction<typeof OrgchartConfig>).mockReturnValue(
-			mockConfig,
-		);
-		(
-			startFileWatching as MockedFunction<typeof startFileWatching>
-		).mockResolvedValue(mockUnsubscribe);
+		// Update the mocked config object
+		Object.assign(OrgchartConfig, mockConfig);
+		(startFileWatching as any).mockResolvedValue(mockUnsubscribe);
 
 		// Setup directories
-		await fs.mkdir(mockConfig.orgChartDir, {recursive: true});
+		await fs.mkdir(mockConfig.orgchartDir, {recursive: true});
 
 		// Setup LLM mock response
 		mockLLMProvider.chatCompletion.mockResolvedValue({
@@ -150,7 +154,7 @@ describe('ContinuousContextManager', () => {
 
 			// Check that FULL_CONTEXT.md was written
 			const fullContextPath = path.join(
-				mockConfig.orgChartDir,
+				mockConfig.orgchartDir,
 				'FULL_CONTEXT.md',
 			);
 			const fullContextExists = await fs
@@ -161,7 +165,7 @@ describe('ContinuousContextManager', () => {
 
 			// Check that file watching was started
 			expect(startFileWatching).toHaveBeenCalledWith(
-				testDir,
+				mockConfig.workingDir,
 				expect.any(Function),
 				expect.any(GitIgnoreParser),
 			);
@@ -200,9 +204,7 @@ describe('ContinuousContextManager', () => {
 			await manager.initialize();
 
 			// Get the callback from the startFileWatching mock call
-			const mockCalls = (
-				startFileWatching as MockedFunction<typeof startFileWatching>
-			).mock.calls;
+			const mockCalls = (startFileWatching as any).mock.calls;
 			expect(mockCalls).toHaveLength(1);
 			fileWatchingCallback = mockCalls[0]![1];
 
@@ -302,9 +304,7 @@ describe('ContinuousContextManager', () => {
 			await manager.initialize();
 
 			// Get the callback from the startFileWatching mock call
-			const mockCalls = (
-				startFileWatching as MockedFunction<typeof startFileWatching>
-			).mock.calls;
+			const mockCalls = (startFileWatching as any).mock.calls;
 			expect(mockCalls).toHaveLength(1);
 			fileWatchingCallback = mockCalls[0]![1];
 
@@ -483,7 +483,7 @@ describe('ContinuousContextManager', () => {
 			await manager.initialize();
 
 			expect(startFileWatching).toHaveBeenCalledWith(
-				testDir,
+				mockConfig.workingDir,
 				expect.any(Function),
 				expect.objectContaining({
 					getPatterns: expect.any(Function),
@@ -492,18 +492,16 @@ describe('ContinuousContextManager', () => {
 			);
 
 			// Verify the GitIgnoreParser was configured with additional patterns
-			const gitIgnoreParser = (
-				startFileWatching as MockedFunction<typeof startFileWatching>
-			).mock.calls[0]![2];
+			const gitIgnoreParser = (startFileWatching as any).mock.calls[0]![2];
 			expect(gitIgnoreParser).toBeDefined();
 		});
 	});
 
 	describe('file watching error handling', () => {
 		it('should handle startFileWatching errors', async () => {
-			(
-				startFileWatching as MockedFunction<typeof startFileWatching>
-			).mockRejectedValue(new Error('File watching failed'));
+			(startFileWatching as any).mockRejectedValue(
+				new Error('File watching failed'),
+			);
 
 			await manager.initialize();
 
@@ -521,9 +519,7 @@ describe('ContinuousContextManager', () => {
 			await manager.initialize();
 
 			// Get the callback from the startFileWatching mock call
-			const mockCalls = (
-				startFileWatching as MockedFunction<typeof startFileWatching>
-			).mock.calls;
+			const mockCalls = (startFileWatching as any).mock.calls;
 			expect(mockCalls).toHaveLength(1);
 			fileWatchingCallback = mockCalls[0]![1];
 		});

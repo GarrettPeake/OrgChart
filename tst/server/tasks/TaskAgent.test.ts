@@ -16,7 +16,7 @@ import {
 	DisplayContentType,
 	OrgchartEvent,
 } from '@server/IOTypes.js';
-import {OrgChartConfig, OrgchartConfig} from '@server/dependencies/Configuration.js';
+import {OrgchartConfig} from '@server/dependencies/Configuration.js';
 import {
 	CompletionUsageStats,
 	ToolCall,
@@ -40,7 +40,11 @@ vi.mock('@server/dependencies/Logger.js', () => ({
 }));
 
 vi.mock('@server/dependencies/Configuration.js', () => ({
-	OrgchartConfig: vi.fn(),
+	OrgchartConfig: {
+		openrouterApiKey: 'test-api-key',
+		maxAgentIterations: 10,
+		llmProvider: undefined, // Will be set in beforeEach
+	},
 }));
 
 vi.mock('@/shared/utils/TextUtils.js', () => ({
@@ -163,13 +167,13 @@ describe('TaskAgent', () => {
 		};
 
 		mockConfig = {
+			openrouterApiKey: 'test-api-key',
 			maxAgentIterations: 10,
 			llmProvider: mockLLMProvider,
 		};
 
-		(OrgchartConfig as MockedFunction<typeof OrgChartConfig>).mockReturnValue(
-			mockConfig,
-		);
+		// Update the mocked config object
+		Object.assign(OrgchartConfig, mockConfig);
 
 		// Setup mock event writer
 		mockWriteEvent = vi.fn();

@@ -62,10 +62,6 @@ export const delegateWorkTool = (level: number): ToolDefinition => {
 						type: DisplayContentType.TEXT,
 						content: args.reasoning,
 					},
-					{
-						type: DisplayContentType.TEXT,
-						content: args.task,
-					},
 				],
 			});
 
@@ -76,15 +72,7 @@ export const delegateWorkTool = (level: number): ToolDefinition => {
 					content: [
 						{
 							type: DisplayContentType.TEXT,
-							content: args.reasoning,
-						},
-						{
-							type: DisplayContentType.TEXT,
 							content: `Failed: Cannot delegate to agent '${args.agentId}' as it does not exist`,
-						},
-						{
-							type: DisplayContentType.TEXT,
-							content: args.task,
 						},
 					],
 				});

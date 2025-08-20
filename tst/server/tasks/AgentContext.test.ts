@@ -412,12 +412,21 @@ describe('AgentContext', () => {
 
 			const contextBlock = agentContext.getLatestBlockByType('CONTEXT');
 			expect(contextBlock?.messages[0]?.content).toBe(mockContent);
-			expect(contextBlock?.messages[1]?.content).toBe(
-				'I understand the current project context and will use this information to assist effectively.',
-			);
+			expect(contextBlock?.messages[1]).toMatchObject({
+				role: 'assistant',
+				content: [
+					{
+						text: 'I understand the current project context and will use this information to assist effectively.',
+						type: 'text',
+						cache_control: {
+							type: 'ephemeral',
+						},
+					},
+				],
+			});
 		});
 
-		it('should remove old context blocks when refreshing', () => {
+		it('should replace existing context blocks when refreshed', () => {
 			// Add initial context
 			agentContext.addContextBlock('Old context');
 			expect(agentContext.getBlocksByType('CONTEXT')).toHaveLength(1);
@@ -507,11 +516,8 @@ describe('AgentContext', () => {
 
 			expect(summary).toContain('Total Blocks: 0');
 			expect(summary).toContain('Total Messages: 0');
-			expect(summary).toContain('[SYSTEM] System Prompt (0 messages)');
+			expect(summary).toContain('(No blocks in context)');
 		});
-	});
-
-	describe('edge cases and error handling', () => {
 		it('should handle empty system prompt', () => {
 			const contextWithEmptyPrompt = new AgentContext(
 				[],

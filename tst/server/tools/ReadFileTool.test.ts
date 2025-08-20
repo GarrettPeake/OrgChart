@@ -1,3 +1,4 @@
+
 import {
 	describe,
 	it,
@@ -105,7 +106,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'document.pdf',
-					justification: 'Reading PDF document',
+					reasoning: 'Reading PDF document',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -124,7 +125,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'document.docx',
-					justification: 'Reading DOCX document',
+					reasoning: 'Reading DOCX document',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -142,7 +143,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'empty.txt',
-					justification: 'Reading empty file',
+					reasoning: 'Reading empty file',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -161,7 +162,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'large.txt',
-					justification: 'Reading large file',
+					reasoning: 'Reading large file',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -180,7 +181,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'special-chars.txt',
-					justification: 'Reading file with special characters',
+					reasoning: 'Reading file with special characters',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -201,7 +202,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'nonexistent.txt',
-					justification: 'Trying to read non-existent file',
+					reasoning: 'Trying to read non-existent file',
 				};
 
 				await expect(
@@ -217,7 +218,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'restricted.txt',
-					justification: 'Trying to read restricted file',
+					reasoning: 'Trying to read restricted file',
 				};
 
 				await expect(
@@ -233,7 +234,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'problematic.txt',
-					justification: 'Reading problematic file',
+					reasoning: 'Reading problematic file',
 				};
 
 				await expect(
@@ -249,7 +250,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'corrupted.pdf',
-					justification: 'Reading corrupted PDF',
+					reasoning: 'Reading corrupted PDF',
 				};
 
 				await expect(
@@ -265,7 +266,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'corrupted.docx',
-					justification: 'Reading corrupted DOCX',
+					reasoning: 'Reading corrupted DOCX',
 				};
 
 				await expect(
@@ -295,7 +296,7 @@ describe('ReadFileTool', () => {
 					content: [
 						{
 							type: DisplayContentType.TEXT,
-							content: args.justification,
+							content: args.reasoning,
 						},
 						{
 							type: DisplayContentType.TEXT,
@@ -322,7 +323,7 @@ describe('ReadFileTool', () => {
 					content: [
 						{
 							type: DisplayContentType.TEXT,
-							content: args.justification,
+							content: args.reasoning,
 						},
 						{
 							type: DisplayContentType.TEXT,
@@ -349,7 +350,7 @@ describe('ReadFileTool', () => {
 					content: [
 						{
 							type: DisplayContentType.TEXT,
-							content: args.justification,
+							content: args.reasoning,
 						},
 						{
 							type: DisplayContentType.TEXT,
@@ -379,7 +380,7 @@ describe('ReadFileTool', () => {
 					content: [
 						{
 							type: DisplayContentType.TEXT,
-							content: args.justification,
+							content: args.reasoning,
 						},
 						{
 							type: DisplayContentType.TEXT,
@@ -429,7 +430,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: './relative/path/file.txt',
-					justification: 'Testing relative path',
+					reasoning: 'Testing relative path',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -448,7 +449,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: '/absolute/path/file.txt',
-					justification: 'Testing absolute path',
+					reasoning: 'Testing absolute path',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -467,7 +468,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'path with spaces/file name.txt',
-					justification: 'Testing paths with spaces',
+					reasoning: 'Testing paths with spaces',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -499,7 +500,7 @@ describe('ReadFileTool', () => {
 
 					const args = {
 						file_path: testCase.path,
-						justification: `Testing ${testCase.path}`,
+						reasoning: `Testing ${testCase.path}`,
 					};
 
 					const result = await readToolDefinition.enact(
@@ -513,14 +514,14 @@ describe('ReadFileTool', () => {
 				}
 			});
 
-			it('should pass justification parameter but not use it in execution', async () => {
+			it('should pass reasoning parameter but not use it in execution', async () => {
 				const fileContent = 'Test content';
 				mockReadFile.mockResolvedValue(fileContent);
 
 				const args = {
 					file_path: 'test.txt',
-					justification:
-						'This is a detailed justification for reading the file',
+					reasoning:
+						'This is a detailed reasoning for reading the file',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -530,7 +531,7 @@ describe('ReadFileTool', () => {
 				);
 
 				expect(result).toBe(fileContent);
-				// Justification should not affect the readFile call
+				// Reasoning should not affect the readFile call
 				expect(mockReadFile).toHaveBeenCalledWith('test.txt');
 			});
 		});
@@ -542,7 +543,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'test.txt',
-					justification: 'Testing delegation',
+					reasoning: 'Testing delegation',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -563,7 +564,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'formatted.txt',
-					justification: 'Testing content preservation',
+					reasoning: 'Testing content preservation',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -585,7 +586,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'test.txt',
-					justification: 'Testing error propagation',
+					reasoning: 'Testing error propagation',
 				};
 
 				await expect(
@@ -604,7 +605,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'async.txt',
-					justification: 'Testing async behavior',
+					reasoning: 'Testing async behavior',
 				};
 
 				const result = await readToolDefinition.enact(
@@ -622,9 +623,9 @@ describe('ReadFileTool', () => {
 					.mockResolvedValueOnce('Content 2')
 					.mockResolvedValueOnce('Content 3');
 
-				const args1 = {file_path: 'file1.txt', justification: 'Read 1'};
-				const args2 = {file_path: 'file2.txt', justification: 'Read 2'};
-				const args3 = {file_path: 'file3.txt', justification: 'Read 3'};
+				const args1 = {file_path: 'file1.txt', reasoning: 'Read 1'};
+				const args2 = {file_path: 'file2.txt', reasoning: 'Read 2'};
+				const args3 = {file_path: 'file3.txt', reasoning: 'Read 3'};
 
 				const [result1, result2, result3] = await Promise.all([
 					readToolDefinition.enact(args1, mockTaskAgent, mockWriteEvent),
@@ -646,13 +647,13 @@ describe('ReadFileTool', () => {
 			// The actual enforcement happens at compile time
 			const validArgs = {
 				file_path: 'test.txt',
-				justification: 'Required parameter test',
+				reasoning: 'Required parameter test',
 			};
 
 			expect(validArgs).toHaveProperty('file_path');
-			expect(validArgs).toHaveProperty('justification');
+			expect(validArgs).toHaveProperty('reasoning');
 			expect(typeof validArgs.file_path).toBe('string');
-			expect(typeof validArgs.justification).toBe('string');
+			expect(typeof validArgs.reasoning).toBe('string');
 		});
 
 		it('should return Promise<string> as specified in interface', async () => {
@@ -660,7 +661,7 @@ describe('ReadFileTool', () => {
 
 			const args = {
 				file_path: 'test.txt',
-				justification: 'Type safety test',
+				reasoning: 'Type safety test',
 			};
 
 			const result = readToolDefinition.enact(

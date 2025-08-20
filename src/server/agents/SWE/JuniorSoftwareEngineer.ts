@@ -4,7 +4,7 @@ import {SystemPromptSharedAgentBehavior} from '../Prompts.js';
 import {getToolset} from '@server/tools/index.js';
 
 export const JuniorSoftwareEngineer: Agent = {
-	model: 'google/gemini-2.5-flash',
+	model: 'anthropic/claude-sonnet-4',
 	id: 'JuniorSoftwareEngineer',
 	name: 'Junior Software Engineer',
 	human_description:
