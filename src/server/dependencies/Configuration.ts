@@ -57,7 +57,7 @@ const orgchartDir = path.join(workingDir, '/.orgchart');
 const runId = crypto.randomUUID().substring(0, 6);
 fs.mkdirSync(orgchartDir, {recursive: true});
 export const OrgchartConfig: OrgChartConfig = {
-    // Shared config
+	// Shared config
 	maxAgentIterations: 30,
 	defaultAgent: 'TechnicalProductManager',
 	// User config

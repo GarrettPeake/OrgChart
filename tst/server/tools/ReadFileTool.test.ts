@@ -1,4 +1,3 @@
-
 import {
 	describe,
 	it,
@@ -520,8 +519,7 @@ describe('ReadFileTool', () => {
 
 				const args = {
 					file_path: 'test.txt',
-					reasoning:
-						'This is a detailed reasoning for reading the file',
+					reasoning: 'This is a detailed reasoning for reading the file',
 				};
 
 				const result = await readToolDefinition.enact(

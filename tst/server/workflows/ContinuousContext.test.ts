@@ -1,11 +1,4 @@
-import {
-	describe,
-	it,
-	expect,
-	beforeEach,
-	afterEach,
-	vi,
-} from 'vitest';
+import {describe, it, expect, beforeEach, afterEach, vi} from 'vitest';
 import {ContinuousContextManager} from '@server/workflows/ContinuousContext.js';
 import {GitIgnoreParser} from '@server/utils/GitIgnoreParser.js';
 import {OrgchartConfig} from '@server/dependencies/Configuration.js';

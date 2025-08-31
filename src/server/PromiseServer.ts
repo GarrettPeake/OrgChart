@@ -45,7 +45,7 @@ export class PromiseServer {
 		ServerLogger.info(`Starting server'`);
 		try {
 			// Wait for context manager to initialize before creating agents
-			// await this.contextManager.initialize();
+			await this.contextManager.initialize();
 			ServerLogger.info('ContinuousContext initialized successfully');
 		} catch (error) {
 			ServerLogger.error('Failed to initialize context manager:', error);

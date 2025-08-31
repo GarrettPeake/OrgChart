@@ -449,7 +449,9 @@ export class TaskAgent {
 			this.status = AgentStatus.ACTING;
 		} else {
 			// No tool calls, task might be complete or need clarification
-			ServerLogger.warn(`LLM provided no tool calls: ${JSON.stringify(response)}`);
+			ServerLogger.warn(
+				`LLM provided no tool calls: ${JSON.stringify(response)}`,
+			);
 			this.handleError('No Tool Calls');
 		}
 	}

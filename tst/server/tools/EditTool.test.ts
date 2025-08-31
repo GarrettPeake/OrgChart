@@ -12,7 +12,7 @@ vi.mock('diff', () => ({
 	createPatch: vi.fn(),
 }));
 
-import {editToolDefinition} from '@server/tools/EditTool';
+import {editToolDefinition} from '@server/tools/EditTool.js';
 import fs from 'fs/promises';
 import {createPatch} from 'diff';
 
