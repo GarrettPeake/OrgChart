@@ -56,13 +56,7 @@ export const Interface = () => {
 	return (
 		<Box flexDirection="column" flexGrow={1} width={screenDimensions[0]}>
 			{server?.getAgentGraph() ? null : (
-				<Box
-					flexDirection="column"
-					borderStyle="round"
-					borderDimColor
-					borderColor={colors.highlightColor}
-					flexShrink={1}
-				>
+				<Box flexDirection="column" flexShrink={1} marginBottom={-2}>
 					<Box marginBottom={-1} marginLeft={3}>
 						<Text color={colors.accentColor}>Welcome to the</Text>
 					</Box>
