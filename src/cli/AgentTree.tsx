@@ -73,7 +73,7 @@ export const buildAgentTreeComponents = (
 				{agentInfo.children?.map((child, index) => {
 					const isLastChild = index === agentInfo.children!.length - 1;
 					return (
-						<React.Fragment key={child.id || index}>
+						<React.Fragment key={crypto.randomUUID().substring(0, 6)}>
 							{buildTreeDfs(child, [...prefix, isLastChild ? 1 : 2])}
 						</React.Fragment>
 					);
